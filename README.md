@@ -18,6 +18,12 @@ decides what they may see and do. The server only serves the pages and
   service, as the public client forge-api names in `GetServerInfo`
   (`lib/auth`). The ID token lives in the tab's `sessionStorage` for an hour;
   there is no refresh token.
+- **Delete:** a writer deletes a service from its page. The name is typed to
+  confirm, as on the CLI; the API then takes down everything the service
+  runs (previews, staging, production, their namespaces) and removes it from
+  the catalog, shown live. The GitHub repo is kept. This needs a forge-api
+  with the teardown (showmino/forge#28): an older API removes only the
+  catalog entry.
 - **Security headers:** `proxy.ts` sets the Content-Security-Policy on every
   page. It asks forge-api which login service it uses and names the two in
   `connect-src`; until the API has answered it allows any web address, so a

@@ -65,6 +65,7 @@ describe("operations", () => {
     ["rollback", "deployments/forge-web/production", "Roll back forge-web in production"],
     ["create_environment", "environments/pr-42", "Create preview pr-42"],
     ["destroy_environment", "environments/pr-42", "Destroy preview pr-42"],
+    ["delete_service", "services/force-docs", "Delete force-docs"],
     ["resource.apply", "resources/payments/staging", "Resource apply resources/payments/staging"],
     ["", "", "Operation"],
   ])("%s on %s is %j", (kind, target, want) => {

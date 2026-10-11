@@ -329,3 +329,70 @@ export function DestroyDialog({ environment, onClose, onStarted }: OnPreview) {
     </Dialog>
   );
 }
+
+// DeleteServiceDialog removes a service and everything it runs. As on the
+// CLI, the name is typed to confirm. previews and deployed say what there is
+// to take down, as the page knows it; the API looks again when asked.
+export function DeleteServiceDialog({
+  id,
+  previews,
+  deployed,
+  onClose,
+  onStarted,
+}: Common & { previews: string[]; deployed: string[] }) {
+  const api = useApi();
+  const [typed, setTyped] = useState("");
+  const action = useAction(
+    () => api.catalog.deleteService({ name: `services/${id}` }),
+    (res) => onStarted(res.operation?.name),
+  );
+  const matches = typed.trim() === id;
+  const runs = [
+    ...deployed.map((env) => `its ${env} deployment and the namespace ${id}-${env}`),
+    ...(previews.length ? [`${previews.length === 1 ? "its preview" : `its ${previews.length} previews`} (${previews.join(", ")})`] : []),
+  ];
+  return (
+    <Dialog title={`Delete ${id}?`} onClose={onClose}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (matches) action.run();
+        }}
+        className="flex flex-col gap-4"
+      >
+        {runs.length > 0 ? (
+          <>
+            <p>This takes down everything {id} runs, then removes it from the catalog:</p>
+            <ul className="list-disc pl-5 text-[13.5px]">
+              {runs.map((r) => (
+                <li key={r}>{r}</li>
+              ))}
+            </ul>
+          </>
+        ) : (
+          <p>{id} runs nothing on the cluster. This removes it from the catalog.</p>
+        )}
+        <p className="text-fg-2">
+          Its GitHub repo is kept. If the delete fails half way, {id} stays in the catalog and you can delete it again.
+        </p>
+        <Field id="delete-name" label={`Type ${id} to confirm`}>
+          <input
+            id="delete-name"
+            className={`${inputClass} font-mono`}
+            value={typed}
+            onChange={(e) => setTyped(e.target.value)}
+            autoComplete="off"
+            spellCheck={false}
+          />
+        </Field>
+        {action.error ? <ErrorNote error={action.error} /> : null}
+        <DialogActions>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button kind="danger" type="submit" disabled={action.busy || !matches}>
+            Delete service
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
+  );
+}

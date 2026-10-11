@@ -83,6 +83,7 @@ const kinds: Record<string, string> = {
   rollback: "Roll back",
   create_environment: "Create preview",
   destroy_environment: "Destroy preview",
+  delete_service: "Delete",
 };
 
 // operationTitle names an operation by what it does and to what: "Promote forge-web to production".
@@ -92,5 +93,7 @@ export function operationTitle(op: Operation): string {
   if (deployment) return `${kind} ${deployment[1]} ${op.kind === "rollback" ? "in" : "to"} ${deployment[2]}`;
   const preview = /^environments\/(.+)$/.exec(op.target);
   if (preview) return `${kind} ${preview[1]}`;
+  const service = /^services\/(.+)$/.exec(op.target);
+  if (service) return `${kind} ${service[1]}`;
   return op.target ? `${kind} ${op.target}` : kind;
 }
