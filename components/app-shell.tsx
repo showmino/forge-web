@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useApi } from "@/components/providers";
 import { listAllServices } from "@/lib/api";
-import { clearSession, loadSession, type Session } from "@/lib/auth/session";
+import { clearSession, loadSession, SESSION_KEY, type Session } from "@/lib/auth/session";
 
 // The shell of the Forge design language: a dark iron rail beside a light work
 // surface. On a narrow screen the rail slides in over the page.
@@ -73,6 +73,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/";
   const [session, setSession] = useState<Session | null>(null);
   const [navOpen, setNavOpen] = useState(false);
+  // Counts the changes other tabs made to the session, to look at it again.
+  const [tabs, setTabs] = useState(0);
   const rail = useRef<HTMLElement>(null);
   const menu = useRef<HTMLButtonElement>(null);
 
@@ -91,7 +93,16 @@ export function AppShell({ children }: { children: ReactNode }) {
     setSession((prev) => (prev?.token === s.token ? prev : s));
     // Going to another page closes the rail on a narrow screen.
     setNavOpen(false);
-  }, [router, pathname]);
+  }, [router, pathname, tabs]);
+
+  // The session is shared by every tab: signing out in one signs out here.
+  useEffect(() => {
+    const changed = (e: StorageEvent) => {
+      if (e.key === SESSION_KEY || e.key === null) setTabs((n) => n + 1);
+    };
+    window.addEventListener("storage", changed);
+    return () => window.removeEventListener("storage", changed);
+  }, []);
 
   // The open rail (narrow screens only) takes the focus, and Escape or the
   // scrim closes it and gives the focus back to the menu button.
@@ -218,6 +229,9 @@ function Rail({
         <button
           type="button"
           onClick={() => {
+            // End the session on the API too, so its token is worth nothing
+            // any more. Signing out here does not wait for that.
+            if (session?.forge) void api.auth.deleteSession({ name: "sessions/current" }).catch(() => {});
             clearSession();
             router.replace("/login");
           }}

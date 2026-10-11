@@ -8,7 +8,8 @@ import { Lifecycle, ServiceCatalogService } from "@/gen/forge/v1/catalog_pb";
 import { Deployment_Health, Deployment_SyncStatus, DeployService } from "@/gen/forge/v1/deploy_pb";
 import { Environment_State, EnvironmentService } from "@/gen/forge/v1/environment_pb";
 import { TemplateParameter_Type, TemplateService } from "@/gen/forge/v1/template_pb";
-import { renderWithApi, signIn } from "@/test/helpers";
+import { idToken, renderWithApi, signIn } from "@/test/helpers";
+import { saveForgeSession } from "@/lib/auth/session";
 import { AppShell } from "@/components/app-shell";
 import AuditLog from "./(app)/audit/page";
 import Catalog from "./(app)/page";
@@ -87,8 +88,17 @@ const events = [
   },
 ];
 
+// The sessions a test ended on the API.
+let ended: string[] = [];
+
 function forge(router: ConnectRouter) {
-  router.service(AuthService, { getStatus: () => ({ subject: "ana", permissions: ["services.read"] }) });
+  router.service(AuthService, {
+    getStatus: () => ({ subject: "ana", permissions: ["services.read"] }),
+    deleteSession: (req) => {
+      ended.push(req.name);
+      return {};
+    },
+  });
   router.service(ServiceCatalogService, {
     listServices: () => ({ services: [payments, ledger] }),
     getService: (req) => {
@@ -144,7 +154,9 @@ const template = {
 const row = (text: string) => screen.getByText(text).closest("tr")!;
 
 beforeEach(() => {
+  ended = [];
   sessionStorage.clear();
+  localStorage.clear();
   nav.params = {};
   nav.pathname = "/";
   nav.replace.mockClear();
@@ -296,6 +308,7 @@ describe("the audit log", () => {
 describe("the frame around every page", () => {
   it("sends a reader without a login to the login page, and back afterwards", async () => {
     sessionStorage.clear();
+    localStorage.clear();
     window.history.replaceState(null, "", "/services/payments");
     renderWithApi(<AppShell>secret</AppShell>, forge);
     await waitFor(() => expect(nav.replace).toHaveBeenCalledWith("/login?return=%2Fservices%2Fpayments"));
@@ -313,6 +326,25 @@ describe("the frame around every page", () => {
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
     expect(sessionStorage.getItem("forge.session")).toBeNull();
     expect(nav.replace).toHaveBeenCalledWith("/login");
+  });
+
+  it("ends a Forge session on the API when signing out, and follows a sign-out in another tab", async () => {
+    saveForgeSession("fgs_abc", Date.now() + 7 * 24 * 3_600_000, idToken({ sub: "ana", email: "ana@example.com", exp: Date.now() / 1000 + 3600 }));
+    renderWithApi(<AppShell>content</AppShell>, forge);
+    expect(await screen.findByText("content")).toBeTruthy();
+    // Another tab signs out: this one stops showing the page.
+    localStorage.removeItem("forge.session");
+    sessionStorage.clear();
+    window.dispatchEvent(new StorageEvent("storage", { key: "forge.session" }));
+    await waitFor(() => expect(screen.queryByText("content")).toBeNull());
+    expect(ended).toEqual([]);
+
+    cleanup();
+    saveForgeSession("fgs_abc", Date.now() + 7 * 24 * 3_600_000, idToken({ sub: "ana", email: "ana@example.com", exp: Date.now() / 1000 + 3600 }));
+    renderWithApi(<AppShell>content</AppShell>, forge);
+    fireEvent.click(await screen.findByRole("button", { name: "Sign out" }));
+    await waitFor(() => expect(ended).toEqual(["sessions/current"]));
+    expect(localStorage.getItem("forge.session")).toBeNull();
   });
 
   it("names a writer", async () => {
