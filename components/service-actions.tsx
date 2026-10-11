@@ -1,13 +1,13 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useApi } from "@/components/providers";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogActions } from "@/components/ui/dialog";
 import { Field, inputClass } from "@/components/ui/field";
 import { ErrorNote, Loading } from "@/components/ui/layout";
-import type { Deployment } from "@/gen/forge/v1/deploy_pb";
+import { Bump, type Deployment } from "@/gen/forge/v1/deploy_pb";
 import type { Environment } from "@/gen/forge/v1/environment_pb";
 import { environmentId } from "@/lib/api";
 import { randomString } from "@/lib/auth/pkce";
@@ -62,6 +62,10 @@ function FactList({ items }: { items: [string, ReactNode][] }) {
 
 const code = (text: string) => <span className="type-code">{text}</span>;
 
+// built names a build: its version when it has one, and its commit.
+const built = (r: { version: string; commit: string }) =>
+  r.version ? `${r.version}, ${shortCommit(r.commit)}` : shortCommit(r.commit);
+
 export function DeployDialog({ id, onClose, onStarted }: Common) {
   const api = useApi();
   const [ref, setRef] = useState("main");
@@ -89,20 +93,32 @@ export function DeployDialog({ id, onClose, onStarted }: Common) {
   );
 }
 
+// How far a promotion raises the version; a patch unless someone picks more.
+const BUMPS = [
+  [Bump.PATCH, "Patch", "Bug fixes"],
+  [Bump.MINOR, "Minor", "New features"],
+  [Bump.MAJOR, "Major", "Breaking changes"],
+] as const;
+
 export function PromoteDialog({ id, staging, onClose, onStarted }: Common & { staging: Deployment | undefined }) {
   const api = useApi();
+  const [bump, setBump] = useState<Bump>(Bump.PATCH);
   // The page may be old, and CI deploys to staging on every push: ask the API
-  // now what a promote would put into production, and confirm that.
+  // now what a promote would put into production, and as which version, and
+  // confirm that.
   const check = useQuery({
-    queryKey: ["promote-check", id],
-    queryFn: () => api.deploys.promoteDeploy({ service: `services/${id}`, validateOnly: true }).then((r) => r.deployment),
+    queryKey: ["promote-check", id, bump],
+    queryFn: () => api.deploys.promoteDeploy({ service: `services/${id}`, validateOnly: true, bump }).then((r) => r.deployment),
     staleTime: 0,
     gcTime: 0,
+    placeholderData: keepPreviousData,
   });
   const next = check.data;
   const moved = !!next?.commit && !!staging?.commit && next.commit !== staging.commit;
+  // A commit that was released before keeps its version: nothing to pick.
+  const released = !!next?.version && next.version === staging?.version;
   const action = useAction(
-    () => api.deploys.promoteDeploy({ service: `services/${id}` }),
+    () => api.deploys.promoteDeploy({ service: `services/${id}`, bump }),
     (res) => onStarted(res.operation?.name),
   );
   return (
@@ -115,8 +131,52 @@ export function PromoteDialog({ id, staging, onClose, onStarted }: Common & { st
           <ErrorNote error={check.error} />
         ) : (
           <>
+            {next?.version && !released ? (
+              <fieldset className="flex flex-col gap-1.5">
+                <legend className="mb-1.5 text-[13px] font-medium">Release as</legend>
+                <div className="grid grid-cols-3 gap-2">
+                  {BUMPS.map(([value, label, hint]) => (
+                    <label
+                      key={value}
+                      className={`flex cursor-pointer flex-col gap-0.5 rounded-md border px-3 py-2 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ember ${
+                        bump === value ? "border-ember bg-ember-soft" : "border-line-strong bg-surface"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2 text-[13.5px] font-medium">
+                        <input
+                          type="radio"
+                          name="bump"
+                          className="size-3.5 accent-ember"
+                          checked={bump === value}
+                          onChange={() => setBump(value)}
+                        />
+                        {label}
+                      </span>
+                      <span className="text-[12px] text-fg-3">{hint}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            ) : null}
             <FactList
               items={[
+                ...(next?.version
+                  ? ([
+                      [
+                        "Version",
+                        released ? (
+                          <>
+                            {code(next.version)} <span className="text-fg-3">(released before; it keeps its version)</span>
+                          </>
+                        ) : (
+                          <span aria-live="polite">
+                            {staging?.version ? <>{code(staging.version)} becomes </> : null}
+                            {code(next.version)}
+                          </span>
+                        ),
+                      ],
+                    ] as [string, ReactNode][])
+                  : []),
                 ["Commit", code(next?.commit ? shortCommit(next.commit) : "–")],
                 ["Image", code(next?.image || "–")],
                 ["Staging", `${deploymentStatus(staging).word}, deployed ${when(staging?.deployTime)}`],
@@ -133,8 +193,8 @@ export function PromoteDialog({ id, staging, onClose, onStarted }: Common & { st
         {action.error ? <ErrorNote error={action.error} /> : null}
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
-          <Button kind="primary" type="submit" disabled={action.busy || !next}>
-            Promote to production
+          <Button kind="primary" type="submit" disabled={action.busy || !next || check.isPlaceholderData}>
+            {next?.version && !check.isPlaceholderData ? `Promote as ${next.version}` : "Promote to production"}
           </Button>
         </DialogActions>
       </form>
@@ -174,10 +234,10 @@ export function RollbackDialog({ id, env, onClose, onStarted }: Common & { env: 
         ) : (
           <Field id="rollback-to" label="Go back to">
             <select id="rollback-to" className={inputClass} value={to} onChange={(e) => setTo(e.target.value)}>
-              <option value="">The one before the current ({shortCommit(earlier[0].commit)})</option>
+              <option value="">The one before the current ({built(earlier[0])})</option>
               {earlier.map((r) => (
                 <option key={r.deployCommit} value={r.deployCommit}>
-                  {shortCommit(r.commit)}, {r.kind} {when(r.time)} by {r.actor || "unknown"}
+                  {built(r)}, {r.kind} {when(r.time)} by {r.actor || "unknown"}
                 </option>
               ))}
             </select>
