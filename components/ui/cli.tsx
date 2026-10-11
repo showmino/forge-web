@@ -77,3 +77,23 @@ export function Cli({ command }: { command: string }) {
     </div>
   );
 }
+
+// CommandBlock is a whole command on the dark ground of the rail, one flag a
+// line: what a form will do, written as the CLI would be asked to do it.
+export function CommandBlock({ command, flags }: { command: string; flags: [flag: string, value: string][] }) {
+  return (
+    <pre
+      aria-label="The same from the terminal"
+      className="overflow-x-auto whitespace-pre-wrap break-words rounded-md bg-rail-bg px-3.5 py-3 font-mono text-[12.5px] leading-[1.7] text-rail-fg"
+    >
+      <span className="select-none text-rail-fg-2">$ </span>
+      {command}
+      {flags.map(([flag, value], i) => (
+        <span key={i}>
+          {" \\\n  "}
+          <span className="text-ember-hot">{flag}</span> {value}
+        </span>
+      ))}
+    </pre>
+  );
+}

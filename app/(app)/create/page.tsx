@@ -7,6 +7,7 @@ import { useCanWrite } from "@/components/app-shell";
 import { StepLog, type Step } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
 import { Addr, Button, TextLink } from "@/components/ui/button";
+import { CommandBlock } from "@/components/ui/cli";
 import { Field, inputClass } from "@/components/ui/field";
 import { ErrorNote, Loading, PageHeader, Panel, Section } from "@/components/ui/layout";
 import { CreateStep_State, type Service } from "@/gen/forge/v1/catalog_pb";
@@ -86,13 +87,15 @@ function ParameterField({ p, own, onChange }: { p: TemplateParameter; own: strin
       label={label}
       hint={
         <>
-          {p.description}
-          {p.description && p.defaultValue ? " " : null}
-          {p.defaultValue ? (
+          {p.description ? `${p.description.replace(/[.\s]+$/, "")}. ` : null}
+          {/* A default may be written in the template's own syntax ("{% .Repo.Name %}"): say what it does, not how. */}
+          {!p.defaultValue ? null : p.defaultValue.includes("{%") ? (
+            "Left empty, the template works it out from the repo."
+          ) : (
             <>
               Left empty, it is <span className="font-mono text-[12px]">{p.defaultValue}</span>.
             </>
-          ) : null}
+          )}
         </>
       }
     >
@@ -121,7 +124,11 @@ export default function CreateService() {
   });
 
   const [name, setName] = useState("");
-  const [picked, setPicked] = useState("");
+  // "Use template" on a template's card opens this page with it chosen.
+  const [picked, setPicked] = useState(() => {
+    const t = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("template");
+    return t ? `templates/${t}` : "";
+  });
   const [team, setTeam] = useState("");
   const [owners, setOwners] = useState(() => loadSession()?.email ?? "");
   const [params, setParams] = useState<Record<string, string>>({});
@@ -137,6 +144,20 @@ export default function CreateService() {
   const template = templates.data?.find((t) => t.name === picked) ?? templates.data?.[0];
   const own = (p: TemplateParameter) => params[`${template?.name}/${p.name}`];
   const badName = checked && !SERVICE_NAME.test(name);
+  const ownerList = owners
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean);
+  // The command that does the same, flag by flag, as the form is filled in.
+  const flags: [string, string][] = [
+    ["--template", template ? templateId(template.name) : "<template>"],
+    ["--team", team.trim() || "<team>"],
+    ...ownerList.map((o): [string, string] => ["--owner", o]),
+    ...(template?.parameters ?? []).flatMap((p): [string, string][] => {
+      const value = sent(p, own(p));
+      return value === undefined ? [] : [["--set", `${p.name}=${value}`]];
+    }),
+  ];
 
   async function create() {
     if (!template) return;
@@ -152,10 +173,7 @@ export default function CreateService() {
       serviceId: name,
       template: template.name,
       ownerTeam: team.trim(),
-      owners: owners
-        .split(",")
-        .map((o) => o.trim())
-        .filter(Boolean),
+      owners: ownerList,
       parameters,
     };
     const signature = JSON.stringify(request);
@@ -307,6 +325,11 @@ export default function CreateService() {
               </div>
             </Section>
           ) : null}
+
+          <div className="flex max-w-[640px] flex-col gap-1.5">
+            <span className="text-[12px] text-fg-3">From the terminal</span>
+            <CommandBlock command={`forge create ${name || "<name>"}`} flags={flags} />
+          </div>
 
           {steps.length > 0 ? (
             <Panel>

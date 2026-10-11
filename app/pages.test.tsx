@@ -251,14 +251,20 @@ describe("templates", () => {
   it("lists the templates", async () => {
     renderWithApi(<Templates />, forge);
     expect((await screen.findByRole("link", { name: "nextjs" })).getAttribute("href")).toBe("/templates/nextjs");
-    expect(screen.getByText("Next.js web app")).toBeTruthy();
-    expect(screen.getByText("v1.3.0")).toBeTruthy();
+    const card = within(screen.getByRole("link", { name: "nextjs" }).closest("li")!);
+    expect(card.getByText("Next.js web app")).toBeTruthy();
+    expect(card.getByText(/v1\.3\.0 · platform/)).toBeTruthy();
+    expect(card.getByText("typescript")).toBeTruthy();
+    // A reader cannot create, so the card offers them nothing to press.
+    expect(card.queryByRole("link", { name: /Use template/ })).toBeNull();
+    expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge template list");
   });
 
   it("shows what one template asks for", async () => {
     nav.params = { name: "nextjs" };
     renderWithApi(<TemplatePage />, forge);
-    expect(await screen.findByRole("heading", { name: "Next.js web app" })).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "nextjs" })).toBeTruthy();
+    expect(within(screen.getByRole("navigation", { name: "Breadcrumb" })).getByText("Next.js web app")).toBeTruthy();
     const port = within(row("port"));
     expect(port.getByText("Number")).toBeTruthy();
     expect(port.getByText("3000")).toBeTruthy();

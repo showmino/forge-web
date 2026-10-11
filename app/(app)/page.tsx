@@ -78,7 +78,7 @@ export default function Catalog() {
               className="w-full max-w-[260px] rounded-md border border-line-strong bg-surface px-2.5 py-[7px] text-[13.5px] text-fg placeholder:text-fg-3"
             />
             <button type="button" className={`${chip} ${team ? chipOff : ""}`} aria-pressed={!team} onClick={() => setTeam("")}>
-              All teams<span className="ml-1 font-mono text-[11.5px] opacity-80">{all.length}</span>
+              All teams <span className="font-mono text-[11.5px] opacity-80">{all.length}</span>
             </button>
             {teams.map((t) => (
               <button
@@ -88,8 +88,8 @@ export default function Catalog() {
                 aria-pressed={team === t}
                 onClick={() => setTeam(team === t ? "" : t)}
               >
-                {t}
-                <span className="ml-1 font-mono text-[11.5px] opacity-80">{all.filter((s) => s.ownerTeam === t).length}</span>
+                {t}{" "}
+                <span className="font-mono text-[11.5px] opacity-80">{all.filter((s) => s.ownerTeam === t).length}</span>
               </button>
             ))}
           </div>
