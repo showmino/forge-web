@@ -44,9 +44,13 @@ export default function Login() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4 py-12">
-      <p className="flex items-center gap-2 type-heading">
-        <span aria-hidden="true" className="size-3 bg-ember" />
-        Forge
+      <p className="flex items-center gap-2.5">
+        <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+          <rect x="3" y="3" width="20" height="5" rx="1" fill="currentColor" />
+          <rect x="3" y="10.5" width="13" height="5" rx="1" fill="currentColor" />
+          <rect x="3" y="18" width="7" height="5" rx="1" fill="var(--ember)" />
+        </svg>
+        <span className="font-display text-[19px] font-[750] tracking-[0.01em] [font-stretch:118%]">forge</span>
       </p>
       <h1 className="type-display">Sign in to Forge</h1>
       <p className="text-fg-2">

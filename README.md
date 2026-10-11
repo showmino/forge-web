@@ -27,8 +27,10 @@ decides what they may see and do. The server only serves the pages and
   progress, status pills with a dot and a word, names in mono, and on every
   page the CLI command that does the same. Its tokens are the Tailwind theme
   in `app/globals.css`; its parts are in `components/ui` and
-  `components/app-shell.tsx`. The Services list and the service page follow
-  the design's layouts; the other pages have its tokens, shell and CLI line.
+  `components/app-shell.tsx`. Every page follows the design's layout for
+  it: Services, a service, Templates (cards), Operations (the design's
+  Deployments table and chips), the Audit log and Create (with the whole
+  command shown as the form is filled in).
 
 ## Develop
 

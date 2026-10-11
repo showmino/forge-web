@@ -2,7 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import { useCanWrite } from "@/components/app-shell";
 import { useApi } from "@/components/providers";
+import { ButtonLink, Icon } from "@/components/ui/button";
+import { Crumbs } from "@/components/ui/layout";
+import Link from "next/link";
 import { Empty, ErrorNote, Facts, Loading, PageHeader, Panel, Section, TableFrame, td, th, tr } from "@/components/ui/layout";
 import { TemplateParameter_Type, type TemplateParameter } from "@/gen/forge/v1/template_pb";
 
@@ -23,6 +27,7 @@ function typeText(p: TemplateParameter): string {
 export default function TemplatePage() {
   const { name: id } = useParams<{ name: string }>();
   const api = useApi();
+  const canWrite = useCanWrite();
   const template = useQuery({
     queryKey: ["template", id],
     queryFn: () => api.templates.getTemplate({ name: `templates/${id}` }).then((r) => r.template),
@@ -35,7 +40,26 @@ export default function TemplatePage() {
 
   return (
     <>
-      <PageHeader title={t.title || id} lead={t.description} cli={`forge template get ${id}`} />
+      <PageHeader
+        title={id}
+        mono
+        crumbs={
+          <Crumbs>
+            <Link href="/templates">Templates</Link>
+            <span>/</span>
+            <span>{t.title || id}</span>
+          </Crumbs>
+        }
+        lead={t.description}
+        cli={`forge template get ${id}`}
+      >
+        {canWrite ? (
+          <ButtonLink kind="primary" href={`/create?template=${encodeURIComponent(id)}`}>
+            <Icon name="plus" />
+            Use template
+          </ButtonLink>
+        ) : null}
+      </PageHeader>
       <Panel className="p-6">
         <Facts
           items={[

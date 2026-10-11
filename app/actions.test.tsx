@@ -406,9 +406,17 @@ describe("operations", () => {
     expect(failed.getByText("Failed").closest("span")!.getAttribute("title")).toBe("Argo CD did not sync in time");
     expect(within(screen.getByText("op_ffffffffffff").closest("tr")!).getByText("Running")).toBeTruthy();
 
-    click(screen.getByLabelText("Running only"));
-    await waitFor(() => expect(screen.queryByText("op_999999999999")).toBeNull());
-    expect(w.calls.listOps.at(-1)).toMatchObject({ running: true });
+    // The chips count each kind and filter the table; the command follows.
+    const cli = () => screen.getByTitle("Same action from the terminal").textContent;
+    click(screen.getByRole("button", { name: "In progress 1" }));
+    expect(screen.queryByText("op_999999999999")).toBeNull();
+    expect(screen.getByText("op_ffffffffffff")).toBeTruthy();
+    expect(cli()).toContain("forge op list --running");
+    click(screen.getByRole("button", { name: "Failed 1" }));
+    expect(screen.getByText("op_999999999999")).toBeTruthy();
+    expect(screen.queryByText("op_ffffffffffff")).toBeNull();
+    click(screen.getByRole("button", { name: "Succeeded 0" }));
+    expect(screen.getByText("No operations match this filter.")).toBeTruthy();
   });
 
   it("follows one operation live and cancels it", async () => {
@@ -454,8 +462,18 @@ describe("create a service", () => {
     expect((screen.getByLabelText("port (optional)") as HTMLInputElement).value).toBe("");
     expect(screen.getByText("3000").closest("span")!.parentElement!.textContent).toContain("Left empty, it is 3000.");
     expect((screen.getByLabelText("region") as HTMLSelectElement).value).toBe("eu");
+    // A default written in the template's own syntax is described, not shown raw.
+    expect(document.getElementById("param-module-note")!.textContent).toBe("Left empty, the template works it out from the repo.");
+    expect(document.getElementById("param-port-note")!.textContent).toBe("Port the server listens on. Left empty, it is 3000.");
     fireEvent.change(screen.getByLabelText("port (optional)"), { target: { value: "8080" } });
     click(screen.getByLabelText(/metrics/));
+    // The same create as a command, flag by flag, as the form stands.
+    const command = screen.getByLabelText("The same from the terminal").textContent!;
+    expect(command).toContain("forge create ledger");
+    for (const flag of ["--template nextjs", "--team finance", "--owner ana@example.com", "--set port=8080", "--set region=eu", "--set metrics=true"]) {
+      expect(command).toContain(flag);
+    }
+    expect(command).not.toContain("module=");
     click(screen.getByRole("button", { name: "Create service" }));
 
     expect(await screen.findByRole("heading", { name: "ledger was created" })).toBeTruthy();
@@ -508,6 +526,15 @@ describe("create a service", () => {
     const keys = (w.calls.create as { requestId: string }[]).map((c) => c.requestId);
     expect(new Set(keys.slice(0, 3)).size).toBe(1);
     expect(keys[3]).not.toBe(keys[0]);
+  });
+
+  it("starts from the template a card's Use template names", async () => {
+    window.history.replaceState(null, "", "/create?template=go-grpc");
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    expect(((await screen.findByLabelText("Template")) as HTMLSelectElement).value).toBe("templates/go-grpc");
+    expect(screen.queryByLabelText("port (optional)")).toBeNull();
+    window.history.replaceState(null, "", "/");
   });
 
   it("refuses a bad name before asking the API", async () => {
