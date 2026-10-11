@@ -205,10 +205,10 @@ function ServiceView({ id }: { id: string }) {
                 <Button
                   kind="primary"
                   onClick={() => setOpen({ kind: "promote" })}
-                  aria-label={`Promote ${shortCommit(staging.commit)} to production`}
+                  aria-label={`Promote ${staging.version || shortCommit(staging.commit)} to production`}
                 >
                   <Icon name="ship" />
-                  Promote {shortCommit(staging.commit)}
+                  Promote {staging.version || shortCommit(staging.commit)}
                 </Button>
               </>
             ) : (
@@ -249,9 +249,9 @@ function ServiceView({ id }: { id: string }) {
               <tr>
                 <th className={th}>Environment</th>
                 <th className={th}>Status</th>
+                <th className={th}>Version</th>
                 <th className={th}>Commit</th>
                 <th className={th}>Deployed</th>
-                <th className={th}>By</th>
                 <th className={th}>Address</th>
                 {canWrite ? <th className={th}>Actions</th> : null}
               </tr>
@@ -269,13 +269,16 @@ function ServiceView({ id }: { id: string }) {
                     </td>
                     <td className={td}>
                       <span className={`font-mono text-[13px] ${env === "staging" && ahead ? "font-semibold text-ember-ink" : ""}`}>
-                        {d?.commit ? shortCommit(d.commit) : "–"}
+                        {d?.version || "–"}
                       </span>
                     </td>
-                    <td className={`${td} text-fg-3`} title={exact(d?.deployTime)}>
-                      {when(d?.deployTime)}
+                    <td className={td}>
+                      <span className="font-mono text-[13px] text-fg-2">{d?.commit ? shortCommit(d.commit) : "–"}</span>
                     </td>
-                    <td className={`${td} text-[13px]`}>{d?.deployedBy || "–"}</td>
+                    <td className={td}>
+                      <div title={exact(d?.deployTime)}>{when(d?.deployTime)}</div>
+                      {d?.deployedBy ? <div className="text-[12.5px] text-fg-3">by {d.deployedBy}</div> : null}
+                    </td>
                     <td className={td}>{d?.url ? <Addr href={d.url} /> : "–"}</td>
                     {canWrite ? (
                       <td className={td}>

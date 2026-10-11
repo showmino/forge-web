@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuditService } from "@/gen/forge/v1/audit_pb";
 import { AuthService } from "@/gen/forge/v1/auth_pb";
 import { CreateStep_State, ServiceCatalogService } from "@/gen/forge/v1/catalog_pb";
-import { Deployment_Health, Deployment_SyncStatus, DeployService } from "@/gen/forge/v1/deploy_pb";
+import { Bump, Deployment_Health, Deployment_SyncStatus, DeployService } from "@/gen/forge/v1/deploy_pb";
 import { Environment_State, EnvironmentService } from "@/gen/forge/v1/environment_pb";
 import { OperationService } from "@/gen/forge/v1/operation_pb";
 import { TeamService } from "@/gen/forge/v1/team_pb";
@@ -48,10 +48,12 @@ type World = {
   deleteRuns: boolean;
   // How a watched operation ends, when not well.
   opError?: { code: string; message: string };
+  // Whether the API cuts versions: staging then runs a release candidate.
+  versions: boolean;
 };
 
 function world(over: Partial<World> = {}): World {
-  return { writer: true, production: Deployment_Health.MISSING, calls: {}, fail: {}, finish: () => {}, history: 3, stagingNow: COMMIT, dropCreate: 0, dropWatch: 0, teamsDenied: false, deleteRuns: true, ...over };
+  return { writer: true, production: Deployment_Health.MISSING, calls: {}, fail: {}, finish: () => {}, history: 3, stagingNow: COMMIT, dropCreate: 0, dropWatch: 0, teamsDenied: false, deleteRuns: true, versions: false, ...over };
 }
 
 const op = (id: string, kind: string, target: string, extra: object = {}) => ({
@@ -105,6 +107,7 @@ function forge(w: World) {
             commit: COMMIT,
             image: "ghcr.io/showmino/payments:18b1232",
             deployTime: ago(12),
+            version: w.versions ? "v0.3.1-rc.2" : "",
           },
           { name: "deployments/payments/production", service: "services/payments", env: "production", health: w.production, commit: w.production === Deployment_Health.MISSING ? "" : COMMIT },
         ],
@@ -117,7 +120,8 @@ function forge(w: World) {
         // As the API: a dry run says what production would run, and changes nothing.
         if (req.validateOnly) {
           record("promoteCheck", req);
-          return { deployment: { name: "deployments/payments/production", env: "production", commit: w.stagingNow, image: `ghcr.io/showmino/payments:${w.stagingNow.slice(0, 7)}` } };
+          const version = !w.versions ? "" : req.bump === Bump.MAJOR ? "v1.0.0" : req.bump === Bump.MINOR ? "v0.4.0" : "v0.3.1";
+          return { deployment: { name: "deployments/payments/production", env: "production", commit: w.stagingNow, image: `ghcr.io/showmino/payments:${w.stagingNow.slice(0, 7)}`, version } };
         }
         record("promote", req);
         w.production = Deployment_Health.HEALTHY;
@@ -309,6 +313,34 @@ describe("promote", () => {
     expect(await screen.findByRole("button", { name: "Roll back production" })).toBeTruthy();
     expect(screen.getByText("Both run the same commit")).toBeTruthy();
     expect(screen.queryByRole("button", { name: PROMOTE })).toBeNull();
+  });
+
+  it("names the version it cuts and lets the writer pick how far it goes up", async () => {
+    const w = world({ versions: true });
+    await openService(w);
+    // The page names staging's build by its version, next to the commit.
+    click(await screen.findByRole("button", { name: "Promote v0.3.1-rc.2 to production" }));
+    const table = within(screen.getByRole("table", { name: "Deployments" }));
+    expect(table.getByText("v0.3.1-rc.2")).toBeTruthy();
+    expect(table.getByText("18b1232")).toBeTruthy();
+
+    // A patch unless something else is picked.
+    expect(await dialog().findByRole("button", { name: "Promote as v0.3.1" })).toBeTruthy();
+    expect((dialog().getByRole("radio", { name: /Patch/ }) as HTMLInputElement).checked).toBe(true);
+    expect(dialog().getByText("v0.3.1-rc.2")).toBeTruthy();
+    click(dialog().getByRole("radio", { name: /Minor/ }));
+    click(await dialog().findByRole("button", { name: "Promote as v0.4.0" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(w.calls.promoteCheck).toMatchObject([{ bump: Bump.PATCH }, { bump: Bump.MINOR }]);
+    expect(w.calls.promote).toMatchObject([{ service: "services/payments", bump: Bump.MINOR }]);
+  });
+
+  it("offers no pick when the API cuts no versions", async () => {
+    await openService(world());
+    click(await screen.findByRole("button", { name: PROMOTE }));
+    await dialog().findByText("18b1232");
+    expect(dialog().queryByRole("radio")).toBeNull();
+    expect(dialog().queryByText("Version")).toBeNull();
   });
 
   it("keeps the dialog open with the reason when the API refuses", async () => {

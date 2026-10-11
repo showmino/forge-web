@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file forge/v1/deploy.proto.
  */
 export const file_forge_v1_deploy: GenFile = /*@__PURE__*/
-  fileDesc("ChVmb3JnZS92MS9kZXBsb3kucHJvdG8SCGZvcmdlLnYxIukECgpEZXBsb3ltZW50EgwKBG5hbWUYASABKAkSDwoHc2VydmljZRgCIAEoCRILCgNlbnYYAyABKAkSDQoFaW1hZ2UYBCABKAkSCwoDcmVmGAUgASgJEg4KBmNvbW1pdBgGIAEoCRILCgN1cmwYByABKAkSLQoEc3luYxgIIAEoDjIfLmZvcmdlLnYxLkRlcGxveW1lbnQuU3luY1N0YXR1cxIrCgZoZWFsdGgYCSABKA4yGy5mb3JnZS52MS5EZXBsb3ltZW50LkhlYWx0aBIPCgdtZXNzYWdlGAogASgJEhUKDWRlcGxveV9jb21taXQYCyABKAkSEwoLZGVwbG95ZWRfYnkYDCABKAkSLwoLZGVwbG95X3RpbWUYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCW9wZXJhdGlvbhgOIAEoCSJ3CgpTeW5jU3RhdHVzEhsKF1NZTkNfU1RBVFVTX1VOU1BFQ0lGSUVEEAASFgoSU1lOQ19TVEFUVVNfU1lOQ0VEEAESGwoXU1lOQ19TVEFUVVNfT1VUX09GX1NZTkMQAhIXChNTWU5DX1NUQVRVU19VTktOT1dOEAMinwEKBkhlYWx0aBIWChJIRUFMVEhfVU5TUEVDSUZJRUQQABISCg5IRUFMVEhfSEVBTFRIWRABEhYKEkhFQUxUSF9QUk9HUkVTU0lORxACEhMKD0hFQUxUSF9ERUdSQURFRBADEhIKDkhFQUxUSF9NSVNTSU5HEAQSFAoQSEVBTFRIX1NVU1BFTkRFRBAFEhIKDkhFQUxUSF9VTktOT1dOEAYiqwEKDERlcGxveVJlY29yZBIVCg1kZXBsb3lfY29tbWl0GAEgASgJEgwKBGtpbmQYAiABKAkSDQoFaW1hZ2UYAyABKAkSCwoDcmVmGAQgASgJEg4KBmNvbW1pdBgFIAEoCRINCgVhY3RvchgGIAEoCRIoCgR0aW1lGAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCglvcGVyYXRpb24YCCABKAkiagoSU3RhcnREZXBsb3lSZXF1ZXN0Eg8KB3NlcnZpY2UYASABKAkSCwoDZW52GAIgASgJEgsKA3JlZhgDIAEoCRISCgpyZXF1ZXN0X2lkGAQgASgJEhUKDXZhbGlkYXRlX29ubHkYBSABKAgiZwoTU3RhcnREZXBsb3lSZXNwb25zZRImCglvcGVyYXRpb24YASABKAsyEy5mb3JnZS52MS5PcGVyYXRpb24SKAoKZGVwbG95bWVudBgCIAEoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQiJAoUR2V0RGVwbG95bWVudFJlcXVlc3QSDAoEbmFtZRgBIAEoCSJBChVHZXREZXBsb3ltZW50UmVzcG9uc2USKAoKZGVwbG95bWVudBgBIAEoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQiNgoWTGlzdERlcGxveW1lbnRzUmVxdWVzdBIPCgdzZXJ2aWNlGAEgASgJEgsKA2VudhgCIAEoCSJEChdMaXN0RGVwbG95bWVudHNSZXNwb25zZRIpCgtkZXBsb3ltZW50cxgBIAMoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQiNwoYTGlzdERlcGxveUhpc3RvcnlSZXF1ZXN0EgwKBG5hbWUYASABKAkSDQoFbGltaXQYAiABKAUiRAoZTGlzdERlcGxveUhpc3RvcnlSZXNwb25zZRInCgdyZWNvcmRzGAEgAygLMhYuZm9yZ2UudjEuRGVwbG95UmVjb3JkIkgKFVJvbGxiYWNrRGVwbG95UmVxdWVzdBIMCgRuYW1lGAEgASgJEgoKAnRvGAIgASgJEhUKDXZhbGlkYXRlX29ubHkYAyABKAgiagoWUm9sbGJhY2tEZXBsb3lSZXNwb25zZRImCglvcGVyYXRpb24YASABKAsyEy5mb3JnZS52MS5PcGVyYXRpb24SKAoKZGVwbG95bWVudBgCIAEoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQiWAoUUHJvbW90ZURlcGxveVJlcXVlc3QSDwoHc2VydmljZRgBIAEoCRIMCgRmcm9tGAIgASgJEgoKAnRvGAMgASgJEhUKDXZhbGlkYXRlX29ubHkYBCABKAgiaQoVUHJvbW90ZURlcGxveVJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIoCgpkZXBsb3ltZW50GAIgASgLMhQuZm9yZ2UudjEuRGVwbG95bWVudDKfBAoNRGVwbG95U2VydmljZRJMCgtTdGFydERlcGxveRIcLmZvcmdlLnYxLlN0YXJ0RGVwbG95UmVxdWVzdBodLmZvcmdlLnYxLlN0YXJ0RGVwbG95UmVzcG9uc2UiABJVCg1HZXREZXBsb3ltZW50Eh4uZm9yZ2UudjEuR2V0RGVwbG95bWVudFJlcXVlc3QaHy5mb3JnZS52MS5HZXREZXBsb3ltZW50UmVzcG9uc2UiA5ACARJbCg9MaXN0RGVwbG95bWVudHMSIC5mb3JnZS52MS5MaXN0RGVwbG95bWVudHNSZXF1ZXN0GiEuZm9yZ2UudjEuTGlzdERlcGxveW1lbnRzUmVzcG9uc2UiA5ACARJhChFMaXN0RGVwbG95SGlzdG9yeRIiLmZvcmdlLnYxLkxpc3REZXBsb3lIaXN0b3J5UmVxdWVzdBojLmZvcmdlLnYxLkxpc3REZXBsb3lIaXN0b3J5UmVzcG9uc2UiA5ACARJVCg5Sb2xsYmFja0RlcGxveRIfLmZvcmdlLnYxLlJvbGxiYWNrRGVwbG95UmVxdWVzdBogLmZvcmdlLnYxLlJvbGxiYWNrRGVwbG95UmVzcG9uc2UiABJSCg1Qcm9tb3RlRGVwbG95Eh4uZm9yZ2UudjEuUHJvbW90ZURlcGxveVJlcXVlc3QaHy5mb3JnZS52MS5Qcm9tb3RlRGVwbG95UmVzcG9uc2UiAGIGcHJvdG8z", [file_forge_v1_operation, file_google_protobuf_timestamp]);
+  fileDesc("ChVmb3JnZS92MS9kZXBsb3kucHJvdG8SCGZvcmdlLnYxIvoECgpEZXBsb3ltZW50EgwKBG5hbWUYASABKAkSDwoHc2VydmljZRgCIAEoCRILCgNlbnYYAyABKAkSDQoFaW1hZ2UYBCABKAkSCwoDcmVmGAUgASgJEg4KBmNvbW1pdBgGIAEoCRILCgN1cmwYByABKAkSLQoEc3luYxgIIAEoDjIfLmZvcmdlLnYxLkRlcGxveW1lbnQuU3luY1N0YXR1cxIrCgZoZWFsdGgYCSABKA4yGy5mb3JnZS52MS5EZXBsb3ltZW50LkhlYWx0aBIPCgdtZXNzYWdlGAogASgJEhUKDWRlcGxveV9jb21taXQYCyABKAkSEwoLZGVwbG95ZWRfYnkYDCABKAkSLwoLZGVwbG95X3RpbWUYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCW9wZXJhdGlvbhgOIAEoCRIPCgd2ZXJzaW9uGA8gASgJIncKClN5bmNTdGF0dXMSGwoXU1lOQ19TVEFUVVNfVU5TUEVDSUZJRUQQABIWChJTWU5DX1NUQVRVU19TWU5DRUQQARIbChdTWU5DX1NUQVRVU19PVVRfT0ZfU1lOQxACEhcKE1NZTkNfU1RBVFVTX1VOS05PV04QAyKfAQoGSGVhbHRoEhYKEkhFQUxUSF9VTlNQRUNJRklFRBAAEhIKDkhFQUxUSF9IRUFMVEhZEAESFgoSSEVBTFRIX1BST0dSRVNTSU5HEAISEwoPSEVBTFRIX0RFR1JBREVEEAMSEgoOSEVBTFRIX01JU1NJTkcQBBIUChBIRUFMVEhfU1VTUEVOREVEEAUSEgoOSEVBTFRIX1VOS05PV04QBiK8AQoMRGVwbG95UmVjb3JkEhUKDWRlcGxveV9jb21taXQYASABKAkSDAoEa2luZBgCIAEoCRINCgVpbWFnZRgDIAEoCRILCgNyZWYYBCABKAkSDgoGY29tbWl0GAUgASgJEg0KBWFjdG9yGAYgASgJEigKBHRpbWUYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCW9wZXJhdGlvbhgIIAEoCRIPCgd2ZXJzaW9uGAkgASgJIogBChJTdGFydERlcGxveVJlcXVlc3QSDwoHc2VydmljZRgBIAEoCRILCgNlbnYYAiABKAkSCwoDcmVmGAMgASgJEhIKCnJlcXVlc3RfaWQYBCABKAkSFQoNdmFsaWRhdGVfb25seRgFIAEoCBIcCgRidW1wGAYgASgOMg4uZm9yZ2UudjEuQnVtcCJnChNTdGFydERlcGxveVJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIoCgpkZXBsb3ltZW50GAIgASgLMhQuZm9yZ2UudjEuRGVwbG95bWVudCIkChRHZXREZXBsb3ltZW50UmVxdWVzdBIMCgRuYW1lGAEgASgJIkEKFUdldERlcGxveW1lbnRSZXNwb25zZRIoCgpkZXBsb3ltZW50GAEgASgLMhQuZm9yZ2UudjEuRGVwbG95bWVudCI2ChZMaXN0RGVwbG95bWVudHNSZXF1ZXN0Eg8KB3NlcnZpY2UYASABKAkSCwoDZW52GAIgASgJIkQKF0xpc3REZXBsb3ltZW50c1Jlc3BvbnNlEikKC2RlcGxveW1lbnRzGAEgAygLMhQuZm9yZ2UudjEuRGVwbG95bWVudCI3ChhMaXN0RGVwbG95SGlzdG9yeVJlcXVlc3QSDAoEbmFtZRgBIAEoCRINCgVsaW1pdBgCIAEoBSJEChlMaXN0RGVwbG95SGlzdG9yeVJlc3BvbnNlEicKB3JlY29yZHMYASADKAsyFi5mb3JnZS52MS5EZXBsb3lSZWNvcmQiSAoVUm9sbGJhY2tEZXBsb3lSZXF1ZXN0EgwKBG5hbWUYASABKAkSCgoCdG8YAiABKAkSFQoNdmFsaWRhdGVfb25seRgDIAEoCCJqChZSb2xsYmFja0RlcGxveVJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIoCgpkZXBsb3ltZW50GAIgASgLMhQuZm9yZ2UudjEuRGVwbG95bWVudCJ2ChRQcm9tb3RlRGVwbG95UmVxdWVzdBIPCgdzZXJ2aWNlGAEgASgJEgwKBGZyb20YAiABKAkSCgoCdG8YAyABKAkSFQoNdmFsaWRhdGVfb25seRgEIAEoCBIcCgRidW1wGAUgASgOMg4uZm9yZ2UudjEuQnVtcCJpChVQcm9tb3RlRGVwbG95UmVzcG9uc2USJgoJb3BlcmF0aW9uGAEgASgLMhMuZm9yZ2UudjEuT3BlcmF0aW9uEigKCmRlcGxveW1lbnQYAiABKAsyFC5mb3JnZS52MS5EZXBsb3ltZW50KkwKBEJ1bXASFAoQQlVNUF9VTlNQRUNJRklFRBAAEg4KCkJVTVBfUEFUQ0gQARIOCgpCVU1QX01JTk9SEAISDgoKQlVNUF9NQUpPUhADMp8ECg1EZXBsb3lTZXJ2aWNlEkwKC1N0YXJ0RGVwbG95EhwuZm9yZ2UudjEuU3RhcnREZXBsb3lSZXF1ZXN0Gh0uZm9yZ2UudjEuU3RhcnREZXBsb3lSZXNwb25zZSIAElUKDUdldERlcGxveW1lbnQSHi5mb3JnZS52MS5HZXREZXBsb3ltZW50UmVxdWVzdBofLmZvcmdlLnYxLkdldERlcGxveW1lbnRSZXNwb25zZSIDkAIBElsKD0xpc3REZXBsb3ltZW50cxIgLmZvcmdlLnYxLkxpc3REZXBsb3ltZW50c1JlcXVlc3QaIS5mb3JnZS52MS5MaXN0RGVwbG95bWVudHNSZXNwb25zZSIDkAIBEmEKEUxpc3REZXBsb3lIaXN0b3J5EiIuZm9yZ2UudjEuTGlzdERlcGxveUhpc3RvcnlSZXF1ZXN0GiMuZm9yZ2UudjEuTGlzdERlcGxveUhpc3RvcnlSZXNwb25zZSIDkAIBElUKDlJvbGxiYWNrRGVwbG95Eh8uZm9yZ2UudjEuUm9sbGJhY2tEZXBsb3lSZXF1ZXN0GiAuZm9yZ2UudjEuUm9sbGJhY2tEZXBsb3lSZXNwb25zZSIAElIKDVByb21vdGVEZXBsb3kSHi5mb3JnZS52MS5Qcm9tb3RlRGVwbG95UmVxdWVzdBofLmZvcmdlLnYxLlByb21vdGVEZXBsb3lSZXNwb25zZSIAYgZwcm90bzM", [file_forge_v1_operation, file_google_protobuf_timestamp]);
 
 /**
  * Deployment is what runs for one service in one environment.
@@ -105,6 +105,15 @@ export type Deployment = Message<"forge.v1.Deployment"> & {
    * @generated from field: string operation = 14;
    */
   operation: string;
+
+  /**
+   * The version tag on commit: "v0.3.1-rc.2" for a release candidate,
+   * "v0.3.1" once it was released to production. Empty for deploys from
+   * before Forge cut versions.
+   *
+   * @generated from field: string version = 15;
+   */
+  version: string;
 };
 
 /**
@@ -242,6 +251,13 @@ export type DeployRecord = Message<"forge.v1.DeployRecord"> & {
    * @generated from field: string operation = 8;
    */
   operation: string;
+
+  /**
+   * The version this deploy ran as; see Deployment.version.
+   *
+   * @generated from field: string version = 9;
+   */
+  version: string;
 };
 
 /**
@@ -289,6 +305,14 @@ export type StartDeployRequest = Message<"forge.v1.StartDeployRequest"> & {
    * @generated from field: bool validate_only = 5;
    */
   validateOnly: boolean;
+
+  /**
+   * For a deploy straight to production of a commit without a final
+   * version: how far the version goes up. Default patch.
+   *
+   * @generated from field: forge.v1.Bump bump = 6;
+   */
+  bump: Bump;
 };
 
 /**
@@ -530,6 +554,14 @@ export type PromoteDeployRequest = Message<"forge.v1.PromoteDeployRequest"> & {
    * @generated from field: bool validate_only = 4;
    */
   validateOnly: boolean;
+
+  /**
+   * How far the version goes up when this promotion cuts a final version.
+   * Default patch. A commit that already has a final version keeps it.
+   *
+   * @generated from field: forge.v1.Bump bump = 5;
+   */
+  bump: Bump;
 };
 
 /**
@@ -562,6 +594,39 @@ export type PromoteDeployResponse = Message<"forge.v1.PromoteDeployResponse"> & 
  */
 export const PromoteDeployResponseSchema: GenMessage<PromoteDeployResponse> = /*@__PURE__*/
   messageDesc(file_forge_v1_deploy, 13);
+
+/**
+ * Bump is the part of the version a final release raises.
+ *
+ * @generated from enum forge.v1.Bump
+ */
+export enum Bump {
+  /**
+   * @generated from enum value: BUMP_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: BUMP_PATCH = 1;
+   */
+  PATCH = 1,
+
+  /**
+   * @generated from enum value: BUMP_MINOR = 2;
+   */
+  MINOR = 2,
+
+  /**
+   * @generated from enum value: BUMP_MAJOR = 3;
+   */
+  MAJOR = 3,
+}
+
+/**
+ * Describes the enum forge.v1.Bump.
+ */
+export const BumpSchema: GenEnum<Bump> = /*@__PURE__*/
+  enumDesc(file_forge_v1_deploy, 0);
 
 /**
  * DeployService ships catalog services to the staging and production

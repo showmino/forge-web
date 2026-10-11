@@ -1,0 +1,29 @@
+name: release
+
+# Forge tags every commit it deploys: a release candidate (v0.3.1-rc.2) when
+# it reaches staging, the final version (v0.3.1) when it reaches production.
+# This adds that version to the image CI built for the commit, so
+# ghcr.io/showmino/forge-web:v0.3.1 is the image production runs.
+on:
+  push:
+    tags: ["v[0-9]*"]
+
+permissions:
+  contents: read
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Tag the image with the version
+        run: |
+          image=ghcr.io/showmino/forge-web
+          docker buildx imagetools create --tag "$image:$GITHUB_REF_NAME" "$image:${GITHUB_SHA::7}"
