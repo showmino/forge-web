@@ -42,6 +42,11 @@ describe("safeReturn", () => {
     ["https://evil.example.com", "/"],
     ["//evil.example.com", "/"],
     ["/\\evil.example.com", "/"],
+    ["/\t/evil.example.com", "/"],
+    ["/\n/evil.example.com", "/"],
+    ["/\r\\evil.example.com", "/"],
+    ["/.//evil.example.com", "/"],
+    ["/services/../audit", "/audit"],
     ["services", "/"],
     ["/login?return=/x", "/"],
     ["/auth/callback?code=1", "/"],
@@ -115,9 +120,14 @@ describe("login", () => {
 
   it("reports what the login service said went wrong", async () => {
     const { fetcher } = fakeFetch();
-    await loginUrl("/", "http://forge-web.example.com", fetcher);
-    const back = new URLSearchParams({ error: "access_denied", error_description: "You are not a member of the organization." });
+    const url = new URL(await loginUrl("/", "http://forge-web.example.com", fetcher));
+    const state = url.searchParams.get("state")!;
+    const back = new URLSearchParams({ error: "access_denied", error_description: "You are not a member of the organization.", state });
     await expect(finishLogin(back, fetcher)).rejects.toThrow("You are not a member of the organization.");
+    // A crafted link, with no login of this tab behind it, cannot put its own words on the page.
+    await loginUrl("/", "http://forge-web.example.com", fetcher);
+    const crafted = new URLSearchParams({ error: "x", error_description: "Call 555-0100 to restore access.", state: "guess" });
+    await expect(finishLogin(crafted, fetcher)).rejects.toThrow("The login was not completed.");
   });
 
   it("keeps no login when the service refuses the code or sends no token", async () => {

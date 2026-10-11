@@ -1,17 +1,30 @@
 import type { ReactNode } from "react";
-import type { Status, Tone } from "@/lib/status";
+import { Lifecycle } from "@/gen/forge/v1/catalog_pb";
+import { lifecycleWord, type Status, type Tone } from "@/lib/status";
 
-// The design system's StatusBadge and EnvTag. A status is always a glyph, a
-// word and a colour together; an environment is its name with a square in its
-// temper colour.
+// The Forge design language's status parts. Every status has two cues, a word
+// and a colour dot; colour alone is never the signal. Ember is the colour of
+// work in progress, and only that dot moves.
 
-const tones: Record<Tone, string> = {
-  success: "bg-success-soft text-success",
-  progress: "bg-accent-soft text-accent",
-  warning: "bg-warning-soft text-warning",
-  danger: "bg-danger-soft text-danger",
-  neutral: "bg-surface-sunken text-ink-muted",
+const pills: Record<Tone, string> = {
+  success: "bg-ok-bg text-ok-fg before:bg-ok-dot",
+  progress: "pulsing bg-ember-soft text-ember-ink before:bg-ember",
+  warning: "bg-warn-bg text-warn-fg before:bg-warn-dot",
+  danger: "bg-bad-bg text-bad-fg before:bg-bad-dot",
+  neutral: "bg-surface-2 text-fg-2 shadow-[inset_0_0_0_1px_var(--line)] before:bg-fg-3",
 };
+
+// StatusBadge is the status pill: a dot and a word.
+export function StatusBadge({ status, title }: { status: Status; title?: string }) {
+  return (
+    <span
+      title={title}
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full py-px pl-[7px] pr-2 type-label before:size-1.5 before:rounded-full before:content-[''] ${pills[status.tone]}`}
+    >
+      {status.word}
+    </span>
+  );
+}
 
 const glyphs: Record<Tone, ReactNode> = {
   success: <path d="M2.5 6.5 5 9l4.5-5.5" />,
@@ -31,6 +44,7 @@ const glyphs: Record<Tone, ReactNode> = {
   neutral: <circle cx="6" cy="6" r="1.6" fill="currentColor" stroke="none" />,
 };
 
+// Glyph marks a line of a log or a note: a tick, a ring for running work, a cross.
 export function Glyph({ tone }: { tone: Tone }) {
   return (
     <svg
@@ -48,30 +62,45 @@ export function Glyph({ tone }: { tone: Tone }) {
   );
 }
 
-export function StatusBadge({ status, title }: { status: Status; title?: string }) {
+const envSquare: Record<string, string> = {
+  staging: "before:bg-env-staging",
+  production: "before:bg-env-production",
+};
+
+// EnvTag names an environment in mono with a square in its colour. kind is
+// "staging", "production" or "preview"; a preview shows its own name.
+export function EnvTag({ kind, name }: { kind: "staging" | "production" | "preview"; name?: string }) {
   return (
     <span
-      title={title}
-      className={`inline-flex h-[22px] items-center gap-1 whitespace-nowrap rounded-sm px-2 type-label ${tones[status.tone]}`}
+      className={`inline-flex items-center gap-[7px] whitespace-nowrap rounded-sm border border-line-strong bg-surface px-2 py-px font-mono text-[12.5px] text-fg before:size-2 before:rounded-[1px] before:content-[''] ${envSquare[kind] ?? "before:bg-env-preview"}`}
     >
-      <Glyph tone={status.tone} />
-      {status.word}
+      {name ?? kind}
     </span>
   );
 }
 
-const temper: Record<string, string> = {
-  staging: "before:bg-temper-plum",
-  production: "before:bg-temper-blue",
+const lifeDot: Partial<Record<Lifecycle, string>> = {
+  [Lifecycle.PRODUCTION]: "before:border-fg-2 before:bg-fg-2",
+  [Lifecycle.EXPERIMENTAL]: "before:border-dashed before:border-ember",
+  [Lifecycle.DEPRECATED]: "line-through decoration-fg-3 before:border-fg-3",
 };
 
-// EnvTag names an environment. kind is "staging", "production" or "preview"; a preview shows its own name.
-export function EnvTag({ kind, name }: { kind: "staging" | "production" | "preview"; name?: string }) {
+// Life says where a service is in its life: a ring, filled once it is in production.
+export function Life({ lifecycle }: { lifecycle: Lifecycle }) {
   return (
     <span
-      className={`inline-flex h-[22px] items-center gap-2 whitespace-nowrap rounded-sm border border-border bg-surface px-2 font-mono text-[12px] leading-4 text-ink before:size-2 before:content-[''] ${temper[kind] ?? "before:bg-temper-straw"}`}
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap text-[12.5px] text-fg-2 before:size-[7px] before:rounded-full before:border-[1.5px] before:content-[''] ${lifeDot[lifecycle] ?? "before:border-fg-3"}`}
     >
-      {name ?? kind}
+      {lifecycleWord(lifecycle)}
+    </span>
+  );
+}
+
+// Tag is a small mono label: a commit, a template, a version.
+export function Tag({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-block whitespace-nowrap rounded-sm border border-line px-1.5 font-mono text-[11.5px] text-fg-2">
+      {children}
     </span>
   );
 }

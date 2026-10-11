@@ -26,8 +26,11 @@ function leave(to: string) {
   window.location.assign(to);
 }
 
+let leaving = false;
+
 function loginAgain(err: unknown) {
-  if (!isCode(err, Code.Unauthenticated) || typeof window === "undefined") return;
+  if (!isCode(err, Code.Unauthenticated) || typeof window === "undefined" || leaving) return;
+  leaving = true;
   const session = loadSession();
   clearSession();
   if (session && Date.now() - session.savedAt < FRESH_MS) {

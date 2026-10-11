@@ -30,7 +30,7 @@ export function AuditTable({ events, showService = true }: { events: AuditEvent[
       <tbody>
         {events.map((e) => (
           <tr key={e.name} className={tr}>
-            <td className={`${td} text-ink-muted`} title={exact(e.time)}>
+            <td className={`${td} text-fg-2`} title={exact(e.time)}>
               {when(e.time)}
             </td>
             <td className={`${td} type-code`}>{e.action}</td>

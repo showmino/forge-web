@@ -25,6 +25,13 @@ export default function Login() {
     if (query.get("error") === "refused") setError(new Error(REFUSED));
   }, [router]);
 
+  // The browser may bring this page back as it was left (Back from the login service).
+  useEffect(() => {
+    const reset = () => setBusy(false);
+    window.addEventListener("pageshow", reset);
+    return () => window.removeEventListener("pageshow", reset);
+  }, []);
+
   function signIn() {
     setBusy(true);
     setError(null);
@@ -38,11 +45,11 @@ export default function Login() {
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4 py-12">
       <p className="flex items-center gap-2 type-heading">
-        <span aria-hidden="true" className="size-3 bg-heat" />
+        <span aria-hidden="true" className="size-3 bg-ember" />
         Forge
       </p>
       <h1 className="type-display">Sign in to Forge</h1>
-      <p className="text-ink-muted">
+      <p className="text-fg-2">
         You sign in with your GitHub account. Members of the organization can read; the platform team can also create,
         deploy and promote.
       </p>

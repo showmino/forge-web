@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useApi } from "@/components/providers";
 import { TextLink } from "@/components/ui/button";
 import { Empty, ErrorNote, Loading, PageHeader, TableFrame, td, th, tr } from "@/components/ui/layout";
+import { templateId } from "@/lib/api";
 
 // The templates a new service can start from.
 export default function Templates() {
@@ -15,7 +16,7 @@ export default function Templates() {
 
   return (
     <>
-      <PageHeader title="Templates" lead="The golden paths a new service starts from." />
+      <PageHeader title="Templates" lead="The golden paths a new service starts from." cli="forge template list" />
       {templates.isPending ? (
         <Loading what="templates" />
       ) : templates.error ? (
@@ -37,16 +38,16 @@ export default function Templates() {
             {templates.data.map((t) => (
               <tr key={t.name} className={tr}>
                 <td className={td}>
-                  <TextLink href={`/templates/${t.name}`} className="type-code">
-                    {t.name}
+                  <TextLink href={`/templates/${templateId(t.name)}`} className="type-code">
+                    {templateId(t.name)}
                   </TextLink>
                 </td>
                 <td className={`${td} whitespace-normal`}>
                   <span className="type-body-strong">{t.title}</span>
-                  {t.description ? <span className="block text-ink-muted">{t.description}</span> : null}
+                  {t.description ? <span className="block text-fg-2">{t.description}</span> : null}
                 </td>
                 <td className={`${td} type-code`}>{t.version || "–"}</td>
-                <td className={`${td} text-ink-muted`}>{t.tags.join(", ") || "–"}</td>
+                <td className={`${td} text-fg-2`}>{t.tags.join(", ") || "–"}</td>
                 <td className={td}>{t.owner || "–"}</td>
               </tr>
             ))}

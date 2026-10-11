@@ -67,9 +67,20 @@ export function errorText(err: unknown): string {
   }
 }
 
-// serviceId turns "services/payments" into "payments".
+// The API names things by kind ("services/payments", "templates/nextjs",
+// "environments/pr-42", "operations/op_1d68e6ad2d75"); pages and addresses use
+// the short name.
 export function serviceId(name: string): string {
   return name.replace(/^services\//, "");
+}
+export function templateId(name: string): string {
+  return name.replace(/^templates\//, "");
+}
+export function environmentId(name: string): string {
+  return name.replace(/^environments\//, "");
+}
+export function operationId(name: string): string {
+  return name.replace(/^operations\//, "");
 }
 
 // listAllServices follows the pages of the catalog to its end.

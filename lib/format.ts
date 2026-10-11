@@ -24,7 +24,8 @@ export function timeUntil(then: Date, now = new Date()): string {
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `in ${minutes} min`;
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `in ${hours} h`;
+  // Hours for the first two days: "in 31 h" says more than "in 1 day".
+  if (hours < 48) return `in ${hours} h`;
   return `in ${Math.floor(hours / 24)} days`;
 }
 

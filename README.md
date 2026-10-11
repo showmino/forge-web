@@ -6,8 +6,10 @@ Next.js app with TypeScript and Tailwind CSS.
 
 ## What it is
 
-The web dashboard of Forge: the catalog, a page per service, the templates and
-the audit log. It is a thin client of the Forge API, like the CLI: every call
+The web dashboard of Forge: the catalog, a page per service, the templates,
+operations and the audit log. A writer also creates a service from a template,
+deploys, promotes, rolls back and manages previews from it, each behind a
+confirmation, with the work shown live (`WatchOperation`). It is a thin client of the Forge API, like the CLI: every call
 goes from the browser to forge-api with the reader's own token, and the API
 decides what they may see and do. The server only serves the pages and
 `/api/healthz`; it holds no secrets.
@@ -19,9 +21,14 @@ decides what they may see and do. The server only serves the pages and
 - **API client:** `gen/` is generated from the protos in `proto/`, a copy from
   `showmino/forge` at the commit in `proto/FORGE_COMMIT`. After an API change:
   `sh scripts/sync-proto.sh ../forge`.
-- **Look:** the Forge design system
-  (https://claude.ai/artifact/9BE6LhhUayv1FtFs4GGQGq). Its tokens are the
-  Tailwind theme in `app/globals.css`; its components are in `components/ui`.
+- **Look:** the Forge design language of the Forge Console design
+  (https://claude.ai/artifact/JH9WMXofSHtUrQcGB5AwfG): a dark iron rail beside
+  a light work surface, ember for the one primary action and for work in
+  progress, status pills with a dot and a word, names in mono, and on every
+  page the CLI command that does the same. Its tokens are the Tailwind theme
+  in `app/globals.css`; its parts are in `components/ui` and
+  `components/app-shell.tsx`. The Services list and the service page follow
+  the design's layouts; the other pages have its tokens, shell and CLI line.
 
 ## Develop
 

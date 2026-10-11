@@ -2,7 +2,8 @@ import { create } from "@bufbuild/protobuf";
 import { describe, expect, it } from "vitest";
 import { Deployment_Health, Deployment_SyncStatus, DeploymentSchema } from "@/gen/forge/v1/deploy_pb";
 import { Environment_State, EnvironmentSchema } from "@/gen/forge/v1/environment_pb";
-import { auditStatus, deploymentStatus, environmentStatus } from "./status";
+import { OperationSchema } from "@/gen/forge/v1/operation_pb";
+import { auditStatus, deploymentStatus, environmentStatus, operationStatus, operationTitle } from "./status";
 
 describe("deploymentStatus", () => {
   const d = (health: Deployment_Health, sync = Deployment_SyncStatus.SYNCED) => create(DeploymentSchema, { health, sync });
@@ -42,5 +43,31 @@ describe("auditStatus", () => {
     ["canceled", "neutral", "Cancelled"],
   ])("%s → %s %s", (code, tone, word) => {
     expect(auditStatus(code)).toEqual({ tone, word });
+  });
+});
+
+describe("operations", () => {
+  const op = (init: Parameters<typeof create<typeof OperationSchema>>[1]) => create(OperationSchema, init);
+
+  it.each([
+    [undefined, "progress", "Running"],
+    [op({}), "progress", "Running"],
+    [op({ done: true }), "success", "Succeeded"],
+    [op({ done: true, error: { code: "cancelled" } }), "neutral", "Cancelled"],
+    [op({ done: true, error: { code: "image_timeout" } }), "danger", "Failed"],
+  ])("%#: %s %s", (operation, tone, word) => {
+    expect(operationStatus(operation)).toEqual({ tone, word });
+  });
+
+  it.each([
+    ["deploy", "deployments/forge-web/staging", "Deploy forge-web to staging"],
+    ["promote", "deployments/forge-web/production", "Promote forge-web to production"],
+    ["rollback", "deployments/forge-web/production", "Roll back forge-web in production"],
+    ["create_environment", "environments/pr-42", "Create preview pr-42"],
+    ["destroy_environment", "environments/pr-42", "Destroy preview pr-42"],
+    ["resource.apply", "resources/payments/staging", "Resource apply resources/payments/staging"],
+    ["", "", "Operation"],
+  ])("%s on %s is %j", (kind, target, want) => {
+    expect(operationTitle(op({ kind, target }))).toBe(want);
   });
 });

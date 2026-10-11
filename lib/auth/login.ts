@@ -25,9 +25,20 @@ type Fetch = typeof fetch;
 
 // safeReturn keeps a return address inside the dashboard: a path, never another site.
 export function safeReturn(path: string | null | undefined): string {
-  if (!path || !path.startsWith("/") || path.startsWith("//") || path.startsWith("/\\")) return "/";
-  if (path.startsWith(CALLBACK) || path.startsWith("/login")) return "/";
-  return path;
+  if (!path || !path.startsWith("/")) return "/";
+  // Resolve it as a browser would: a tab or a backslash after the first
+  // slash ("/\t/evil.example.com") turns into another site there.
+  const here = "http://forge.invalid";
+  let url: URL;
+  try {
+    url = new URL(path, here);
+  } catch {
+    return "/";
+  }
+  const clean = url.pathname + url.search + url.hash;
+  if (url.origin !== here || !clean.startsWith("/") || clean.startsWith("//")) return "/";
+  if (url.pathname.startsWith(CALLBACK) || url.pathname.startsWith("/login")) return "/";
+  return clean;
 }
 
 async function discover(fetcher: Fetch) {
@@ -84,15 +95,16 @@ export async function startLogin(returnTo: string): Promise<void> {
 export async function finishLogin(query: URLSearchParams, fetcher: Fetch = fetch): Promise<string> {
   const raw = sessionStorage.getItem(PENDING);
   sessionStorage.removeItem(PENDING);
+  const pending = raw ? (JSON.parse(raw) as Pending) : null;
+  const ours = !!pending?.state && query.get("state") === pending.state;
   if (query.get("error")) {
-    throw new Error(query.get("error_description") || "The login was not completed.");
+    // The login service's own words, but only for a login this tab started:
+    // anyone can craft a callback link with text of their choosing.
+    throw new Error((ours && query.get("error_description")) || "The login was not completed.");
   }
   const code = query.get("code");
-  if (!raw || !code) throw new Error("This login link is not valid any more. Sign in again.");
-  const pending = JSON.parse(raw) as Pending;
-  if (!pending.state || query.get("state") !== pending.state) {
-    throw new Error("This login did not start in this tab. Sign in again.");
-  }
+  if (!pending || !code) throw new Error("This login link is not valid any more. Sign in again.");
+  if (!ours) throw new Error("This login did not start in this tab. Sign in again.");
   const res = await fetcher(pending.tokenEndpoint, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },

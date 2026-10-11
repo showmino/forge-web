@@ -1,6 +1,7 @@
 import { Lifecycle } from "@/gen/forge/v1/catalog_pb";
 import { Deployment_Health, Deployment_SyncStatus, type Deployment } from "@/gen/forge/v1/deploy_pb";
 import { Environment_State, type Environment } from "@/gen/forge/v1/environment_pb";
+import type { Operation } from "@/gen/forge/v1/operation_pb";
 
 // A status is a glyph, a word and a colour together (the design system's
 // StatusBadge). These functions pick the tone and the word from what the API says.
@@ -66,4 +67,30 @@ export function lifecycleWord(l: Lifecycle): string {
     default:
       return "Not set";
   }
+}
+
+// operationStatus says how a long-running operation is doing or how it ended.
+export function operationStatus(op: Operation | undefined): Status {
+  if (!op || !op.done) return { tone: "progress", word: "Running" };
+  if (!op.error) return { tone: "success", word: "Succeeded" };
+  if (op.error.code === "cancelled") return { tone: "neutral", word: "Cancelled" };
+  return { tone: "danger", word: "Failed" };
+}
+
+const kinds: Record<string, string> = {
+  deploy: "Deploy",
+  promote: "Promote",
+  rollback: "Roll back",
+  create_environment: "Create preview",
+  destroy_environment: "Destroy preview",
+};
+
+// operationTitle names an operation by what it does and to what: "Promote forge-web to production".
+export function operationTitle(op: Operation): string {
+  const kind = kinds[op.kind] ?? (op.kind ? op.kind.charAt(0).toUpperCase() + op.kind.slice(1).replace(/[_.]/g, " ") : "Operation");
+  const deployment = /^deployments\/([^/]+)\/([^/]+)$/.exec(op.target);
+  if (deployment) return `${kind} ${deployment[1]} ${op.kind === "rollback" ? "in" : "to"} ${deployment[2]}`;
+  const preview = /^environments\/(.+)$/.exec(op.target);
+  if (preview) return `${kind} ${preview[1]}`;
+  return op.target ? `${kind} ${op.target}` : kind;
 }
