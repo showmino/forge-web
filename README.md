@@ -18,6 +18,11 @@ decides what they may see and do. The server only serves the pages and
   service, as the public client forge-api names in `GetServerInfo`
   (`lib/auth`). The ID token lives in the tab's `sessionStorage` for an hour;
   there is no refresh token.
+- **Security headers:** `proxy.ts` sets the Content-Security-Policy on every
+  page. It asks forge-api which login service it uses and names the two in
+  `connect-src`; until the API has answered it allows any web address, so a
+  failed lookup never locks a reader out. Scripts still allow inline code
+  (Next's own), which is the remaining gap.
 - **Owner:** a service is owned by a team of the GitHub organization. Create
   picks it from the teams the API lists from GitHub (`TeamService`); if the
   list cannot be read it says why and lets the team be typed.

@@ -1,0 +1,44 @@
+import { NextResponse } from "next/server";
+import { contentSecurityPolicy, origin } from "@/lib/csp";
+
+// Sets the Content-Security-Policy on every page. The login service's address
+// is not known when the image is built: forge-api names it (GetServerInfo), so
+// this asks the API, remembers the answer for a while, and names both in the
+// policy. Until the API has answered, the policy allows any web address.
+
+const API = (process.env.NEXT_PUBLIC_FORGE_API_URL ?? "http://localhost:8080").replace(/\/$/, "");
+const dev = process.env.NODE_ENV !== "production";
+
+// How long an answer, or a failure, is remembered.
+const KNOWN_MS = 5 * 60_000;
+const FAILED_MS = 30_000;
+
+let login: { origin: string | null; until: number } | null = null;
+
+async function loginOrigin(): Promise<string | null> {
+  if (login && Date.now() < login.until) return login.origin;
+  let found: string | null = null;
+  try {
+    const res = await fetch(`${API}/forge.v1.AuthService/GetServerInfo`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+      signal: AbortSignal.timeout(2000),
+    });
+    if (res.ok) found = origin(((await res.json()) as { oidc?: { issuer?: string } }).oidc?.issuer);
+  } catch {
+    found = null;
+  }
+  // A failure keeps the last good answer, and is tried again sooner.
+  login = found ? { origin: found, until: Date.now() + KNOWN_MS } : { origin: login?.origin ?? null, until: Date.now() + FAILED_MS };
+  return login.origin;
+}
+
+export async function proxy() {
+  const res = NextResponse.next();
+  res.headers.set("Content-Security-Policy", contentSecurityPolicy({ api: origin(API), login: await loginOrigin(), dev }));
+  return res;
+}
+
+// Pages only: static files and the health check need no policy and must not wait for one.
+export const config = { matcher: ["/((?!_next/|api/healthz|favicon.ico|robots.txt).*)"] };

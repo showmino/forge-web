@@ -448,7 +448,14 @@ describe("operations", () => {
     renderWithApi(<OperationPage />, forge(w));
     expect(await screen.findByText("Rendered the manifests")).toBeTruthy();
     expect(w.calls.watch).toMatchObject([{ name: "operations/op_aaaaaaaaaaaa" }]);
+    // Cancelling asks first: the work may leave its target half way.
     click(await screen.findByRole("button", { name: "Cancel" }));
+    expect(dialog().getByRole("heading").textContent).toMatch(/^Cancel /);
+    click(dialog().getByRole("button", { name: "Keep it running" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(w.calls.cancel).toBeUndefined();
+    click(screen.getByRole("button", { name: "Cancel" }));
+    click(dialog().getByRole("button", { name: "Cancel operation" }));
     expect(await screen.findAllByText("Cancelled")).toHaveLength(2);
     expect(w.calls.cancel).toMatchObject([{ name: "operations/op_aaaaaaaaaaaa" }]);
     expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();

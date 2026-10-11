@@ -5,6 +5,7 @@ import { Code } from "@connectrpc/connect";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useApi } from "@/components/providers";
 import { Button, TextLink } from "@/components/ui/button";
+import { Dialog, DialogActions } from "@/components/ui/dialog";
 import { ErrorNote, Panel } from "@/components/ui/layout";
 import { Glyph, StatusBadge } from "@/components/ui/status";
 import type { Operation, OperationEvent } from "@/gen/forge/v1/operation_pb";
@@ -129,6 +130,7 @@ export function OperationLog({ name, onDone, link = true }: { name: string; onDo
   const [cancelError, setCancelError] = useState<unknown>(null);
   // "asked" stays until the operation ends: a second click would do nothing new.
   const [cancel, setCancel] = useState<"idle" | "asking" | "asked">("idle");
+  const [confirming, setConfirming] = useState(false);
   const done = useRef(onDone);
   const reported = useRef(false);
 
@@ -162,6 +164,7 @@ export function OperationLog({ name, onDone, link = true }: { name: string; onDo
   }
 
   function askCancel() {
+    setConfirming(false);
     setCancel("asking");
     setCancelError(null);
     api.operations.cancelOperation({ name }).then(
@@ -190,7 +193,7 @@ export function OperationLog({ name, onDone, link = true }: { name: string; onDo
           <div className="flex items-center gap-3">
             <StatusBadge status={status} />
             {running && !error ? (
-              <Button size="sm" onClick={askCancel} disabled={cancel !== "idle"}>
+              <Button size="sm" onClick={() => setConfirming(true)} disabled={cancel !== "idle"}>
                 {cancel === "idle" ? "Cancel" : "Cancelling"}
               </Button>
             ) : null}
@@ -214,6 +217,21 @@ export function OperationLog({ name, onDone, link = true }: { name: string; onDo
           </div>
         ) : null}
       </section>
+      {confirming && running ? (
+        <Dialog title={`Cancel ${operation ? operationTitle(operation).replace(/^./, (c) => c.toLowerCase()) : "this operation"}?`} onClose={() => setConfirming(false)}>
+          <p>
+            The work stops where it is. What it already changed stays changed, so the target may be left half way: look at it
+            afterwards.
+          </p>
+          <p className="font-mono text-[12.5px] text-fg-3">{name}</p>
+          <DialogActions>
+            <Button onClick={() => setConfirming(false)}>Keep it running</Button>
+            <Button kind="danger" onClick={askCancel}>
+              Cancel operation
+            </Button>
+          </DialogActions>
+        </Dialog>
+      ) : null}
     </Panel>
   );
 }

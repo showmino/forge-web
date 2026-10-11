@@ -4,7 +4,7 @@ import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCanWrite } from "@/components/app-shell";
 import { actorText } from "@/components/audit-table";
 import { OperationLog } from "@/components/operation-log";
@@ -75,13 +75,18 @@ function ServiceView({ id }: { id: string }) {
     queryFn: () => api.operations.listOperations({ running: true }).then((r) => r.operations),
   });
   const previewNames = new Set((previews.data ?? []).map((e) => e.name));
-  const inProgress = [
-    ...started,
-    ...(running.data ?? [])
-      .filter((op) => op.target.startsWith(`deployments/${id}/`) || previewNames.has(op.target))
-      .map((op) => op.name)
-      .filter((n) => !started.includes(n)),
-  ];
+  const found = (running.data ?? [])
+    .filter((op) => op.target.startsWith(`deployments/${id}/`) || previewNames.has(op.target))
+    .map((op) => op.name);
+  // Once seen, an operation stays on the page: when it ends (and, for a
+  // destroy, its preview is gone) its result is still there to read.
+  const [seen, setSeen] = useState<string[]>([]);
+  const fresh = found.filter((n) => !seen.includes(n)).join(" ");
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (fresh) setSeen((all) => [...all, ...fresh.split(" ").filter((n) => !all.includes(n))]);
+  }, [fresh]);
+  const inProgress = [...started, ...[...seen, ...found].filter((n, i, all) => all.indexOf(n) === i && !started.includes(n))];
 
   // What the page shows may have changed: an action was taken or an operation ended.
   function refresh() {
