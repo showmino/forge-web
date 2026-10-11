@@ -1,11 +1,12 @@
 "use client";
 
+import { Code, ConnectError } from "@connectrpc/connect";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useCanWrite } from "@/components/app-shell";
 import { StepLog, type Step } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
-import { Button, TextLink } from "@/components/ui/button";
+import { Addr, Button, TextLink } from "@/components/ui/button";
 import { Field, inputClass } from "@/components/ui/field";
 import { ErrorNote, Loading, PageHeader, Panel, Section } from "@/components/ui/layout";
 import { CreateStep_State, type Service } from "@/gen/forge/v1/catalog_pb";
@@ -27,9 +28,33 @@ const words: Record<string, [doing: string, done: string]> = {
 
 type Outcome = { service?: Service; failure?: { step: string; message: string; rolledBack: boolean }; error?: unknown };
 
-function ParameterField({ p, value, onChange }: { p: TemplateParameter; value: string; onChange: (v: string) => void }) {
+// Answers after which the API did nothing more: the next attempt is a new create.
+const REFUSED = [Code.InvalidArgument, Code.FailedPrecondition, Code.PermissionDenied, Code.Unauthenticated, Code.AlreadyExists, Code.NotFound];
+
+// shown is what a parameter's control displays: the writer's own value, or the
+// one that applies when they give none.
+function shown(p: TemplateParameter, own: string | undefined): string {
+  if (own !== undefined) return own;
+  if (p.type === TemplateParameter_Type.BOOL) return p.defaultValue;
+  // A required choice has no default: the first value is selected, and sent.
+  if (p.type === TemplateParameter_Type.ENUM) return p.defaultValue || (p.required ? (p.values[0] ?? "") : "");
+  return "";
+}
+
+// sent is what goes to the API for a parameter, or undefined to leave it to
+// the template. A default is never sent back: the API hands it out as the
+// template wrote it (it may refer to the repo, "github.com/{owner}/{name}")
+// and fills it in only when the parameter is absent.
+function sent(p: TemplateParameter, own: string | undefined): string | undefined {
+  if (own !== undefined && own !== "") return own;
+  if (own === undefined && p.type === TemplateParameter_Type.ENUM && p.required && !p.defaultValue) return p.values[0];
+  return undefined;
+}
+
+function ParameterField({ p, own, onChange }: { p: TemplateParameter; own: string | undefined; onChange: (v: string) => void }) {
   const id = `param-${p.name}`;
   const label = p.required ? p.name : `${p.name} (optional)`;
+  const value = shown(p, own);
   if (p.type === TemplateParameter_Type.BOOL) {
     return (
       <label className="flex items-center gap-2">
@@ -41,27 +66,44 @@ function ParameterField({ p, value, onChange }: { p: TemplateParameter; value: s
       </label>
     );
   }
-  return (
-    <Field id={id} label={label} hint={p.description}>
-      {p.type === TemplateParameter_Type.ENUM ? (
+  if (p.type === TemplateParameter_Type.ENUM) {
+    return (
+      <Field id={id} label={label} hint={p.description}>
         <select id={id} className={inputClass} value={value} onChange={(e) => onChange(e.target.value)}>
-          {p.required ? null : <option value="">Not set</option>}
+          {p.required ? null : <option value="">{p.defaultValue ? `The default (${p.defaultValue})` : "Not set"}</option>}
           {p.values.map((v) => (
             <option key={v} value={v}>
               {v}
             </option>
           ))}
         </select>
-      ) : (
-        <input
-          id={id}
-          className={`${inputClass} type-code`}
-          inputMode={p.type === TemplateParameter_Type.INT ? "numeric" : undefined}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          required={p.required}
-        />
-      )}
+      </Field>
+    );
+  }
+  return (
+    <Field
+      id={id}
+      label={label}
+      hint={
+        <>
+          {p.description}
+          {p.description && p.defaultValue ? " " : null}
+          {p.defaultValue ? (
+            <>
+              Left empty, it is <span className="font-mono text-[12px]">{p.defaultValue}</span>.
+            </>
+          ) : null}
+        </>
+      }
+    >
+      <input
+        id={id}
+        className={`${inputClass} font-mono`}
+        inputMode={p.type === TemplateParameter_Type.INT ? "numeric" : undefined}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        required={p.required}
+      />
     </Field>
   );
 }
@@ -87,9 +129,13 @@ export default function CreateService() {
   const [busy, setBusy] = useState(false);
   const [steps, setSteps] = useState<Step[]>([]);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
+  // The idempotency key of the create in hand, and what it was for. The API
+  // replays the outcome of a create to a retry with the same key, so the key
+  // is kept until the API has given a definite answer or the request changes.
+  const attempt = useRef<{ key: string; request: string } | null>(null);
 
   const template = templates.data?.find((t) => t.name === picked) ?? templates.data?.[0];
-  const value = (p: TemplateParameter) => params[`${template?.name}/${p.name}`] ?? p.defaultValue;
+  const own = (p: TemplateParameter) => params[`${template?.name}/${p.name}`];
   const badName = checked && !SERVICE_NAME.test(name);
 
   async function create() {
@@ -98,75 +144,101 @@ export default function CreateService() {
     setSteps([]);
     setOutcome(null);
     const parameters: Record<string, string> = {};
-    for (const p of template.parameters) if (value(p) !== "") parameters[p.name] = value(p);
-    const list: Step[] = [];
+    for (const p of template.parameters) {
+      const value = sent(p, own(p));
+      if (value !== undefined) parameters[p.name] = value;
+    }
+    const request = {
+      serviceId: name,
+      template: template.name,
+      ownerTeam: team.trim(),
+      owners: owners
+        .split(",")
+        .map((o) => o.trim())
+        .filter(Boolean),
+      parameters,
+    };
+    const signature = JSON.stringify(request);
+    if (attempt.current?.request !== signature) attempt.current = { key: randomString(), request: signature };
+    const requestId = attempt.current.key;
+
+    let list: Step[] = [];
     const show = (step: Step) => {
       const at = list.findIndex((s) => s.key === step.key);
       if (at >= 0) list[at] = step;
       else list.push(step);
       setSteps([...list]);
     };
-    try {
-      const stream = api.catalog.createService({
-        serviceId: name,
-        template: template.name,
-        ownerTeam: team.trim(),
-        owners: owners
-          .split(",")
-          .map((o) => o.trim())
-          .filter(Boolean),
-        parameters,
-        // A new key for each attempt: a retry after a fix must not replay the failure.
-        requestId: randomString(),
-      });
-      let ended: Outcome = { error: new Error("Forge ended the create without a result. Check the catalog before trying again.") };
-      for await (const msg of stream) {
-        const event = msg.event;
-        if (event.case === "step") {
-          const [doing, did] = words[event.value.name] ?? [event.value.name, event.value.name];
-          const isDone = event.value.state === CreateStep_State.DONE;
-          show({
-            key: event.value.name,
-            tone: isDone ? "success" : "progress",
-            text: isDone ? `${did} ${event.value.detail}`.trim() : doing,
-          });
-        } else if (event.case === "service") {
-          ended = { service: event.value };
-        } else if (event.case === "failure") {
-          show({ key: event.value.step, tone: "danger", text: `${(words[event.value.step] ?? [event.value.step])[0]} failed` });
-          ended = { failure: event.value };
+    // Whatever was still turning when the stream ended did not finish here.
+    const settle = () => {
+      list = list.map((s) => (s.tone === "progress" ? { ...s, tone: "neutral" as const } : s));
+      setSteps([...list]);
+    };
+
+    let ended: Outcome | null = null;
+    // A stream that drops says nothing about the create: the API keeps working.
+    // Ask once more with the same key, which replays what happened.
+    for (let round = 0; round < 2 && !ended; round++) {
+      try {
+        for await (const msg of api.catalog.createService({ ...request, requestId })) {
+          const event = msg.event;
+          if (event.case === "step") {
+            const [doing, did] = words[event.value.name] ?? [event.value.name, event.value.name];
+            const isDone = event.value.state === CreateStep_State.DONE;
+            show({
+              key: event.value.name,
+              tone: isDone ? "success" : "progress",
+              text: isDone ? `${did} ${event.value.detail}`.trim() : doing,
+            });
+          } else if (event.case === "service") {
+            ended = { service: event.value };
+          } else if (event.case === "failure") {
+            show({ key: event.value.step, tone: "danger", text: `${(words[event.value.step] ?? [event.value.step])[0]} failed` });
+            ended = { failure: event.value };
+          }
         }
+      } catch (err) {
+        if (REFUSED.includes(ConnectError.from(err).code)) ended = { error: err };
       }
+      if (!ended && round === 0) show({ key: "reconnect", tone: "neutral", text: "The connection dropped. Asking Forge what happened." });
+    }
+    settle();
+    if (ended) {
+      // A definite answer: the next create is a new one.
+      attempt.current = null;
       setOutcome(ended);
       if (ended.service) void queries.invalidateQueries({ queryKey: ["services"] });
-    } catch (err) {
-      setOutcome({ error: err });
-    } finally {
-      setBusy(false);
+    } else {
+      setOutcome({
+        error: new Error(
+          "Forge could not be reached, and the create may still be finishing. Look for the service in the catalog, then press Create service again: it picks up the same create, it does not start a second one.",
+        ),
+      });
     }
+    setBusy(false);
   }
 
   function submit(e: FormEvent) {
     e.preventDefault();
     setChecked(true);
-    if (SERVICE_NAME.test(name)) void create();
+    if (SERVICE_NAME.test(name) && !busy) void create();
   }
 
   if (outcome?.service) {
     const id = serviceId(outcome.service.name);
     return (
       <>
-        <PageHeader title={`${id} was created`} lead="Its CI is running: it tests the code, builds the image and deploys it to staging." />
+        <PageHeader
+          title={`${id} was created`}
+          lead="Its CI is running: it tests the code, builds the image and deploys it to staging."
+          cli={`forge service get ${id}`}
+        />
         <Panel>
           <StepLog steps={steps} />
         </Panel>
-        <p className="flex flex-wrap gap-4">
+        <p className="flex flex-wrap items-center gap-4">
           <TextLink href={`/services/${id}`}>Open {id}</TextLink>
-          {outcome.service.repoUrl ? (
-            <TextLink href={outcome.service.repoUrl} target="_blank" rel="noreferrer">
-              Open the repo
-            </TextLink>
-          ) : null}
+          {outcome.service.repoUrl ? <Addr href={outcome.service.repoUrl} /> : null}
         </p>
       </>
     );
@@ -195,7 +267,7 @@ export default function CreateService() {
             >
               <input
                 id="service-name"
-                className={`${inputClass} type-code`}
+                className={`${inputClass} font-mono`}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onBlur={() => setChecked(true)}
@@ -228,7 +300,7 @@ export default function CreateService() {
                   <ParameterField
                     key={`${template.name}/${p.name}`}
                     p={p}
-                    value={value(p)}
+                    own={own(p)}
                     onChange={(v) => setParams((all) => ({ ...all, [`${template.name}/${p.name}`]: v }))}
                   />
                 ))}

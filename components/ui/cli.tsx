@@ -16,12 +16,14 @@ async function copyText(text: string): Promise<boolean> {
   } catch {
     // Fall through to the older way.
   }
+  const before = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const area = document.createElement("textarea");
   area.value = text;
   area.setAttribute("readonly", "");
   area.style.position = "fixed";
   area.style.opacity = "0";
   document.body.appendChild(area);
+  area.focus();
   area.select();
   let ok = false;
   try {
@@ -30,6 +32,7 @@ async function copyText(text: string): Promise<boolean> {
     ok = false;
   }
   area.remove();
+  before?.focus();
   return ok;
 }
 

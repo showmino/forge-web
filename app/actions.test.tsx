@@ -36,10 +36,15 @@ type World = {
   // Resolved by a test to let a watched operation end.
   finish: () => void;
   history: number;
+  // What staging runs when the promote dialog asks; the page shows COMMIT.
+  stagingNow: string;
+  // How many times a stream drops before it works.
+  dropCreate: number;
+  dropWatch: number;
 };
 
 function world(over: Partial<World> = {}): World {
-  return { writer: true, production: Deployment_Health.MISSING, calls: {}, fail: {}, finish: () => {}, history: 3, ...over };
+  return { writer: true, production: Deployment_Health.MISSING, calls: {}, fail: {}, finish: () => {}, history: 3, stagingNow: COMMIT, dropCreate: 0, dropWatch: 0, ...over };
 }
 
 const op = (id: string, kind: string, target: string, extra: object = {}) => ({
@@ -65,6 +70,7 @@ function forge(w: World) {
       async *createService(req) {
         record("create", req);
         yield { event: { case: "step" as const, value: { name: "fetch", state: CreateStep_State.STARTED } } };
+        if (w.dropCreate-- > 0) throw new ConnectError("connection reset", Code.Unavailable);
         yield { event: { case: "step" as const, value: { name: "fetch", state: CreateStep_State.DONE, detail: "nextjs@v1.3.1" } } };
         yield { event: { case: "step" as const, value: { name: "create_repo", state: CreateStep_State.STARTED } } };
         if (req.serviceId === "taken") {
@@ -96,6 +102,11 @@ function forge(w: World) {
         return { operation: op("op_aaaaaaaaaaaa", "deploy", "deployments/payments/staging") };
       },
       promoteDeploy: (req) => {
+        // As the API: a dry run says what production would run, and changes nothing.
+        if (req.validateOnly) {
+          record("promoteCheck", req);
+          return { deployment: { name: "deployments/payments/production", env: "production", commit: w.stagingNow, image: `ghcr.io/showmino/payments:${w.stagingNow.slice(0, 7)}` } };
+        }
         record("promote", req);
         w.production = Deployment_Health.HEALTHY;
         return { operation: op("op_bbbbbbbbbbbb", "promote", "deployments/payments/production") };
@@ -144,7 +155,8 @@ function forge(w: World) {
             description: "Server-rendered Next.js app",
             parameters: [
               { name: "port", type: TemplateParameter_Type.INT, defaultValue: "3000", description: "Port the server listens on" },
-              { name: "region", type: TemplateParameter_Type.ENUM, values: ["eu", "us"], required: true, defaultValue: "eu" },
+              { name: "region", type: TemplateParameter_Type.ENUM, values: ["eu", "us"], required: true },
+              { name: "module", type: TemplateParameter_Type.STRING, defaultValue: "github.com/{% .Repo.Owner %}/{% .Repo.Name %}", pattern: "^[a-z0-9./-]+$" },
               { name: "metrics", type: TemplateParameter_Type.BOOL, defaultValue: "false", description: "Expose /metrics" },
             ],
           },
@@ -165,6 +177,7 @@ function forge(w: World) {
         record("watch", req);
         const kind = req.name.endsWith("bbbbbbbbbbbb") ? "promote" : "deploy";
         yield { kind: { case: "event" as const, value: { time: ago(1), step: "render", message: "Rendered the manifests" } } };
+        if (w.dropWatch-- > 0) throw new ConnectError("connection reset", Code.Unavailable);
         yield { kind: { case: "event" as const, value: { time: ago(0), step: "sync", message: "Waiting for the rollout: 1 of 2 pods ready" } } };
         await new Promise<void>((resolve) => (w.finish = resolve));
         const cancelled = (w.calls.cancel ?? []).length > 0;
@@ -236,8 +249,11 @@ describe("promote", () => {
     await openService(w);
     click(await screen.findByRole("button", { name: PROMOTE }));
     expect(dialog().getByRole("heading", { name: "Promote payments to production?" })).toBeTruthy();
-    expect(dialog().getByText("18b1232")).toBeTruthy();
+    // Nothing can be confirmed until the API has said what staging runs now.
+    expect((dialog().getByRole("button", { name: "Promote to production" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(await dialog().findByText("18b1232")).toBeTruthy();
     expect(dialog().getByText("ghcr.io/showmino/payments:18b1232")).toBeTruthy();
+    expect(w.calls.promoteCheck).toMatchObject([{ service: "services/payments", validateOnly: true }]);
     expect(w.calls.promote).toBeUndefined();
 
     click(dialog().getByRole("button", { name: "Promote to production" }));
@@ -264,11 +280,20 @@ describe("promote", () => {
     const w = world({ fail: { promote: new ConnectError("staging is not healthy", Code.FailedPrecondition) } });
     await openService(w);
     click(await screen.findByRole("button", { name: PROMOTE }));
+    await dialog().findByText("18b1232");
     click(dialog().getByRole("button", { name: "Promote to production" }));
     expect((await dialog().findByRole("alert")).textContent).toContain("staging is not healthy");
     expect(screen.queryByText("In progress")).toBeNull();
     // The button works again for another try.
     expect((dialog().getByRole("button", { name: "Promote to production" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("shows what staging runs now, not what the page showed when it loaded", async () => {
+    const w = world({ stagingNow: "9c1e2faaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" });
+    await openService(w);
+    click(await screen.findByRole("button", { name: PROMOTE }));
+    expect(await dialog().findByText("ghcr.io/showmino/payments:9c1e2fa")).toBeTruthy();
+    expect(dialog().getByRole("status").textContent).toContain("it now runs 9c1e2fa, not 18b1232");
   });
 
   it("does nothing on Escape or Cancel, and gives the focus back", async () => {
@@ -312,6 +337,15 @@ describe("deploy and roll back", () => {
     fireEvent.change(pick, { target: { value: "c1" } });
     click(dialog().getByRole("button", { name: "Roll back production" }));
     await waitFor(() => expect(w.calls.rollback).toMatchObject([{ name: "deployments/payments/production", to: "c1" }]));
+  });
+
+  it("names the deploy it goes back to, even when the writer takes the first offer", async () => {
+    const w = world({ production: Deployment_Health.HEALTHY });
+    await openService(w);
+    click(await screen.findByRole("button", { name: "Roll back production" }));
+    await dialog().findByLabelText("Go back to");
+    click(dialog().getByRole("button", { name: "Roll back production" }));
+    await waitFor(() => expect(w.calls.rollback).toMatchObject([{ to: "c2" }]));
   });
 
   it("says so when there is nothing to go back to", async () => {
@@ -388,6 +422,24 @@ describe("operations", () => {
     expect(w.calls.cancel).toMatchObject([{ name: "operations/op_aaaaaaaaaaaa" }]);
     expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
   });
+
+  it("watches again when the connection drops, and still sees the end", async () => {
+    const w = world({ dropWatch: 1 });
+    nav.params = { id: "op_aaaaaaaaaaaa" };
+    renderWithApi(<OperationPage />, forge(w));
+    expect(await screen.findByText(/Connecting to the live view again/)).toBeTruthy();
+    await waitFor(() => expect(w.calls.watch).toHaveLength(2), { timeout: 3000 });
+    expect(await screen.findByText("Waiting for the rollout: 1 of 2 pods ready")).toBeTruthy();
+    expect(screen.queryByText(/Connecting to the live view again/)).toBeNull();
+    await waitFor(
+      () => {
+        w.finish();
+        expect(screen.getByText("Succeeded")).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
 });
 
 describe("create a service", () => {
@@ -398,7 +450,10 @@ describe("create a service", () => {
     fireEvent.change(screen.getByLabelText("Team"), { target: { value: " finance " } });
     // The owner starts as the person logged in; the template's defaults are filled in.
     expect((screen.getByLabelText("Owners") as HTMLInputElement).value).toBe("ana@example.com");
-    expect((screen.getByLabelText("port (optional)") as HTMLInputElement).value).toBe("3000");
+    // A default is named, not filled in: left empty, the template applies it.
+    expect((screen.getByLabelText("port (optional)") as HTMLInputElement).value).toBe("");
+    expect(screen.getByText("3000").closest("span")!.parentElement!.textContent).toContain("Left empty, it is 3000.");
+    expect((screen.getByLabelText("region") as HTMLSelectElement).value).toBe("eu");
     fireEvent.change(screen.getByLabelText("port (optional)"), { target: { value: "8080" } });
     click(screen.getByLabelText(/metrics/));
     click(screen.getByRole("button", { name: "Create service" }));
@@ -412,8 +467,47 @@ describe("create a service", () => {
       template: "templates/nextjs",
       ownerTeam: "finance",
       owners: ["ana@example.com"],
-      parameters: { port: "8080", region: "eu", metrics: "true" },
     });
+    // Only what the writer set, plus the required choice. The module default
+    // refers to the repo and must be left for the API to fill in.
+    expect((w.calls.create[0] as { parameters: object }).parameters).toEqual({ port: "8080", region: "eu", metrics: "true" });
+  });
+
+  it("sends no defaults back when the writer changes nothing", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    fireEvent.change(await screen.findByLabelText("Service name"), { target: { value: "ledger" } });
+    click(screen.getByRole("button", { name: "Create service" }));
+    await screen.findByRole("heading", { name: "ledger was created" });
+    expect((w.calls.create[0] as { parameters: object }).parameters).toEqual({ region: "eu" });
+  });
+
+  it("asks again with the same key when the connection drops, so there is one create", async () => {
+    const w = world({ dropCreate: 1 });
+    renderWithApi(<CreateService />, forge(w));
+    fireEvent.change(await screen.findByLabelText("Service name"), { target: { value: "ledger" } });
+    click(screen.getByRole("button", { name: "Create service" }));
+    expect(await screen.findByRole("heading", { name: "ledger was created" })).toBeTruthy();
+    const keys = (w.calls.create as { requestId: string }[]).map((c) => c.requestId);
+    expect(keys).toHaveLength(2);
+    expect(keys[0]).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(keys[1]).toBe(keys[0]);
+  });
+
+  it("keeps the key when Forge cannot be reached at all, and takes a new one after a definite answer", async () => {
+    const w = world({ dropCreate: 2 });
+    renderWithApi(<CreateService />, forge(w));
+    fireEvent.change(await screen.findByLabelText("Service name"), { target: { value: "taken" } });
+    click(screen.getByRole("button", { name: "Create service" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("it does not start a second one");
+    // The writer presses again: the same create, and this time the API answers (a failure).
+    click(screen.getByRole("button", { name: "Create service" }));
+    await screen.findByText(/already exists/);
+    click(screen.getByRole("button", { name: "Create service" }));
+    await waitFor(() => expect(w.calls.create).toHaveLength(4));
+    const keys = (w.calls.create as { requestId: string }[]).map((c) => c.requestId);
+    expect(new Set(keys.slice(0, 3)).size).toBe(1);
+    expect(keys[3]).not.toBe(keys[0]);
   });
 
   it("refuses a bad name before asking the API", async () => {

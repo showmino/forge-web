@@ -54,6 +54,8 @@ export function NameLink({ className = "", ...props }: ComponentProps<typeof Lin
 
 // Addr is an address outside the console: it opens in a new tab.
 export function Addr({ href, className = "" }: { href: string; className?: string }) {
+  // Anything that is not a web address is shown as text, never as something to click.
+  if (!/^https?:\/\//i.test(href)) return <span className={`break-all font-mono text-[12.5px] ${className}`}>{href}</span>;
   return (
     <a
       href={href}

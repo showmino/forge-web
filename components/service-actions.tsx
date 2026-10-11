@@ -91,6 +91,16 @@ export function DeployDialog({ id, onClose, onStarted }: Common) {
 
 export function PromoteDialog({ id, staging, onClose, onStarted }: Common & { staging: Deployment | undefined }) {
   const api = useApi();
+  // The page may be old, and CI deploys to staging on every push: ask the API
+  // now what a promote would put into production, and confirm that.
+  const check = useQuery({
+    queryKey: ["promote-check", id],
+    queryFn: () => api.deploys.promoteDeploy({ service: `services/${id}`, validateOnly: true }).then((r) => r.deployment),
+    staleTime: 0,
+    gcTime: 0,
+  });
+  const next = check.data;
+  const moved = !!next?.commit && !!staging?.commit && next.commit !== staging.commit;
   const action = useAction(
     () => api.deploys.promoteDeploy({ service: `services/${id}` }),
     (res) => onStarted(res.operation?.name),
@@ -99,17 +109,31 @@ export function PromoteDialog({ id, staging, onClose, onStarted }: Common & { st
     <Dialog title={`Promote ${id} to production?`} onClose={onClose}>
       <form onSubmit={action.run} className="flex flex-col gap-4">
         <p>Production will run the build that staging runs now.</p>
-        <FactList
-          items={[
-            ["Commit", code(staging?.commit ? shortCommit(staging.commit) : "–")],
-            ["Image", code(staging?.image || "–")],
-            ["Staging", `${deploymentStatus(staging).word}, deployed ${when(staging?.deployTime)}`],
-          ]}
-        />
+        {check.isPending ? (
+          <Loading what="what staging runs now" />
+        ) : check.error ? (
+          <ErrorNote error={check.error} />
+        ) : (
+          <>
+            <FactList
+              items={[
+                ["Commit", code(next?.commit ? shortCommit(next.commit) : "–")],
+                ["Image", code(next?.image || "–")],
+                ["Staging", `${deploymentStatus(staging).word}, deployed ${when(staging?.deployTime)}`],
+              ]}
+            />
+            {moved ? (
+              <p role="status" className="rounded-md bg-warn-bg px-3 py-2 text-[13.5px] text-warn-fg">
+                Staging has moved on since this page loaded: it now runs {shortCommit(next.commit)}, not{" "}
+                {shortCommit(staging.commit)}.
+              </p>
+            ) : null}
+          </>
+        )}
         {action.error ? <ErrorNote error={action.error} /> : null}
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
-          <Button kind="primary" type="submit" disabled={action.busy}>
+          <Button kind="primary" type="submit" disabled={action.busy || !next}>
             Promote to production
           </Button>
         </DialogActions>
@@ -127,12 +151,13 @@ export function RollbackDialog({ id, env, onClose, onStarted }: Common & { env: 
     staleTime: 0,
   });
   const [to, setTo] = useState("");
-  const action = useAction(
-    () => api.deploys.rollbackDeploy({ name, to }),
-    (res) => onStarted(res.operation?.name),
-  );
   // The newest record is what runs now; anything older can be restored.
   const earlier = (history.data ?? []).slice(1);
+  const action = useAction(
+    // "The one before the current" is named here, so what was shown is what is restored.
+    () => api.deploys.rollbackDeploy({ name, to: to || earlier[0]?.deployCommit || "" }),
+    (res) => onStarted(res.operation?.name),
+  );
   return (
     <Dialog title={`Roll back ${id} in ${env}?`} onClose={onClose}>
       <form onSubmit={action.run} className="flex flex-col gap-4">

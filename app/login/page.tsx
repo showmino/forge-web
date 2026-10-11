@@ -25,6 +25,13 @@ export default function Login() {
     if (query.get("error") === "refused") setError(new Error(REFUSED));
   }, [router]);
 
+  // The browser may bring this page back as it was left (Back from the login service).
+  useEffect(() => {
+    const reset = () => setBusy(false);
+    window.addEventListener("pageshow", reset);
+    return () => window.removeEventListener("pageshow", reset);
+  }, []);
+
   function signIn() {
     setBusy(true);
     setError(null);

@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useApi } from "@/components/providers";
 import { listAllServices } from "@/lib/api";
 import { clearSession, loadSession, type Session } from "@/lib/auth/session";
@@ -73,36 +73,69 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/";
   const [session, setSession] = useState<Session | null>(null);
   const [navOpen, setNavOpen] = useState(false);
+  const rail = useRef<HTMLElement>(null);
+  const menu = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const s = loadSession();
     if (!s) {
+      // The login has ended: show nothing more of the page.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSession(null);
       const here = window.location.pathname + window.location.search;
       router.replace("/login?return=" + encodeURIComponent(here));
       return;
     }
     // The session lives in the browser only, so it is read after the page
     // mounts. Keep the same object for the same login, so nothing re-renders.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSession((prev) => (prev?.token === s.token ? prev : s));
     // Going to another page closes the rail on a narrow screen.
     setNavOpen(false);
   }, [router, pathname]);
 
+  // The open rail (narrow screens only) takes the focus, and Escape or the
+  // scrim closes it and gives the focus back to the menu button.
+  useEffect(() => {
+    if (!navOpen) return;
+    rail.current?.querySelector<HTMLElement>("a, button")?.focus();
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== "Escape") return;
+      setNavOpen(false);
+      menu.current?.focus();
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [navOpen]);
+
+  function closeNav() {
+    setNavOpen(false);
+    menu.current?.focus();
+  }
+
   if (!session) return null;
   return (
     <div className="grid min-h-screen grid-cols-[minmax(0,1fr)] rail:grid-cols-[232px_minmax(0,1fr)]">
-      {navOpen ? <div className="fixed inset-0 z-[35] bg-scrim rail:hidden" onClick={() => setNavOpen(false)} /> : null}
-      <Rail pathname={pathname} session={session} open={navOpen} />
+      {navOpen ? <div className="fixed inset-0 z-[35] bg-scrim rail:hidden" onClick={closeNav} /> : null}
+      <Rail pathname={pathname} session={session} open={navOpen} railRef={rail} />
       <div className="flex min-w-0 flex-col">
-        <TopBar onMenu={() => setNavOpen(true)} />
+        <TopBar onMenu={() => setNavOpen(true)} open={navOpen} menuRef={menu} />
         <main className="flex w-full max-w-[1320px] flex-col gap-8 px-4 pb-12 pt-6 rail:px-8 rail:pt-8">{children}</main>
       </div>
     </div>
   );
 }
 
-function Rail({ pathname, session, open }: { pathname: string; session: Session; open: boolean }) {
+function Rail({
+  pathname,
+  session,
+  open,
+  railRef,
+}: {
+  pathname: string;
+  session: Session;
+  open: boolean;
+  railRef: RefObject<HTMLElement | null>;
+}) {
   const api = useApi();
   const router = useRouter();
   const canWrite = useCanWrite();
@@ -113,8 +146,11 @@ function Rail({ pathname, session, open }: { pathname: string; session: Session;
 
   return (
     <aside
+      id="rail"
+      ref={railRef}
       aria-label="Primary"
-      className={`fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col gap-4 bg-rail-bg px-3 py-4 text-rail-fg transition-transform duration-200 motion-reduce:transition-none rail:sticky rail:top-0 rail:h-screen rail:w-auto rail:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}
+      // Closed on a narrow screen it is hidden, not just moved away: nothing in it can take the focus.
+      className={`fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col gap-4 bg-rail-bg px-3 py-4 text-rail-fg transition-transform duration-200 motion-reduce:transition-none rail:visible rail:sticky rail:top-0 rail:h-screen rail:w-auto rail:translate-x-0 ${open ? "visible translate-x-0" : "invisible -translate-x-full"}`}
     >
       <Link href="/" aria-label="Forge home" className="flex items-center gap-2.5 px-2 pb-1.5 pt-0.5 no-underline">
         <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
@@ -210,10 +246,18 @@ function toggleTheme() {
 const iconButton =
   "inline-grid size-8 cursor-pointer place-items-center rounded-md border border-transparent text-fg-2 hover:bg-surface-2 hover:text-fg";
 
-function TopBar({ onMenu }: { onMenu: () => void }) {
+function TopBar({ onMenu, open, menuRef }: { onMenu: () => void; open: boolean; menuRef: RefObject<HTMLButtonElement | null> }) {
   return (
     <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-bg/90 px-4 py-2.5 backdrop-blur-md rail:px-8">
-      <button type="button" onClick={onMenu} aria-label="Open navigation" className={`${iconButton} rail:hidden`}>
+      <button
+        ref={menuRef}
+        type="button"
+        onClick={onMenu}
+        aria-label="Open navigation"
+        aria-expanded={open}
+        aria-controls="rail"
+        className={`${iconButton} rail:hidden`}
+      >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
           <path d="M4 7h16M4 12h16M4 17h16" />
         </svg>

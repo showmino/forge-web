@@ -38,6 +38,13 @@ const row = "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-
 // manages previews from here.
 export default function ServicePage() {
   const { name: id } = useParams<{ name: string }>();
+  // Next reuses this page from one service to the next. The key gives each
+  // service its own state: an open dialog or a started operation never
+  // carries over to another service.
+  return <ServiceView key={id} id={id} />;
+}
+
+function ServiceView({ id }: { id: string }) {
   const name = `services/${id}`;
   const api = useApi();
   const queries = useQueryClient();

@@ -32,7 +32,11 @@ export function Dialog({ title, onClose, children }: { title: string; onClose: (
       if (items.length === 0) return;
       const first = items[0];
       const last = items[items.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
+      // Focus can fall outside the list (a button that went disabled while busy): bring it back.
+      if (!items.includes(document.activeElement as HTMLElement)) {
+        e.preventDefault();
+        first.focus();
+      } else if (e.shiftKey && document.activeElement === first) {
         e.preventDefault();
         last.focus();
       } else if (!e.shiftKey && document.activeElement === last) {
@@ -48,7 +52,7 @@ export function Dialog({ title, onClose, children }: { title: string; onClose: (
   }, []);
 
   return (
-    <div className="fixed inset-0 z-20 grid place-items-center overflow-y-auto bg-scrim p-4">
+    <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-scrim p-4">
       <div
         ref={panel}
         role="dialog"
