@@ -12,9 +12,8 @@ import { Field, inputClass } from "@/components/ui/field";
 import { ErrorNote, Loading, PageHeader, Panel, Section } from "@/components/ui/layout";
 import { CreateStep_State, type Service } from "@/gen/forge/v1/catalog_pb";
 import { TemplateParameter_Type, type TemplateParameter } from "@/gen/forge/v1/template_pb";
-import { serviceId, templateId } from "@/lib/api";
+import { serviceId, teamId, templateId } from "@/lib/api";
 import { randomString } from "@/lib/auth/pkce";
-import { loadSession } from "@/lib/auth/session";
 
 const SERVICE_NAME = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 
@@ -129,8 +128,12 @@ export default function CreateService() {
     const t = typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("template");
     return t ? `templates/${t}` : "";
   });
+  // The owner of a service is a team of the GitHub organization, picked from the teams that exist.
+  const teams = useQuery({
+    queryKey: ["teams"],
+    queryFn: () => api.teams.listTeams({}).then((r) => r.teams),
+  });
   const [team, setTeam] = useState("");
-  const [owners, setOwners] = useState(() => loadSession()?.email ?? "");
   const [params, setParams] = useState<Record<string, string>>({});
   const [checked, setChecked] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -144,15 +147,11 @@ export default function CreateService() {
   const template = templates.data?.find((t) => t.name === picked) ?? templates.data?.[0];
   const own = (p: TemplateParameter) => params[`${template?.name}/${p.name}`];
   const badName = checked && !SERVICE_NAME.test(name);
-  const ownerList = owners
-    .split(",")
-    .map((o) => o.trim())
-    .filter(Boolean);
+  const badTeam = checked && !team.trim();
   // The command that does the same, flag by flag, as the form is filled in.
   const flags: [string, string][] = [
     ["--template", template ? templateId(template.name) : "<template>"],
     ["--team", team.trim() || "<team>"],
-    ...ownerList.map((o): [string, string] => ["--owner", o]),
     ...(template?.parameters ?? []).flatMap((p): [string, string][] => {
       const value = sent(p, own(p));
       return value === undefined ? [] : [["--set", `${p.name}=${value}`]];
@@ -173,7 +172,6 @@ export default function CreateService() {
       serviceId: name,
       template: template.name,
       ownerTeam: team.trim(),
-      owners: ownerList,
       parameters,
     };
     const signature = JSON.stringify(request);
@@ -239,7 +237,7 @@ export default function CreateService() {
   function submit(e: FormEvent) {
     e.preventDefault();
     setChecked(true);
-    if (SERVICE_NAME.test(name) && !busy) void create();
+    if (SERVICE_NAME.test(name) && team.trim() && !busy) void create();
   }
 
   if (outcome?.service) {
@@ -303,12 +301,57 @@ export default function CreateService() {
                 ))}
               </select>
             </Field>
-            <Field id="service-team" label="Team" hint="The team that owns the service.">
-              <input id="service-team" className={inputClass} value={team} onChange={(e) => setTeam(e.target.value)} placeholder="platform-engineering" />
-            </Field>
-            <Field id="service-owners" label="Owners" hint="Emails or handles, separated by commas.">
-              <input id="service-owners" className={inputClass} value={owners} onChange={(e) => setOwners(e.target.value)} />
-            </Field>
+            {teams.error ? (
+              // The list could not be read (the API says why): the team can still be typed, as on the CLI.
+              <>
+                <ErrorNote error={teams.error} />
+                <Field
+                  id="service-team"
+                  label="Owner"
+                  hint="The GitHub team that owns the service, by its name on GitHub."
+                  error={badTeam ? "Name the team that owns the service." : undefined}
+                >
+                  <input
+                    id="service-team"
+                    className={`${inputClass} font-mono`}
+                    value={team}
+                    onChange={(e) => setTeam(e.target.value)}
+                    aria-invalid={badTeam}
+                    aria-describedby="service-team-note"
+                    placeholder="platform-engineering"
+                  />
+                </Field>
+              </>
+            ) : (
+              <Field
+                id="service-team"
+                label="Owner"
+                hint="The GitHub team that owns the service."
+                error={badTeam ? "Choose the team that owns the service." : undefined}
+              >
+                <select
+                  id="service-team"
+                  className={inputClass}
+                  value={team}
+                  onChange={(e) => setTeam(e.target.value)}
+                  aria-invalid={badTeam}
+                  aria-describedby="service-team-note"
+                  disabled={teams.isPending}
+                >
+                  <option value="" disabled>
+                    {teams.isPending ? "Loading the teams from GitHub" : "Choose a team"}
+                  </option>
+                  {(teams.data ?? []).map((t) => {
+                    const slug = teamId(t.name);
+                    return (
+                      <option key={t.name} value={slug}>
+                        {t.displayName && t.displayName !== slug ? `${slug} (${t.displayName})` : slug}
+                      </option>
+                    );
+                  })}
+                </select>
+              </Field>
+            )}
           </div>
 
           {template && template.parameters.length > 0 ? (

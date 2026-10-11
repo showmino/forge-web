@@ -6,6 +6,7 @@ import { ServiceCatalogService } from "@/gen/forge/v1/catalog_pb";
 import { DeployService } from "@/gen/forge/v1/deploy_pb";
 import { EnvironmentService } from "@/gen/forge/v1/environment_pb";
 import { OperationService } from "@/gen/forge/v1/operation_pb";
+import { TeamService } from "@/gen/forge/v1/team_pb";
 import { TemplateService } from "@/gen/forge/v1/template_pb";
 import { loadSession } from "@/lib/auth/session";
 import { apiUrl } from "@/lib/config";
@@ -19,6 +20,7 @@ export type Api = {
   deploys: Client<typeof DeployService>;
   environments: Client<typeof EnvironmentService>;
   templates: Client<typeof TemplateService>;
+  teams: Client<typeof TeamService>;
   audit: Client<typeof AuditService>;
   operations: Client<typeof OperationService>;
 };
@@ -40,6 +42,7 @@ export function makeApi(transport: Transport): Api {
     deploys: createClient(DeployService, transport),
     environments: createClient(EnvironmentService, transport),
     templates: createClient(TemplateService, transport),
+    teams: createClient(TeamService, transport),
     audit: createClient(AuditService, transport),
     operations: createClient(OperationService, transport),
   };
@@ -75,6 +78,9 @@ export function serviceId(name: string): string {
 }
 export function templateId(name: string): string {
   return name.replace(/^templates\//, "");
+}
+export function teamId(name: string): string {
+  return name.replace(/^teams\//, "");
 }
 export function environmentId(name: string): string {
   return name.replace(/^environments\//, "");

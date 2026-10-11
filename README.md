@@ -18,6 +18,9 @@ decides what they may see and do. The server only serves the pages and
   service, as the public client forge-api names in `GetServerInfo`
   (`lib/auth`). The ID token lives in the tab's `sessionStorage` for an hour;
   there is no refresh token.
+- **Owner:** a service is owned by a team of the GitHub organization. Create
+  picks it from the teams the API lists from GitHub (`TeamService`); if the
+  list cannot be read it says why and lets the team be typed.
 - **API client:** `gen/` is generated from the protos in `proto/`, a copy from
   `showmino/forge` at the commit in `proto/FORGE_COMMIT`. After an API change:
   `sh scripts/sync-proto.sh ../forge`.
