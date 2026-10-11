@@ -8,6 +8,7 @@ import { CreateStep_State, ServiceCatalogService } from "@/gen/forge/v1/catalog_
 import { Deployment_Health, Deployment_SyncStatus, DeployService } from "@/gen/forge/v1/deploy_pb";
 import { Environment_State, EnvironmentService } from "@/gen/forge/v1/environment_pb";
 import { OperationService } from "@/gen/forge/v1/operation_pb";
+import { TeamService } from "@/gen/forge/v1/team_pb";
 import { TemplateParameter_Type, TemplateService } from "@/gen/forge/v1/template_pb";
 import { renderWithApi, signIn } from "@/test/helpers";
 import CreateService from "./(app)/create/page";
@@ -41,10 +42,12 @@ type World = {
   // How many times a stream drops before it works.
   dropCreate: number;
   dropWatch: number;
+  // The App may not read the organization's teams.
+  teamsDenied: boolean;
 };
 
 function world(over: Partial<World> = {}): World {
-  return { writer: true, production: Deployment_Health.MISSING, calls: {}, fail: {}, finish: () => {}, history: 3, stagingNow: COMMIT, dropCreate: 0, dropWatch: 0, ...over };
+  return { writer: true, production: Deployment_Health.MISSING, calls: {}, fail: {}, finish: () => {}, history: 3, stagingNow: COMMIT, dropCreate: 0, dropWatch: 0, teamsDenied: false, ...over };
 }
 
 const op = (id: string, kind: string, target: string, extra: object = {}) => ({
@@ -146,6 +149,19 @@ function forge(w: World) {
       },
     });
     router.service(AuditService, { listAuditEvents: () => ({}) });
+    router.service(TeamService, {
+      listTeams: () => {
+        if (w.teamsDenied) {
+          throw new ConnectError('the Forge GitHub App may not read the organization\'s teams: grant it the organization permission "Members: read"', Code.FailedPrecondition);
+        }
+        return {
+          teams: [
+            { name: "teams/finance", displayName: "Finance", description: "Ledger and payouts" },
+            { name: "teams/platform-engineering", displayName: "Platform Engineering" },
+          ],
+        };
+      },
+    });
     router.service(TemplateService, {
       listTemplates: () => ({
         templates: [
@@ -202,6 +218,13 @@ function forge(w: World) {
 }
 
 const dialog = () => within(screen.getByRole("dialog"));
+
+// fillCreate gives the create form its two required answers: a name, and the owner picked from GitHub's teams.
+async function fillCreate(name: string, team = "finance") {
+  fireEvent.change(await screen.findByLabelText("Service name"), { target: { value: name } });
+  await screen.findByRole("option", { name: /^finance/ });
+  fireEvent.change(screen.getByLabelText("Owner"), { target: { value: team } });
+}
 // The page's own promote button names the commit staging runs; the dialog's says where it goes.
 const PROMOTE = "Promote 18b1232 to production";
 const click = (el: HTMLElement) => fireEvent.click(el);
@@ -454,10 +477,12 @@ describe("create a service", () => {
   it("asks for what the template asks for, shows each step and ends with the new service", async () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
-    fireEvent.change(await screen.findByLabelText("Service name"), { target: { value: "ledger" } });
-    fireEvent.change(screen.getByLabelText("Team"), { target: { value: " finance " } });
-    // The owner starts as the person logged in; the template's defaults are filled in.
-    expect((screen.getByLabelText("Owners") as HTMLInputElement).value).toBe("ana@example.com");
+    // The owner is a GitHub team, picked from the teams that exist; nobody types it.
+    const owner = (await screen.findByLabelText("Owner")) as HTMLSelectElement;
+    await screen.findByRole("option", { name: "finance (Finance)" });
+    expect([...owner.options].map((o) => o.value)).toEqual(["", "finance", "platform-engineering"]);
+    expect(screen.queryByLabelText("Owners")).toBeNull();
+    await fillCreate("ledger");
     // A default is named, not filled in: left empty, the template applies it.
     expect((screen.getByLabelText("port (optional)") as HTMLInputElement).value).toBe("");
     expect(screen.getByText("3000").closest("span")!.parentElement!.textContent).toContain("Left empty, it is 3000.");
@@ -470,7 +495,8 @@ describe("create a service", () => {
     // The same create as a command, flag by flag, as the form stands.
     const command = screen.getByLabelText("The same from the terminal").textContent!;
     expect(command).toContain("forge create ledger");
-    for (const flag of ["--template nextjs", "--team finance", "--owner ana@example.com", "--set port=8080", "--set region=eu", "--set metrics=true"]) {
+    expect(command).not.toContain("--owner");
+    for (const flag of ["--template nextjs", "--team finance", "--set port=8080", "--set region=eu", "--set metrics=true"]) {
       expect(command).toContain(flag);
     }
     expect(command).not.toContain("module=");
@@ -484,7 +510,7 @@ describe("create a service", () => {
       serviceId: "ledger",
       template: "templates/nextjs",
       ownerTeam: "finance",
-      owners: ["ana@example.com"],
+      owners: [],
     });
     // Only what the writer set, plus the required choice. The module default
     // refers to the repo and must be left for the API to fill in.
@@ -494,7 +520,7 @@ describe("create a service", () => {
   it("sends no defaults back when the writer changes nothing", async () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
-    fireEvent.change(await screen.findByLabelText("Service name"), { target: { value: "ledger" } });
+    await fillCreate("ledger");
     click(screen.getByRole("button", { name: "Create service" }));
     await screen.findByRole("heading", { name: "ledger was created" });
     expect((w.calls.create[0] as { parameters: object }).parameters).toEqual({ region: "eu" });
@@ -503,7 +529,7 @@ describe("create a service", () => {
   it("asks again with the same key when the connection drops, so there is one create", async () => {
     const w = world({ dropCreate: 1 });
     renderWithApi(<CreateService />, forge(w));
-    fireEvent.change(await screen.findByLabelText("Service name"), { target: { value: "ledger" } });
+    await fillCreate("ledger");
     click(screen.getByRole("button", { name: "Create service" }));
     expect(await screen.findByRole("heading", { name: "ledger was created" })).toBeTruthy();
     const keys = (w.calls.create as { requestId: string }[]).map((c) => c.requestId);
@@ -515,7 +541,7 @@ describe("create a service", () => {
   it("keeps the key when Forge cannot be reached at all, and takes a new one after a definite answer", async () => {
     const w = world({ dropCreate: 2 });
     renderWithApi(<CreateService />, forge(w));
-    fireEvent.change(await screen.findByLabelText("Service name"), { target: { value: "taken" } });
+    await fillCreate("taken");
     click(screen.getByRole("button", { name: "Create service" }));
     expect((await screen.findByRole("alert")).textContent).toContain("it does not start a second one");
     // The writer presses again: the same create, and this time the API answers (a failure).
@@ -537,10 +563,31 @@ describe("create a service", () => {
     window.history.replaceState(null, "", "/");
   });
 
+  it("asks for the owner before asking the API", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    fireEvent.change(await screen.findByLabelText("Service name"), { target: { value: "ledger" } });
+    await screen.findByRole("option", { name: /^finance/ });
+    click(screen.getByRole("button", { name: "Create service" }));
+    expect(screen.getByRole("alert").textContent).toContain("Choose the team that owns the service.");
+    expect(w.calls.create).toBeUndefined();
+  });
+
+  it("says why the teams cannot be listed, and still lets the owner be typed", async () => {
+    const w = world({ teamsDenied: true });
+    renderWithApi(<CreateService />, forge(w));
+    expect((await screen.findByRole("alert")).textContent).toContain('grant it the organization permission "Members: read"');
+    fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "ledger" } });
+    fireEvent.change(screen.getByLabelText("Owner"), { target: { value: " finance " } });
+    click(screen.getByRole("button", { name: "Create service" }));
+    await screen.findByRole("heading", { name: "ledger was created" });
+    expect(w.calls.create[0]).toMatchObject({ serviceId: "ledger", ownerTeam: "finance" });
+  });
+
   it("refuses a bad name before asking the API", async () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
-    fireEvent.change(await screen.findByLabelText("Service name"), { target: { value: "My Service" } });
+    await fillCreate("My Service");
     click(screen.getByRole("button", { name: "Create service" }));
     expect(screen.getByRole("alert").textContent).toContain("lowercase letters");
     expect(w.calls.create).toBeUndefined();
@@ -549,7 +596,7 @@ describe("create a service", () => {
   it("says what failed and whether anything was left behind", async () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
-    fireEvent.change(await screen.findByLabelText("Service name"), { target: { value: "taken" } });
+    await fillCreate("taken");
     click(screen.getByRole("button", { name: "Create service" }));
     const alert = await screen.findByText(/already exists/);
     expect(alert.textContent).toContain("Nothing was left behind");

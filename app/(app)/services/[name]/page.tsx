@@ -328,8 +328,8 @@ function ServiceView({ id }: { id: string }) {
             <div className="px-4 pb-4">
               <Facts
                 items={[
-                  ["Team", s.ownerTeam || "–"],
-                  ["Owners", s.owners.length ? s.owners.join(", ") : "–"],
+                  ["Owner", s.ownerTeam ? <span key="o" className="font-mono text-[13px]">{s.ownerTeam}</span> : "–"],
+                  ...(s.owners.length ? ([["Contacts", s.owners.join(", ")]] as [string, string][]) : []),
                   ["Lifecycle", <Life key="l" lifecycle={s.lifecycle} />],
                   ["Repository", s.repoUrl ? <Addr key="r" href={s.repoUrl} /> : "–"],
                   [
