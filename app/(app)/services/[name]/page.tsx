@@ -113,7 +113,7 @@ function ServiceView({ id }: { id: string }) {
     setOpen(null);
     if (!operation) {
       void queries.invalidateQueries({ queryKey: ["services"] });
-      router.replace("/");
+      router.replace("/services");
       return;
     }
     setDeleting(operation);
@@ -127,7 +127,7 @@ function ServiceView({ id }: { id: string }) {
           title={id}
           crumbs={
             <Crumbs>
-              <Link href="/">Services</Link>
+              <Link href="/services">Services</Link>
             </Crumbs>
           }
           lead={
@@ -151,7 +151,7 @@ function ServiceView({ id }: { id: string }) {
           />
         ) : null}
         <p>
-          <TextLink href="/">Back to the services</TextLink>
+          <TextLink href="/services">Back to the services</TextLink>
         </p>
       </>
     );
@@ -178,7 +178,7 @@ function ServiceView({ id }: { id: string }) {
         title={id}
         crumbs={
           <Crumbs>
-            <Link href="/">Services</Link>
+            <Link href="/services">Services</Link>
             <span>/</span>
             <span>{s.ownerTeam || "No team"}</span>
           </Crumbs>

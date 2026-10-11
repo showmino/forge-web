@@ -20,6 +20,7 @@ const icon = {
       <rect x="13.5" y="13.5" width="7" height="7" rx="1" />
     </>
   ),
+  overview: <path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
   templates: (
     <>
       <path d="M12 3l9 5-9 5-9-5z" />
@@ -42,14 +43,15 @@ const icon = {
 
 type Item = { href: string; label: string; icon: keyof typeof icon; match: (p: string) => boolean };
 const groups: { label: string; items: Item[] }[] = [
+  { label: "", items: [{ href: "/", label: "Overview", icon: "overview", match: (p) => p === "/" }] },
   {
     label: "Build",
     items: [
       {
-        href: "/",
+        href: "/services",
         label: "Services",
         icon: "services",
-        match: (p) => p === "/" || p.startsWith("/services") || p.startsWith("/create"),
+        match: (p) => p.startsWith("/services") || p.startsWith("/create"),
       },
       { href: "/templates", label: "Templates", icon: "templates", match: (p) => p.startsWith("/templates") },
     ],
@@ -173,8 +175,10 @@ function Rail({
       </Link>
       <nav aria-label="Main" className="flex flex-col gap-0.5">
         {groups.map((group) => (
-          <div key={group.label} className="flex flex-col gap-0.5">
-            <div className="px-2.5 pb-1.5 pt-3 text-[11px] uppercase tracking-[0.08em] text-rail-fg-2">{group.label}</div>
+          <div key={group.label || "home"} className="flex flex-col gap-0.5">
+            {group.label ? (
+              <div className="px-2.5 pb-1.5 pt-3 text-[11px] uppercase tracking-[0.08em] text-rail-fg-2">{group.label}</div>
+            ) : null}
             {group.items.map((item) => {
               const active = item.match(pathname);
               return (

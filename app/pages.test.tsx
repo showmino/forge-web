@@ -12,7 +12,7 @@ import { idToken, renderWithApi, signIn } from "@/test/helpers";
 import { saveForgeSession } from "@/lib/auth/session";
 import { AppShell } from "@/components/app-shell";
 import AuditLog from "./(app)/audit/page";
-import Catalog from "./(app)/page";
+import Catalog from "./(app)/services/page";
 import ServicePage from "./(app)/services/[name]/page";
 import TemplatePage from "./(app)/templates/[name]/page";
 import Templates from "./(app)/templates/page";
@@ -321,8 +321,9 @@ describe("the frame around every page", () => {
     expect(await screen.findByText("content")).toBeTruthy();
     expect(screen.getByText("ana@example.com")).toBeTruthy();
     expect(screen.getByText("Reader")).toBeTruthy();
-    // The rail counts the services beside the link.
-    expect((await screen.findByRole("link", { name: "Services 2" })).getAttribute("aria-current")).toBe("page");
+    // The rail counts the services beside the link, and marks where the reader is.
+    expect((await screen.findByRole("link", { name: "Services 2" })).getAttribute("aria-current")).toBeNull();
+    expect(screen.getByRole("link", { name: "Overview" }).getAttribute("aria-current")).toBe("page");
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
     expect(sessionStorage.getItem("forge.session")).toBeNull();
     expect(nav.replace).toHaveBeenCalledWith("/login");

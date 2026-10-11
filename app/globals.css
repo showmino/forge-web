@@ -272,12 +272,26 @@
     opacity: 0.35;
   }
 }
+/* The stage a deploy is at glows like metal in the fire. */
+.heating {
+  background: linear-gradient(90deg, var(--ember), var(--ember-hot), var(--ember));
+  background-size: 200% 100%;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ember) 18%, transparent);
+}
+@keyframes heat {
+  to {
+    background-position: -200% 0;
+  }
+}
 @keyframes turn {
   to {
     transform: rotate(360deg);
   }
 }
 @media (prefers-reduced-motion: no-preference) {
+  .heating {
+    animation: heat 1.6s linear infinite;
+  }
   .pulsing::before {
     animation: pulse 1.4s ease-in-out infinite;
   }
