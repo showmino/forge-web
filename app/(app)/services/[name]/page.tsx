@@ -3,13 +3,14 @@
 import { timestampDate } from "@bufbuild/protobuf/wkt";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCanWrite } from "@/components/app-shell";
 import { actorText } from "@/components/audit-table";
 import { OperationLog } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
 import {
+  DeleteServiceDialog,
   DeployDialog,
   DestroyDialog,
   ExtendDialog,
@@ -27,7 +28,7 @@ import { exact, shortCommit, timeUntil, when } from "@/lib/format";
 import { auditStatus, deploymentStatus, environmentStatus } from "@/lib/status";
 
 type Open =
-  | { kind: "deploy" | "promote" | "preview" }
+  | { kind: "deploy" | "promote" | "preview" | "delete" }
   | { kind: "rollback"; env: "staging" | "production" }
   | { kind: "extend" | "destroy"; environment: Environment };
 
@@ -49,8 +50,11 @@ function ServiceView({ id }: { id: string }) {
   const api = useApi();
   const queries = useQueryClient();
   const canWrite = useCanWrite();
+  const router = useRouter();
   const [open, setOpen] = useState<Open | null>(null);
   const [started, setStarted] = useState<string[]>([]);
+  // The delete of this service: its operation while it runs, "gone" once the service is no more.
+  const [deleting, setDeleting] = useState<string | "gone" | null>(null);
 
   const service = useQuery({
     queryKey: ["service", id],
@@ -98,6 +102,60 @@ function ServiceView({ id }: { id: string }) {
     refresh();
   }
   const close = () => setOpen(null);
+  function gone() {
+    setDeleting("gone");
+    void queries.invalidateQueries({ queryKey: ["services"] });
+    void queries.invalidateQueries({ queryKey: ["deployments"] });
+  }
+  // A service that ran nothing is removed at once: back to the list. One
+  // that ran something is taken down by an operation, shown here until it ends.
+  function onDeleteStarted(operation: string | undefined) {
+    setOpen(null);
+    if (!operation) {
+      void queries.invalidateQueries({ queryKey: ["services"] });
+      router.replace("/");
+      return;
+    }
+    setDeleting(operation);
+  }
+
+  if (deleting) {
+    return (
+      <>
+        <PageHeader
+          mono
+          title={id}
+          crumbs={
+            <Crumbs>
+              <Link href="/">Services</Link>
+            </Crumbs>
+          }
+          lead={
+            deleting === "gone"
+              ? "This service was deleted: everything it ran is taken down and it is out of the catalog. Its GitHub repo is kept."
+              : "This service is being deleted. If it fails, the service stays in the catalog and you can delete it again."
+          }
+          cli={`forge service delete ${id}`}
+        />
+        {deleting !== "gone" ? (
+          <OperationLog
+            name={deleting}
+            onDone={(op) => {
+              if (!op.error) gone();
+              else {
+                setDeleting(null);
+                setStarted((s) => (s.includes(op.name) ? s : [op.name, ...s]));
+                refresh();
+              }
+            }}
+          />
+        ) : null}
+        <p>
+          <TextLink href="/">Back to the services</TextLink>
+        </p>
+      </>
+    );
+  }
 
   if (service.isPending) return <Loading what="the service" />;
   if (service.error) return <ErrorNote error={service.error} />;
@@ -352,10 +410,27 @@ function ServiceView({ id }: { id: string }) {
                 ]}
               />
             </div>
+            {canWrite ? (
+              <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-3">
+                <span className="text-[12.5px] text-fg-3">Removes everything it runs. The repo is kept.</span>
+                <Button kind="danger" size="sm" onClick={() => setOpen({ kind: "delete" })}>
+                  Delete service
+                </Button>
+              </div>
+            ) : null}
           </Panel>
         </div>
       </div>
 
+      {open?.kind === "delete" ? (
+        <DeleteServiceDialog
+          id={id}
+          previews={(previews.data ?? []).map((e) => environmentId(e.name))}
+          deployed={(["staging", "production"] as const).filter((env) => deployed(env))}
+          onClose={close}
+          onStarted={onDeleteStarted}
+        />
+      ) : null}
       {open?.kind === "deploy" ? <DeployDialog id={id} onClose={close} onStarted={onStarted} /> : null}
       {open?.kind === "promote" ? (
         <PromoteDialog id={id} staging={deployment("staging")} onClose={close} onStarted={onStarted} />

@@ -44,10 +44,14 @@ type World = {
   dropWatch: number;
   // The App may not read the organization's teams.
   teamsDenied: boolean;
+  // Whether the service runs anything: a delete is then an operation.
+  deleteRuns: boolean;
+  // How a watched operation ends, when not well.
+  opError?: { code: string; message: string };
 };
 
 function world(over: Partial<World> = {}): World {
-  return { writer: true, production: Deployment_Health.MISSING, calls: {}, fail: {}, finish: () => {}, history: 3, stagingNow: COMMIT, dropCreate: 0, dropWatch: 0, teamsDenied: false, ...over };
+  return { writer: true, production: Deployment_Health.MISSING, calls: {}, fail: {}, finish: () => {}, history: 3, stagingNow: COMMIT, dropCreate: 0, dropWatch: 0, teamsDenied: false, deleteRuns: true, ...over };
 }
 
 const op = (id: string, kind: string, target: string, extra: object = {}) => ({
@@ -60,6 +64,7 @@ const op = (id: string, kind: string, target: string, extra: object = {}) => ({
 });
 
 function forge(w: World) {
+  const ended = new Map<string, ReturnType<typeof op>>();
   const record = (name: string, req: unknown) => {
     (w.calls[name] ??= []).push(req);
     if (w.fail[name]) throw w.fail[name];
@@ -70,6 +75,10 @@ function forge(w: World) {
     });
     router.service(ServiceCatalogService, {
       getService: () => ({ service: { name: "services/payments", displayName: "Payments", ownerTeam: "platform-engineering" } }),
+      deleteService: (req) => {
+        record("delete", req);
+        return w.deleteRuns ? { operation: op("op_111111111111", "delete_service", "services/payments") } : {};
+      },
       async *createService(req) {
         record("create", req);
         yield { event: { case: "step" as const, value: { name: "fetch", state: CreateStep_State.STARTED } } };
@@ -191,22 +200,25 @@ function forge(w: World) {
       },
       async *watchOperation(req) {
         record("watch", req);
-        const kind = req.name.endsWith("bbbbbbbbbbbb") ? "promote" : "deploy";
+        const deleting = req.name.endsWith("111111111111");
+        const kind = deleting ? "delete_service" : req.name.endsWith("bbbbbbbbbbbb") ? "promote" : "deploy";
         yield { kind: { case: "event" as const, value: { time: ago(1), step: "render", message: "Rendered the manifests" } } };
         if (w.dropWatch-- > 0) throw new ConnectError("connection reset", Code.Unavailable);
         yield { kind: { case: "event" as const, value: { time: ago(0), step: "sync", message: "Waiting for the rollout: 1 of 2 pods ready" } } };
-        await new Promise<void>((resolve) => (w.finish = resolve));
-        const cancelled = (w.calls.cancel ?? []).length > 0;
-        yield {
-          kind: {
-            case: "operation" as const,
-            value: op(req.name.replace("operations/", ""), kind, "deployments/payments/production", {
+        // As the API: watching an operation that has ended replays it and ends at once.
+        if (!ended.has(req.name)) {
+          await new Promise<void>((resolve) => (w.finish = resolve));
+          const cancelled = (w.calls.cancel ?? []).length > 0;
+          ended.set(
+            req.name,
+            op(req.name.replace("operations/", ""), kind, deleting ? "services/payments" : "deployments/payments/production", {
               done: true,
               endTime: ago(0),
-              error: cancelled ? { code: "cancelled", message: "cancelled" } : undefined,
+              error: cancelled ? { code: "cancelled", message: "cancelled" } : w.opError,
             }),
-          },
-        };
+          );
+        }
+        yield { kind: { case: "operation" as const, value: ended.get(req.name)! } };
       },
       cancelOperation: (req) => {
         record("cancel", req);
@@ -246,7 +258,7 @@ afterEach(cleanup);
 describe("who may act", () => {
   it("shows a reader no actions", async () => {
     await openService(world({ writer: false }));
-    for (const name of ["Deploy to staging", PROMOTE, "Preview env", "Roll back staging", "Extend pr-42", "Destroy pr-42"]) {
+    for (const name of ["Deploy to staging", PROMOTE, "Preview env", "Roll back staging", "Extend pr-42", "Destroy pr-42", "Delete service"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
     expect(screen.queryByText("Actions")).toBeNull();
@@ -334,6 +346,85 @@ describe("promote", () => {
     click(dialog().getByRole("button", { name: "Cancel" }));
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(w.calls.promote).toBeUndefined();
+  });
+});
+
+describe("delete a service", () => {
+  it("says what goes and what stays, asks for the name, and shows the teardown to its end", async () => {
+    const w = world();
+    await openService(w);
+    click(await screen.findByRole("button", { name: "Delete service" }));
+    expect(dialog().getByRole("heading", { name: "Delete payments?" })).toBeTruthy();
+    const text = screen.getByRole("dialog").textContent!;
+    expect(text).toContain("its staging deployment and the namespace payments-staging");
+    expect(text).not.toContain("payments-production"); // production was never deployed
+    expect(text).toContain("its preview (pr-42)");
+    expect(text).toContain("Its GitHub repo is kept.");
+
+    // The name is typed to confirm, as on the CLI: until it matches, nothing can be deleted.
+    const confirm = dialog().getByRole("button", { name: "Delete service" }) as HTMLButtonElement;
+    expect(confirm.disabled).toBe(true);
+    fireEvent.change(dialog().getByLabelText("Type payments to confirm"), { target: { value: "payment" } });
+    expect(confirm.disabled).toBe(true);
+    fireEvent.submit(confirm.closest("form")!);
+    expect(w.calls.delete).toBeUndefined();
+    fireEvent.change(dialog().getByLabelText("Type payments to confirm"), { target: { value: "payments" } });
+    expect(confirm.disabled).toBe(false);
+    click(confirm);
+
+    await waitFor(() => expect(w.calls.delete).toMatchObject([{ name: "services/payments" }]));
+    expect(await screen.findByText(/This service is being deleted/)).toBeTruthy();
+    const log = within(await screen.findByRole("region", { name: "Operation op_111111111111" }));
+    expect(await log.findByText("Rendered the manifests")).toBeTruthy();
+    // While it is being deleted the page offers nothing else to do to it.
+    expect(screen.queryByRole("button", { name: "Deploy to staging" })).toBeNull();
+
+    await waitFor(
+      () => {
+        w.finish();
+        expect(screen.getByText(/This service was deleted/)).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+    expect(screen.getByRole("link", { name: "Back to the services" }).getAttribute("href")).toBe("/");
+  });
+
+  it("goes back to the list at once when the service ran nothing", async () => {
+    const w = world({ deleteRuns: false });
+    await openService(w);
+    nav.router.replace.mockClear();
+    click(await screen.findByRole("button", { name: "Delete service" }));
+    fireEvent.change(dialog().getByLabelText("Type payments to confirm"), { target: { value: "payments" } });
+    click(dialog().getByRole("button", { name: "Delete service" }));
+    await waitFor(() => expect(nav.router.replace).toHaveBeenCalledWith("/"));
+  });
+
+  it("brings the service back, with the reason, when the delete fails half way", async () => {
+    const w = world({ opError: { code: "sync_timeout", message: "Argo CD still has the application payments-staging after 10m0s" } });
+    await openService(w);
+    click(await screen.findByRole("button", { name: "Delete service" }));
+    fireEvent.change(dialog().getByLabelText("Type payments to confirm"), { target: { value: "payments" } });
+    click(dialog().getByRole("button", { name: "Delete service" }));
+    await screen.findByText(/This service is being deleted/);
+    // It did not work: the service is still there, the log says why, and it can be deleted again.
+    await waitFor(
+      () => {
+        w.finish();
+        expect(screen.getByRole("button", { name: "Delete service" })).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+    expect(await screen.findByText("Argo CD still has the application payments-staging after 10m0s")).toBeTruthy();
+    expect(screen.queryByText(/This service was deleted/)).toBeNull();
+  });
+
+  it("keeps the dialog open with the reason when the API refuses", async () => {
+    const w = world({ fail: { delete: new ConnectError("services/payments is a dependency of services/checkout", Code.FailedPrecondition) } });
+    await openService(w);
+    click(await screen.findByRole("button", { name: "Delete service" }));
+    fireEvent.change(dialog().getByLabelText("Type payments to confirm"), { target: { value: "payments" } });
+    click(dialog().getByRole("button", { name: "Delete service" }));
+    expect((await dialog().findByRole("alert")).textContent).toContain("is a dependency of services/checkout");
   });
 });
 
