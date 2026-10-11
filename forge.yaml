@@ -1,0 +1,12 @@
+# Forge service manifest. See 'forge init --help'.
+apiVersion: forge.dev/v1
+service:
+  name: forge-web
+  team: platform-engineering
+  owners:
+    - deogratias.saidi@outlook.com
+  lifecycle: experimental
+  repo: https://github.com/showmino/forge-web
+run:
+  port: 3000
+  health: /api/healthz
