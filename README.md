@@ -14,6 +14,15 @@ goes from the browser to forge-api with the reader's own token, and the API
 decides what they may see and do. The server only serves the pages and
 `/api/healthz`; it holds no secrets.
 
+- **Overview** (`/`): what is shipping, what is broken and what needs
+  someone. The numbers of the day and the recent deploys come from the audit
+  log of the last 24 hours, which outlives a restart of the API; what is in
+  flight is followed live; "needs attention" is deployments Argo CD does not
+  call healthy, deploy targets whose last deploy failed, and previews that
+  failed or end within six hours. The stage line shows Forge's own steps
+  (image, release, commit, namespace, sync): building and testing happen in
+  the service's CI before Forge is asked. The services list is at
+  `/services`.
 - **Login:** the authorization code flow with PKCE against Forge's login
   service, as the public client forge-api names in `GetServerInfo`
   (`lib/auth`). Right after the sign-in the page trades the ID token for a

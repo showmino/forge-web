@@ -419,7 +419,7 @@ describe("delete a service", () => {
       },
       { timeout: 3000 },
     );
-    expect(screen.getByRole("link", { name: "Back to the services" }).getAttribute("href")).toBe("/");
+    expect(screen.getByRole("link", { name: "Back to the services" }).getAttribute("href")).toBe("/services");
   });
 
   it("goes back to the list at once when the service ran nothing", async () => {
@@ -429,7 +429,7 @@ describe("delete a service", () => {
     click(await screen.findByRole("button", { name: "Delete service" }));
     fireEvent.change(dialog().getByLabelText("Type payments to confirm"), { target: { value: "payments" } });
     click(dialog().getByRole("button", { name: "Delete service" }));
-    await waitFor(() => expect(nav.router.replace).toHaveBeenCalledWith("/"));
+    await waitFor(() => expect(nav.router.replace).toHaveBeenCalledWith("/services"));
   });
 
   it("brings the service back, with the reason, when the delete fails half way", async () => {
