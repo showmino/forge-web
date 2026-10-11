@@ -23,6 +23,8 @@ describe("timeUntil", () => {
     ["2026-10-11T11:00:00Z", "now"],
     ["2026-10-11T12:00:30Z", "in under a minute"],
     ["2026-10-11T14:00:00Z", "in 2 h"],
+    ["2026-10-12T19:00:00Z", "in 31 h"],
+    ["2026-10-13T12:00:00Z", "in 2 days"],
     ["2026-10-14T12:00:00Z", "in 3 days"],
   ])("%s → %s", (then, want) => {
     expect(timeUntil(at(then), now)).toBe(want);

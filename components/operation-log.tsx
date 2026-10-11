@@ -21,11 +21,11 @@ function clock(ts: Timestamp | undefined): string {
 }
 
 const stepTone: Record<Tone, string> = {
-  success: "text-success",
-  progress: "text-accent",
-  warning: "text-warning",
-  danger: "text-danger",
-  neutral: "text-ink-muted",
+  success: "text-ok-fg",
+  progress: "text-info-fg",
+  warning: "text-warn-fg",
+  danger: "text-bad-fg",
+  neutral: "text-fg-2",
 };
 
 // StepLog is the list itself: a time, a status glyph and a message per line.
@@ -36,9 +36,9 @@ export function StepLog({ steps }: { steps: Step[] }) {
     <ol aria-live="polite" className="flex flex-col gap-1 py-2">
       {steps.map((s) => (
         <li key={s.key} className={`grid grid-cols-[64px_12px_1fr] items-center gap-3 px-4 ${stepTone[s.tone]}`}>
-          <time className="type-code text-ink-muted">{clock(s.time)}</time>
+          <time className="type-code text-fg-2">{clock(s.time)}</time>
           <Glyph tone={s.tone} />
-          <span className={`min-w-0 break-words ${s.tone === "neutral" ? "text-ink-muted" : "text-ink"}`}>{s.text}</span>
+          <span className={`min-w-0 break-words ${s.tone === "neutral" ? "text-fg-2" : "text-fg"}`}>{s.text}</span>
         </li>
       ))}
     </ol>
@@ -137,7 +137,7 @@ export function OperationLog({ name, onDone, link = true }: { name: string; onDo
   return (
     <Panel className="overflow-hidden">
       <section aria-label={`Operation ${operationId(name)}`}>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-4 py-3">
           <div className="min-w-0">
             <strong className="type-body-strong">{operation ? operationTitle(operation) : "Operation"}</strong>{" "}
             {link ? (
@@ -145,7 +145,7 @@ export function OperationLog({ name, onDone, link = true }: { name: string; onDo
                 {name}
               </TextLink>
             ) : (
-              <span className="type-code text-ink-muted">{name}</span>
+              <span className="type-code text-fg-2">{name}</span>
             )}
           </div>
           <div className="flex items-center gap-3">
@@ -158,7 +158,7 @@ export function OperationLog({ name, onDone, link = true }: { name: string; onDo
           </div>
         </div>
         <StepLog steps={steps} />
-        {steps.length === 0 && running && !error ? <p className="px-4 py-3 text-ink-muted">Waiting for the first step.</p> : null}
+        {steps.length === 0 && running && !error ? <p className="px-4 py-3 text-fg-2">Waiting for the first step.</p> : null}
         {error ? (
           <div className="p-4">
             <ErrorNote error={new Error(`The live view stopped: ${errorText(error)} The operation itself may still be running.`)} />

@@ -23,12 +23,12 @@ export default function Operations() {
 
   return (
     <>
-      <PageHeader title="Operations" lead="Deploys, promotions, rollbacks and previews as they run. Forge forgets them when it restarts; the audit log keeps the outcome.">
+      <PageHeader cli={runningOnly ? "forge op list --running" : "forge op list"} title="Operations" lead="Deploys, promotions, rollbacks and previews as they run. Forge forgets them when it restarts; the audit log keeps the outcome.">
         <label className="flex h-8 items-center gap-2">
           <input
             id="operations-running"
             type="checkbox"
-            className="size-4 accent-accent"
+            className="size-4 accent-ember"
             checked={runningOnly}
             onChange={(e) => setRunningOnly(e.target.checked)}
           />
@@ -64,7 +64,7 @@ export default function Operations() {
                 <td className={td}>
                   <StatusBadge status={operationStatus(op)} title={op.error?.message || undefined} />
                 </td>
-                <td className={`${td} text-ink-muted`} title={exact(op.createTime)}>
+                <td className={`${td} text-fg-2`} title={exact(op.createTime)}>
                   {when(op.createTime)}
                 </td>
                 <td className={td}>{op.creator || "–"}</td>

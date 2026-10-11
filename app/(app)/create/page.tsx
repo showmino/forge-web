@@ -33,10 +33,10 @@ function ParameterField({ p, value, onChange }: { p: TemplateParameter; value: s
   if (p.type === TemplateParameter_Type.BOOL) {
     return (
       <label className="flex items-center gap-2">
-        <input id={id} type="checkbox" className="size-4 accent-accent" checked={value === "true"} onChange={(e) => onChange(String(e.target.checked))} />
+        <input id={id} type="checkbox" className="size-4 accent-ember" checked={value === "true"} onChange={(e) => onChange(String(e.target.checked))} />
         <span>
           <span className="type-small font-semibold">{p.name}</span>
-          {p.description ? <span className="block type-small text-ink-muted">{p.description}</span> : null}
+          {p.description ? <span className="block type-small text-fg-2">{p.description}</span> : null}
         </span>
       </label>
     );
@@ -174,8 +174,12 @@ export default function CreateService() {
 
   return (
     <>
-      <PageHeader title="Create a service" lead="Forge makes the repo from a template, starts its CI and adds it to the catalog." />
-      {!canWrite ? <p className="text-ink-muted">Only writers can create a service. Ask platform-engineering for access.</p> : null}
+      <PageHeader
+        title="Create a service"
+        lead="Forge makes the repo from a template, starts its CI and adds it to the catalog."
+        cli={`forge create ${name || "<name>"} --template ${template ? templateId(template.name) : "<template>"} --team ${team.trim() || "<team>"}`}
+      />
+      {!canWrite ? <p className="text-fg-2">Only writers can create a service. Ask platform-engineering for access.</p> : null}
       {templates.isPending ? (
         <Loading what="templates" />
       ) : templates.error ? (

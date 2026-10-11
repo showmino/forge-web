@@ -12,7 +12,7 @@ export default function OperationPage() {
   const queries = useQueryClient();
   return (
     <>
-      <PageHeader title="Operation" lead={<span className="type-code">operations/{id}</span>} />
+      <PageHeader title={id} mono lead="One long-running operation, live until it ends." cli={`forge op watch ${id}`} />
       <OperationLog
         key={id}
         name={`operations/${id}`}

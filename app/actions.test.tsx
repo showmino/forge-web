@@ -189,13 +189,15 @@ function forge(w: World) {
 }
 
 const dialog = () => within(screen.getByRole("dialog"));
+// The page's own promote button names the commit staging runs; the dialog's says where it goes.
+const PROMOTE = "Promote 18b1232 to production";
 const click = (el: HTMLElement) => fireEvent.click(el);
 
 async function openService(w: World) {
   nav.params = { name: "payments" };
   renderWithApi(<ServicePage />, forge(w));
-  await screen.findByRole("heading", { name: "Payments" });
-  await screen.findByRole("table", { name: "Previews" });
+  await screen.findByRole("heading", { name: "payments" });
+  await screen.findByRole("list", { name: "Previews" });
 }
 
 beforeEach(() => {
@@ -208,7 +210,7 @@ afterEach(cleanup);
 describe("who may act", () => {
   it("shows a reader no actions", async () => {
     await openService(world({ writer: false }));
-    for (const name of ["Deploy to staging", "Promote to production", "Create preview", "Roll back staging", "Extend pr-42", "Destroy pr-42"]) {
+    for (const name of ["Deploy to staging", PROMOTE, "Preview env", "Roll back staging", "Extend pr-42", "Destroy pr-42"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
     expect(screen.queryByText("Actions")).toBeNull();
@@ -217,7 +219,12 @@ describe("who may act", () => {
   it("shows a writer the actions that make sense now", async () => {
     await openService(world());
     expect(await screen.findByRole("button", { name: "Deploy to staging" })).toBeTruthy();
+    // Staging runs a commit production does not: promoting it is the one primary action.
+    expect(screen.getByRole("button", { name: PROMOTE }).textContent).toBe("Promote 18b1232");
+    expect(screen.getByText("Staging is ahead of production")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Roll back staging" })).toBeTruthy();
+    // The page names its command, as every Forge screen does.
+    expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge service get payments");
     // Production was never deployed: there is nothing to roll back there.
     expect(screen.queryByRole("button", { name: "Roll back production" })).toBeNull();
   });
@@ -227,7 +234,7 @@ describe("promote", () => {
   it("confirms with the facts, starts the work, shows it live and refreshes the page", async () => {
     const w = world();
     await openService(w);
-    click(await screen.findByRole("button", { name: "Promote to production" }));
+    click(await screen.findByRole("button", { name: PROMOTE }));
     expect(dialog().getByRole("heading", { name: "Promote payments to production?" })).toBeTruthy();
     expect(dialog().getByText("18b1232")).toBeTruthy();
     expect(dialog().getByText("ghcr.io/showmino/payments:18b1232")).toBeTruthy();
@@ -246,14 +253,17 @@ describe("promote", () => {
     expect(await log.findByText("Succeeded")).toBeTruthy();
     expect(log.getByText("Promote payments to production")).toBeTruthy();
     expect(log.queryByRole("button", { name: "Cancel" })).toBeNull();
-    // The page asked again: production is healthy now and can be rolled back.
+    // The page asked again: production is healthy now and can be rolled back,
+    // and with both on the same commit there is nothing left to promote.
     expect(await screen.findByRole("button", { name: "Roll back production" })).toBeTruthy();
+    expect(screen.getByText("Both run the same commit")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: PROMOTE })).toBeNull();
   });
 
   it("keeps the dialog open with the reason when the API refuses", async () => {
     const w = world({ fail: { promote: new ConnectError("staging is not healthy", Code.FailedPrecondition) } });
     await openService(w);
-    click(await screen.findByRole("button", { name: "Promote to production" }));
+    click(await screen.findByRole("button", { name: PROMOTE }));
     click(dialog().getByRole("button", { name: "Promote to production" }));
     expect((await dialog().findByRole("alert")).textContent).toContain("staging is not healthy");
     expect(screen.queryByText("In progress")).toBeNull();
@@ -264,7 +274,7 @@ describe("promote", () => {
   it("does nothing on Escape or Cancel, and gives the focus back", async () => {
     const w = world();
     await openService(w);
-    const opener = await screen.findByRole("button", { name: "Promote to production" });
+    const opener = await screen.findByRole("button", { name: PROMOTE });
     opener.focus();
     click(opener);
     expect(document.activeElement).toBe(dialog().getByRole("button", { name: "Cancel" }));
@@ -317,7 +327,7 @@ describe("previews", () => {
   it("checks the name before asking the API, then creates the preview", async () => {
     const w = world();
     await openService(w);
-    click(await screen.findByRole("button", { name: "Create preview" }));
+    click(await screen.findByRole("button", { name: "Preview env" }));
     fireEvent.change(dialog().getByLabelText("Preview name"), { target: { value: "PR 42" } });
     click(dialog().getByRole("button", { name: "Create preview" }));
     expect(dialog().getByRole("alert").textContent).toContain("lowercase letters");

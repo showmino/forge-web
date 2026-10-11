@@ -38,11 +38,11 @@ export default function Login() {
   return (
     <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4 py-12">
       <p className="flex items-center gap-2 type-heading">
-        <span aria-hidden="true" className="size-3 bg-heat" />
+        <span aria-hidden="true" className="size-3 bg-ember" />
         Forge
       </p>
       <h1 className="type-display">Sign in to Forge</h1>
-      <p className="text-ink-muted">
+      <p className="text-fg-2">
         You sign in with your GitHub account. Members of the organization can read; the platform team can also create,
         deploy and promote.
       </p>

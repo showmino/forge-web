@@ -16,7 +16,7 @@ export default function Templates() {
 
   return (
     <>
-      <PageHeader title="Templates" lead="The golden paths a new service starts from." />
+      <PageHeader title="Templates" lead="The golden paths a new service starts from." cli="forge template list" />
       {templates.isPending ? (
         <Loading what="templates" />
       ) : templates.error ? (
@@ -44,10 +44,10 @@ export default function Templates() {
                 </td>
                 <td className={`${td} whitespace-normal`}>
                   <span className="type-body-strong">{t.title}</span>
-                  {t.description ? <span className="block text-ink-muted">{t.description}</span> : null}
+                  {t.description ? <span className="block text-fg-2">{t.description}</span> : null}
                 </td>
                 <td className={`${td} type-code`}>{t.version || "–"}</td>
-                <td className={`${td} text-ink-muted`}>{t.tags.join(", ") || "–"}</td>
+                <td className={`${td} text-fg-2`}>{t.tags.join(", ") || "–"}</td>
                 <td className={td}>{t.owner || "–"}</td>
               </tr>
             ))}

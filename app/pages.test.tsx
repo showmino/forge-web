@@ -166,12 +166,26 @@ describe("the catalog", () => {
 
   it("filters by name or team", async () => {
     renderWithApi(<Catalog />, forge);
-    await screen.findByText("payments");
+    await screen.findByRole("link", { name: "payments" });
     fireEvent.change(screen.getByPlaceholderText("Name or team"), { target: { value: "finance" } });
-    expect(screen.queryByText("payments")).toBeNull();
-    expect(screen.getByText("ledger")).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "payments" })).toBeNull();
+    expect(screen.getByRole("link", { name: "ledger" })).toBeTruthy();
     fireEvent.change(screen.getByPlaceholderText("Name or team"), { target: { value: "zzz" } });
-    expect(screen.getByText(/No service matches/)).toBeTruthy();
+    expect(screen.getByText(/No services match/)).toBeTruthy();
+  });
+
+  it("filters by team with a chip, and names the command that does the same", async () => {
+    renderWithApi(<Catalog />, forge);
+    await screen.findByRole("link", { name: "payments" });
+    const cli = () => screen.getByTitle("Same action from the terminal").textContent;
+    expect(cli()).toContain("forge service list");
+    fireEvent.click(screen.getByRole("button", { name: /^finance/ }));
+    expect(screen.queryByRole("link", { name: "payments" })).toBeNull();
+    expect(screen.getByRole("link", { name: "ledger" })).toBeTruthy();
+    expect(cli()).toContain("forge service list --team finance");
+    expect(screen.getByText("1 service shown.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^All teams/ }));
+    expect(screen.getByRole("link", { name: "payments" })).toBeTruthy();
   });
 
   it("says how to make the first service when there is none", async () => {
@@ -199,7 +213,10 @@ describe("a service", () => {
   it("shows its owners, both environments, its previews and its history", async () => {
     nav.params = { name: "payments" };
     renderWithApi(<ServicePage />, forge);
-    expect(await screen.findByRole("heading", { name: "Payments" })).toBeTruthy();
+    // The name is the title, set as it is typed; the team is in the crumbs.
+    expect(await screen.findByRole("heading", { name: "payments" })).toBeTruthy();
+    expect(within(screen.getByRole("navigation", { name: "Breadcrumb" })).getByText("platform-engineering")).toBeTruthy();
+    expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge service get payments");
     expect(screen.getByText("ana@example.com", { selector: "dd" })).toBeTruthy();
 
     const staging = within(await screen.findByRole("table", { name: "Deployments" }));
@@ -207,18 +224,19 @@ describe("a service", () => {
     expect(within(staging.getByText("production").closest("tr")!).getByText("Degraded")).toBeTruthy();
 
     // Only this service's previews, with the branch and when it expires.
-    const previews = within(await screen.findByRole("table", { name: "Previews" }));
-    expect(previews.getByText("pr-42")).toBeTruthy();
-    expect(previews.getByText("feature/refunds")).toBeTruthy();
-    expect(previews.getByText("in 2 h")).toBeTruthy();
+    const previews = within(await screen.findByRole("list", { name: "Previews" }));
+    const preview = previews.getByText("pr-42").closest("li")!;
+    expect(preview.textContent).toContain("feature/refunds");
+    expect(preview.textContent).toContain("expires in 2 h");
+    expect(within(preview).getByText("Ready")).toBeTruthy();
     expect(previews.queryByText("other")).toBeNull();
 
-    const history = within(await screen.findByRole("table", { name: "Audit events" }));
-    expect(within(history.getByText("deploy.promote").closest("tr")!).getByText("OK")).toBeTruthy();
+    const history = within(await screen.findByRole("list", { name: "Recent activity" }));
+    expect(within(history.getByText("deploy.promote").closest("li")!).getByText("OK")).toBeTruthy();
     // A CI run is named by its repository; a failure shows its reason on hover.
-    const failed = within(history.getByText("deploy.rollback").closest("tr")!);
-    expect(failed.getByText("showmino/payments")).toBeTruthy();
-    expect(failed.getByText("Failed").closest("span")!.getAttribute("title")).toBe("nothing to roll back to");
+    const failed = history.getByText("deploy.rollback").closest("li")!;
+    expect(failed.textContent).toContain("showmino/payments");
+    expect(within(failed).getByText("Failed").getAttribute("title")).toBe("nothing to roll back to");
     expect(screen.getByRole("link", { name: "All activity of payments" }).getAttribute("href")).toBe("/audit?service=payments");
   });
 
@@ -284,7 +302,8 @@ describe("the frame around every page", () => {
     expect(await screen.findByText("content")).toBeTruthy();
     expect(screen.getByText("ana@example.com")).toBeTruthy();
     expect(screen.getByText("Reader")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Services" }).getAttribute("aria-current")).toBe("page");
+    // The rail counts the services beside the link.
+    expect((await screen.findByRole("link", { name: "Services 2" })).getAttribute("aria-current")).toBe("page");
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
     expect(sessionStorage.getItem("forge.session")).toBeNull();
     expect(nav.replace).toHaveBeenCalledWith("/login");

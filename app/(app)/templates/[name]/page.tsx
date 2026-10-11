@@ -35,7 +35,7 @@ export default function TemplatePage() {
 
   return (
     <>
-      <PageHeader title={t.title || id} lead={t.description} />
+      <PageHeader title={t.title || id} lead={t.description} cli={`forge template get ${id}`} />
       <Panel className="p-6">
         <Facts
           items={[
@@ -68,7 +68,7 @@ export default function TemplatePage() {
                   <td className={td}>{typeText(p)}</td>
                   <td className={td}>{p.required ? "Yes" : "No"}</td>
                   <td className={`${td} type-code`}>{p.defaultValue || "–"}</td>
-                  <td className={`${td} whitespace-normal text-ink-muted`}>{p.description || "–"}</td>
+                  <td className={`${td} whitespace-normal text-fg-2`}>{p.description || "–"}</td>
                 </tr>
               ))}
             </tbody>

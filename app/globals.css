@@ -1,166 +1,286 @@
 @import "tailwindcss";
 
 /*
- * The Forge design system's tokens: https://claude.ai/artifact/9BE6LhhUayv1FtFs4GGQGq
- * Light first; the dark values follow the reader's system setting. Take every
- * colour from a token: a literal colour is wrong in one of the two themes.
+ * Forge design language v0.1, from the Forge Console design
+ * (https://claude.ai/artifact/JH9WMXofSHtUrQcGB5AwfG).
+ * Layout: dark iron rail + light work surface; every screen = title, one
+ *   primary action, its CLI equivalent, then summary before detail.
+ * Color: iron neutrals (hue 250, low chroma); ember for the one primary action
+ *   and work in progress; status colors carry meaning only.
+ * Type: Archivo (expanded) for titles; IBM Plex Sans for UI; IBM Plex Mono
+ *   for names, refs and commands.
+ * The values are the design's own. Light first; dark follows the system
+ * unless the reader picks a theme (data-theme on <html>).
  */
 :root {
-  color-scheme: light dark;
-  --bg: #f4f5f7;
-  --surface: #ffffff;
-  --surface-sunken: #eaedf1;
-  --border: #d6dae1;
-  --border-strong: #808a99;
-  --ink: #151a21;
-  --ink-muted: #55606e;
-  --accent: #1d4f91;
-  --on-accent: #ffffff;
-  --accent-soft: #e3ecf8;
-  --heat: #d9540b;
-  --success: #0b6a5c;
-  --success-soft: #dcf2ec;
-  --danger: #b3310a;
-  --on-danger: #ffffff;
-  --danger-soft: #fbe5db;
-  --warning: #855700;
-  --warning-soft: #f8ecd0;
-  --temper-straw: #a87900;
-  --temper-plum: #7d4aa8;
-  --temper-blue: #2f6fc0;
-  --scrim: rgba(12, 16, 22, 0.55);
-  --overlay-shadow: 0 12px 32px rgba(16, 24, 40, 0.18);
+  color-scheme: light;
+  --bg: oklch(0.975 0.004 250);
+  --surface: oklch(1 0 0);
+  --surface-2: oklch(0.965 0.005 250);
+  --line: oklch(0.905 0.007 250);
+  --line-strong: oklch(0.82 0.01 250);
+  --fg: oklch(0.22 0.014 250);
+  --fg-2: oklch(0.42 0.014 250);
+  --fg-3: oklch(0.52 0.012 250);
+  --ember: oklch(0.6 0.175 42);
+  --ember-hot: oklch(0.7 0.17 55);
+  --ember-on: oklch(0.99 0.01 60);
+  --ember-soft: oklch(0.95 0.035 52);
+  --ember-ink: oklch(0.47 0.15 40);
+  --ok-bg: oklch(0.95 0.045 155);
+  --ok-fg: oklch(0.42 0.11 155);
+  --ok-dot: oklch(0.62 0.15 155);
+  --warn-bg: oklch(0.95 0.06 85);
+  --warn-fg: oklch(0.45 0.1 70);
+  --warn-dot: oklch(0.75 0.15 75);
+  --bad-bg: oklch(0.95 0.035 25);
+  --bad-fg: oklch(0.48 0.17 25);
+  --bad-dot: oklch(0.6 0.2 25);
+  --on-bad: oklch(0.99 0 0);
+  --info-bg: oklch(0.95 0.03 245);
+  --info-fg: oklch(0.45 0.12 250);
+  --info-dot: oklch(0.6 0.14 250);
+  --rail-bg: oklch(0.205 0.014 250);
+  --rail-fg: oklch(0.93 0.006 250);
+  --rail-fg-2: oklch(0.72 0.012 250);
+  --rail-line: oklch(0.3 0.014 250);
+  --rail-active: oklch(0.27 0.016 250);
+  --scrim: oklch(0.2 0.02 250 / 0.45);
+  --env-staging: oklch(0.58 0.16 300);
+  --env-production: oklch(0.56 0.15 250);
+  --env-preview: oklch(0.62 0.14 55);
+  --elev-1: 0 1px 2px oklch(0.2 0.02 250 / 0.06), 0 0 0 1px oklch(0.2 0.02 250 / 0.03);
+  --elev-3: 0 12px 32px -8px oklch(0.2 0.02 250 / 0.22), 0 0 0 1px oklch(0.2 0.02 250 / 0.06);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #101317;
-    --surface: #181c22;
-    --surface-sunken: #0b0d10;
-    --border: #2b313a;
-    --border-strong: #6d7887;
-    --ink: #e7eaee;
-    --ink-muted: #a1aab6;
-    --accent: #7fb0ee;
-    --on-accent: #0b1622;
-    --accent-soft: #1a2a40;
-    --heat: #ff8a3d;
-    --success: #4fd1b0;
-    --success-soft: #10302a;
-    --danger: #ff9466;
-    --on-danger: #2a1008;
-    --danger-soft: #3a1c12;
-    --warning: #f2c14e;
-    --warning-soft: #33290f;
-    --temper-straw: #e6b93c;
-    --temper-plum: #b78fe2;
-    --temper-blue: #5f9be6;
-    --scrim: rgba(0, 0, 0, 0.65);
-    --overlay-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: oklch(0.17 0.01 250);
+    --surface: oklch(0.205 0.012 250);
+    --surface-2: oklch(0.235 0.012 250);
+    --line: oklch(0.29 0.012 250);
+    --line-strong: oklch(0.37 0.014 250);
+    --fg: oklch(0.95 0.005 250);
+    --fg-2: oklch(0.78 0.01 250);
+    --fg-3: oklch(0.68 0.012 250);
+    --ember: oklch(0.72 0.16 48);
+    --ember-hot: oklch(0.8 0.15 62);
+    --ember-on: oklch(0.2 0.03 40);
+    --ember-soft: oklch(0.3 0.06 45);
+    --ember-ink: oklch(0.84 0.11 58);
+    --ok-bg: oklch(0.3 0.05 155);
+    --ok-fg: oklch(0.86 0.1 155);
+    --ok-dot: oklch(0.72 0.15 155);
+    --warn-bg: oklch(0.32 0.05 80);
+    --warn-fg: oklch(0.88 0.1 85);
+    --warn-dot: oklch(0.8 0.14 80);
+    --bad-bg: oklch(0.31 0.07 25);
+    --bad-fg: oklch(0.86 0.09 25);
+    --bad-dot: oklch(0.68 0.19 25);
+    --info-bg: oklch(0.3 0.05 250);
+    --info-fg: oklch(0.86 0.07 250);
+    --info-dot: oklch(0.7 0.13 250);
+    --rail-bg: oklch(0.14 0.01 250);
+    --rail-fg: oklch(0.93 0.006 250);
+    --rail-fg-2: oklch(0.7 0.012 250);
+    --rail-line: oklch(0.24 0.012 250);
+    --rail-active: oklch(0.22 0.014 250);
+    --scrim: oklch(0.05 0.01 250 / 0.6);
+    --env-staging: oklch(0.74 0.13 300);
+    --env-production: oklch(0.72 0.12 250);
+    --env-preview: oklch(0.76 0.13 60);
+    --elev-1: inset 0 1px 0 oklch(1 0 0 / 0.04), 0 0 0 1px oklch(0 0 0 / 0.2);
+    --elev-3: inset 0 1px 0 oklch(1 0 0 / 0.06), 0 0 0 1px oklch(0 0 0 / 0.3), 0 16px 40px -8px oklch(0 0 0 / 0.6);
   }
 }
 
-/* Only the system's colours, corners and faces exist as utilities. Spacing is Tailwind's 4px grid: p-4 is space-4. */
+/* The same dark values, so the reader's own choice wins both ways. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: oklch(0.17 0.01 250);
+  --surface: oklch(0.205 0.012 250);
+  --surface-2: oklch(0.235 0.012 250);
+  --line: oklch(0.29 0.012 250);
+  --line-strong: oklch(0.37 0.014 250);
+  --fg: oklch(0.95 0.005 250);
+  --fg-2: oklch(0.78 0.01 250);
+  --fg-3: oklch(0.68 0.012 250);
+  --ember: oklch(0.72 0.16 48);
+  --ember-hot: oklch(0.8 0.15 62);
+  --ember-on: oklch(0.2 0.03 40);
+  --ember-soft: oklch(0.3 0.06 45);
+  --ember-ink: oklch(0.84 0.11 58);
+  --ok-bg: oklch(0.3 0.05 155);
+  --ok-fg: oklch(0.86 0.1 155);
+  --ok-dot: oklch(0.72 0.15 155);
+  --warn-bg: oklch(0.32 0.05 80);
+  --warn-fg: oklch(0.88 0.1 85);
+  --warn-dot: oklch(0.8 0.14 80);
+  --bad-bg: oklch(0.31 0.07 25);
+  --bad-fg: oklch(0.86 0.09 25);
+  --bad-dot: oklch(0.68 0.19 25);
+  --info-bg: oklch(0.3 0.05 250);
+  --info-fg: oklch(0.86 0.07 250);
+  --info-dot: oklch(0.7 0.13 250);
+  --rail-bg: oklch(0.14 0.01 250);
+  --rail-fg: oklch(0.93 0.006 250);
+  --rail-fg-2: oklch(0.7 0.012 250);
+  --rail-line: oklch(0.24 0.012 250);
+  --rail-active: oklch(0.22 0.014 250);
+  --scrim: oklch(0.05 0.01 250 / 0.6);
+  --env-staging: oklch(0.74 0.13 300);
+  --env-production: oklch(0.72 0.12 250);
+  --env-preview: oklch(0.76 0.13 60);
+  --elev-1: inset 0 1px 0 oklch(1 0 0 / 0.04), 0 0 0 1px oklch(0 0 0 / 0.2);
+  --elev-3: inset 0 1px 0 oklch(1 0 0 / 0.06), 0 0 0 1px oklch(0 0 0 / 0.3), 0 16px 40px -8px oklch(0 0 0 / 0.6);
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+}
+
+/* Only the design's colours, corners, shadows and faces exist as utilities. Spacing is Tailwind's 4px grid. */
 @theme inline {
   --color-*: initial;
   --color-bg: var(--bg);
   --color-surface: var(--surface);
-  --color-surface-sunken: var(--surface-sunken);
-  --color-border: var(--border);
-  --color-border-strong: var(--border-strong);
-  --color-ink: var(--ink);
-  --color-ink-muted: var(--ink-muted);
-  --color-accent: var(--accent);
-  --color-on-accent: var(--on-accent);
-  --color-accent-soft: var(--accent-soft);
-  --color-heat: var(--heat);
-  --color-success: var(--success);
-  --color-success-soft: var(--success-soft);
-  --color-danger: var(--danger);
-  --color-on-danger: var(--on-danger);
-  --color-danger-soft: var(--danger-soft);
-  --color-warning: var(--warning);
-  --color-warning-soft: var(--warning-soft);
-  --color-temper-straw: var(--temper-straw);
-  --color-temper-plum: var(--temper-plum);
-  --color-temper-blue: var(--temper-blue);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --color-ember: var(--ember);
+  --color-ember-hot: var(--ember-hot);
+  --color-ember-on: var(--ember-on);
+  --color-ember-soft: var(--ember-soft);
+  --color-ember-ink: var(--ember-ink);
+  --color-ok-bg: var(--ok-bg);
+  --color-ok-fg: var(--ok-fg);
+  --color-ok-dot: var(--ok-dot);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-fg: var(--warn-fg);
+  --color-warn-dot: var(--warn-dot);
+  --color-bad-bg: var(--bad-bg);
+  --color-bad-fg: var(--bad-fg);
+  --color-bad-dot: var(--bad-dot);
+  --color-on-bad: var(--on-bad);
+  --color-info-bg: var(--info-bg);
+  --color-info-fg: var(--info-fg);
+  --color-info-dot: var(--info-dot);
+  --color-rail-bg: var(--rail-bg);
+  --color-rail-fg: var(--rail-fg);
+  --color-rail-fg-2: var(--rail-fg-2);
+  --color-rail-line: var(--rail-line);
+  --color-rail-active: var(--rail-active);
   --color-scrim: var(--scrim);
+  --color-env-staging: var(--env-staging);
+  --color-env-production: var(--env-production);
+  --color-env-preview: var(--env-preview);
   --color-transparent: transparent;
 
+  /* Below this width the rail slides in over the page. */
+  --breakpoint-rail: 861px;
+
   --radius-*: initial;
-  --radius-sm: 2px;
-  --radius-md: 4px;
-  --radius-lg: 8px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-full: 999px;
 
   --shadow-*: initial;
-  --shadow-overlay: var(--overlay-shadow);
+  --shadow-1: var(--elev-1);
+  --shadow-3: var(--elev-3);
 
-  --font-display: var(--font-barlow), "Arial Narrow", system-ui, sans-serif;
-  --font-sans: var(--font-plex-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-display: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
-/* The type scale. Headings are the display face; anything from a terminal is type-code. */
+/* The type of the design: Archivo, a little expanded, for titles; Plex Sans for the interface; Plex Mono for names. */
 @utility type-display {
   font-family: var(--font-display);
-  font-size: 32px;
-  line-height: 36px;
-  font-weight: 600;
+  font-stretch: 112%;
+  font-weight: 720;
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 @utility type-title {
   font-family: var(--font-display);
-  font-size: 24px;
-  line-height: 30px;
-  font-weight: 600;
+  font-stretch: 112%;
+  font-weight: 720;
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 @utility type-heading {
   font-family: var(--font-display);
-  font-size: 18px;
-  line-height: 24px;
-  font-weight: 600;
+  font-stretch: 108%;
+  font-weight: 680;
+  font-size: 17px;
+  line-height: 1.25;
 }
 @utility type-body {
   font-family: var(--font-sans);
   font-size: 14px;
-  line-height: 22px;
+  line-height: 1.5;
   font-weight: 400;
 }
 @utility type-body-strong {
   font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 22px;
-  font-weight: 600;
+  font-size: 13.5px;
+  line-height: 1.3;
+  font-weight: 500;
 }
 @utility type-small {
   font-family: var(--font-sans);
   font-size: 13px;
-  line-height: 18px;
+  line-height: 1.4;
 }
 @utility type-label {
   font-family: var(--font-sans);
   font-size: 12px;
-  line-height: 16px;
-  font-weight: 600;
+  line-height: 1.6;
+  font-weight: 500;
 }
 @utility type-code {
   font-family: var(--font-mono);
   font-size: 13px;
-  line-height: 20px;
-  font-weight: 400;
+  line-height: 1.5;
 }
 
-/* Every control shows the same ring when reached by keyboard. */
+@media (max-width: 560px) {
+  .type-title,
+  .type-display {
+    font-size: 25px;
+  }
+}
+
+/* Every control shows the same ember ring when reached by keyboard. */
 :focus-visible {
-  outline: 2px solid var(--heat);
+  outline: 2px solid var(--ember);
   outline-offset: 2px;
+  border-radius: 4px;
 }
 
+/* Only running work moves: the dot of an in-progress pill and the ring of a running step. */
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
 @keyframes turn {
   to {
     transform: rotate(360deg);
   }
 }
 @media (prefers-reduced-motion: no-preference) {
+  .pulsing::before {
+    animation: pulse 1.4s ease-in-out infinite;
+  }
   .turning {
     animation: turn 1.2s linear infinite;
   }

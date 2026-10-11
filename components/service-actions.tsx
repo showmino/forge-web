@@ -49,10 +49,10 @@ function useAction<T>(call: () => Promise<T>, done: (result: T) => void) {
 
 function FactList({ items }: { items: [string, ReactNode][] }) {
   return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-md bg-surface-sunken p-3">
+    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-md bg-surface-2 p-3">
       {items.map(([label, value]) => (
         <div key={label} className="contents">
-          <dt className="text-ink-muted">{label}</dt>
+          <dt className="text-fg-2">{label}</dt>
           <dd className="min-w-0 break-words">{value}</dd>
         </div>
       ))}
@@ -145,7 +145,7 @@ export function RollbackDialog({ id, env, onClose, onStarted }: Common & { env: 
         ) : history.error ? (
           <ErrorNote error={history.error} />
         ) : earlier.length === 0 ? (
-          <p className="text-ink-muted">There is no earlier deploy to go back to.</p>
+          <p className="text-fg-2">There is no earlier deploy to go back to.</p>
         ) : (
           <Field id="rollback-to" label="Go back to">
             <select id="rollback-to" className={inputClass} value={to} onChange={(e) => setTo(e.target.value)}>

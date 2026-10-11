@@ -10,7 +10,7 @@ import { Empty, ErrorNote, Loading, PageHeader } from "@/components/ui/layout";
 type Filters = { service: string; actor: string; action: string; failedOnly: boolean };
 const NONE: Filters = { service: "", actor: "", action: "", failedOnly: false };
 
-const input = "h-8 w-full rounded-md border border-border-strong bg-surface px-3 text-ink placeholder:text-ink-muted";
+const input = "h-8 w-full rounded-md border border-line-strong bg-surface px-3 text-fg placeholder:text-fg-2";
 
 // The audit log: who did what to which service, and how it ended.
 export default function AuditLog() {
@@ -44,7 +44,19 @@ export default function AuditLog() {
 
   return (
     <>
-      <PageHeader title="Audit log" lead="Who did what to which service, and how it ended. Newest first." />
+      <PageHeader
+        title="Audit log"
+        lead="Who did what to which service, and how it ended. Newest first."
+        cli={[
+          "forge audit list",
+          filters.service && `--service ${filters.service}`,
+          filters.actor && `--actor ${filters.actor}`,
+          filters.action && `--action ${filters.action}`,
+          filters.failedOnly && "--failed",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      />
       <form onSubmit={apply} className="flex flex-wrap items-end gap-4">
         <label className="flex w-48 flex-col gap-1">
           <span className="type-small font-semibold">Service</span>
@@ -80,7 +92,7 @@ export default function AuditLog() {
           <input
             id="audit-failed"
             type="checkbox"
-            className="size-4 accent-accent"
+            className="size-4 accent-ember"
             checked={draft.failedOnly}
             onChange={(e) => setDraft({ ...draft, failedOnly: e.target.checked })}
           />

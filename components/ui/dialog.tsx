@@ -55,7 +55,7 @@ export function Dialog({ title, onClose, children }: { title: string; onClose: (
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="flex w-full max-w-[440px] flex-col gap-4 rounded-lg border border-border bg-surface p-6 shadow-overlay"
+        className="flex w-full max-w-[440px] flex-col gap-4 rounded-lg border border-line bg-surface p-6 shadow-3"
       >
         <h2 id={titleId} className="type-heading">
           {title}
