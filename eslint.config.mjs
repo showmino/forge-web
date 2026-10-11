@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated from the Forge API's protos (npm run generate).
+    "gen/**",
   ]),
 ]);
 

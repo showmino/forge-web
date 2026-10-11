@@ -1,0 +1,10 @@
+# The TypeScript client of the Forge API. The protos under proto/ are a copy
+# from showmino/forge at the commit in proto/FORGE_COMMIT (scripts/sync-proto.sh).
+version: v2
+clean: true
+plugins:
+  - local: protoc-gen-es
+    out: gen
+    opt: target=ts
+inputs:
+  - directory: proto

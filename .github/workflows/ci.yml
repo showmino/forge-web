@@ -17,6 +17,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: The generated API client is up to date
+        run: npm run generate && git diff --exit-code -- gen
       - run: npm run lint
       - run: npm run typecheck
       - run: npm test
@@ -37,9 +39,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
+        env:
+          FORGE_API_URL: ${{ vars.FORGE_API_URL }}
         run: |
+          if [ -z "$FORGE_API_URL" ]; then
+            echo "::error::set the organization variable FORGE_API_URL to the Forge API: the dashboard's pages call it"
+            exit 1
+          fi
           image=ghcr.io/showmino/forge-web:${GITHUB_SHA::7}
-          docker build -t "$image" .
+          docker build --build-arg NEXT_PUBLIC_FORGE_API_URL="$FORGE_API_URL" -t "$image" .
           docker push "$image"
 
   # Deploys main to staging through Forge. Runs on the LAN runners, which can
