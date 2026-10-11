@@ -3,7 +3,7 @@ import { createConnectTransport } from "@connectrpc/connect-web";
 import { AuthService } from "@/gen/forge/v1/auth_pb";
 import { apiUrl } from "@/lib/config";
 import { challenge, randomString } from "./pkce";
-import { saveSession } from "./session";
+import { saveForgeSession, saveSession } from "./session";
 
 // Login is the authorization code flow with PKCE against Forge's identity
 // provider, as the public client the API names in GetServerInfo. The API
@@ -89,10 +89,24 @@ export async function startLogin(returnTo: string): Promise<void> {
   window.location.assign(await loginUrl(returnTo, window.location.origin));
 }
 
+// A Forge session as CreateSession returns it.
+export type Started = { token: string; expiresAt: number };
+
+// startSession trades a fresh ID token for a Forge session. It returns null
+// when the API keeps no sessions, and throws when the API refuses.
+export type StartSession = (idToken: string) => Promise<Started | null>;
+
+// browserLabel names this browser for the list of sessions: "Firefox on Linux".
+export function browserLabel(ua = navigator.userAgent): string {
+  const browser = /Firefox\//.test(ua) ? "Firefox" : /Edg\//.test(ua) ? "Edge" : /Chrome\//.test(ua) ? "Chrome" : /Safari\//.test(ua) ? "Safari" : "Browser";
+  const system = /Windows/.test(ua) ? "Windows" : /Android/.test(ua) ? "Android" : /iPhone|iPad/.test(ua) ? "iOS" : /Mac OS X/.test(ua) ? "macOS" : /Linux/.test(ua) ? "Linux" : "";
+  return system ? `${browser} on ${system}` : browser;
+}
+
 // finishLogin completes a login from the callback's query and returns where
-// the reader was going. It throws with a message for the reader when the
-// login cannot be completed.
-export async function finishLogin(query: URLSearchParams, fetcher: Fetch = fetch): Promise<string> {
+// the reader was going. With startSession the login ends in a Forge session.
+// It throws with a message for the reader when the login cannot be completed.
+export async function finishLogin(query: URLSearchParams, fetcher: Fetch = fetch, startSession?: StartSession): Promise<string> {
   const raw = sessionStorage.getItem(PENDING);
   sessionStorage.removeItem(PENDING);
   const pending = raw ? (JSON.parse(raw) as Pending) : null;
@@ -120,6 +134,12 @@ export async function finishLogin(query: URLSearchParams, fetcher: Fetch = fetch
   const body = (await res.json()) as { id_token?: string };
   if (!body.id_token || !saveSession(body.id_token)) {
     throw new Error("The login service gave no usable token. Sign in again.");
+  }
+  if (startSession) {
+    // A session lasts without the login service. When it cannot be made the
+    // login still works, for this tab and for as long as the ID token does.
+    const started = await startSession(body.id_token).catch(() => null);
+    if (started) saveForgeSession(started.token, started.expiresAt, body.id_token);
   }
   return safeReturn(pending.returnTo);
 }

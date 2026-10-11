@@ -1,7 +1,10 @@
-// The login lives in this tab only: the ID token sits in sessionStorage and is
-// gone when the tab closes. The dashboard never judges the token; forge-api
-// verifies it on every call. Here it is only read for its expiry and the
-// name to show.
+// A sign-in ends in a Forge session: a token of forge-api's own that lasts 7
+// days. It sits in localStorage, so every tab of this browser shares it and
+// it survives a restart; signing out ends it on the API too. Against an API
+// that keeps no sessions the login is the ID token, for this tab only
+// (sessionStorage), as before. The dashboard never judges a token; forge-api
+// checks it on every call. Here it is only read for its expiry and the name
+// to show.
 
 export type Session = {
   token: string;
@@ -10,9 +13,12 @@ export type Session = {
   // Milliseconds since the epoch.
   expiresAt: number;
   savedAt: number;
+  // True for a Forge session, which the API can end; unset for an ID token.
+  forge?: boolean;
 };
 
-const KEY = "forge.session";
+export const SESSION_KEY = "forge.session";
+const KEY = SESSION_KEY;
 // Treat a token as expired a little early, so a call does not start with one that ends on the way.
 const SKEW_MS = 30_000;
 
@@ -43,10 +49,9 @@ export function parseToken(token: string, now = Date.now()): Session | null {
   }
 }
 
-// loadSession returns the login of this tab, or null when there is none or it has expired.
-export function loadSession(now = Date.now()): Session | null {
+function read(storage: Storage, now: number): Session | null {
   try {
-    const raw = sessionStorage.getItem(KEY);
+    const raw = storage.getItem(KEY);
     if (!raw) return null;
     const s = JSON.parse(raw) as Session;
     if (typeof s.token !== "string" || typeof s.expiresAt !== "number") return null;
@@ -54,6 +59,31 @@ export function loadSession(now = Date.now()): Session | null {
   } catch {
     return null;
   }
+}
+
+// loadSession returns the login: this browser's Forge session, else this
+// tab's ID token, or null when there is none or it has expired.
+export function loadSession(now = Date.now()): Session | null {
+  try {
+    return read(localStorage, now) ?? read(sessionStorage, now);
+  } catch {
+    return null; // storage is blocked
+  }
+}
+
+// saveForgeSession keeps a Forge session made from the login in idToken. It
+// returns null when it cannot be kept.
+export function saveForgeSession(token: string, expiresAt: number, idToken: string, now = Date.now()): Session | null {
+  const who = parseToken(idToken, now);
+  if (!who || !token) return null;
+  const s: Session = { token, email: who.email, subject: who.subject, expiresAt, savedAt: now, forge: true };
+  try {
+    localStorage.setItem(KEY, JSON.stringify(s));
+    sessionStorage.removeItem(KEY);
+  } catch {
+    return null;
+  }
+  return s;
 }
 
 // saveSession keeps a freshly issued token. It returns null when the token cannot be read.
@@ -70,6 +100,7 @@ export function saveSession(token: string, now = Date.now()): Session | null {
 
 export function clearSession(): void {
   try {
+    localStorage.removeItem(KEY);
     sessionStorage.removeItem(KEY);
   } catch {
     // Nothing was stored.

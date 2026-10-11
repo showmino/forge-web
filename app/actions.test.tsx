@@ -254,6 +254,7 @@ async function openService(w: World) {
 
 beforeEach(() => {
   sessionStorage.clear();
+  localStorage.clear();
   nav.params = {};
   signIn();
 });

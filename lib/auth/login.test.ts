@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { idToken } from "@/test/helpers";
-import { finishLogin, loginUrl, safeReturn } from "./login";
+import { browserLabel, finishLogin, loginUrl, safeReturn } from "./login";
 import { challenge } from "./pkce";
 import { loadSession } from "./session";
 
@@ -56,7 +56,11 @@ describe("safeReturn", () => {
 });
 
 describe("login", () => {
-  beforeEach(() => sessionStorage.clear());
+  beforeEach(() => {
+    sessionStorage.clear();
+    localStorage.clear();
+    localStorage.clear();
+  });
 
   it("sends the browser to the login service with a PKCE challenge and no refresh scope", async () => {
     const { fetcher } = fakeFetch();
@@ -130,9 +134,50 @@ describe("login", () => {
     await expect(finishLogin(crafted, fetcher)).rejects.toThrow("The login was not completed.");
   });
 
+  it("ends in a Forge session when the API keeps them, made from the fresh ID token", async () => {
+    const { fetcher } = fakeFetch();
+    const url = new URL(await loginUrl("/audit", "http://forge-web.example.com", fetcher));
+    const back = new URLSearchParams({ code: "abc", state: url.searchParams.get("state")! });
+    const seen: string[] = [];
+    const ends = Date.now() + 7 * 24 * 3_600_000;
+    const start = async (idToken: string) => {
+      seen.push(idToken);
+      return { token: "fgs_session", expiresAt: ends };
+    };
+    expect(await finishLogin(back, fetcher, start)).toBe("/audit");
+    expect(seen).toHaveLength(1);
+    expect(seen[0].split(".")).toHaveLength(3);
+    expect(loadSession()).toMatchObject({ token: "fgs_session", email: "ana@example.com", expiresAt: ends, forge: true });
+    // The ID token is not kept beside it.
+    expect(sessionStorage.getItem("forge.session")).toBeNull();
+  });
+
+  it("keeps the ID token for this tab when no session can be made", async () => {
+    for (const start of [async () => null, async () => Promise.reject(new Error("the API is away"))]) {
+      sessionStorage.clear();
+      localStorage.clear();
+      const { fetcher } = fakeFetch();
+      const url = new URL(await loginUrl("/", "http://forge-web.example.com", fetcher));
+      const back = new URLSearchParams({ code: "abc", state: url.searchParams.get("state")! });
+      expect(await finishLogin(back, fetcher, start)).toBe("/");
+      const s = loadSession();
+      expect(s?.forge).toBeUndefined();
+      expect(s?.email).toBe("ana@example.com");
+      expect(localStorage.getItem("forge.session")).toBeNull();
+    }
+  });
+
+  it("names the browser for the list of sessions", () => {
+    expect(browserLabel("Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0")).toBe("Firefox on Linux");
+    expect(browserLabel("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15")).toBe("Safari on macOS");
+    expect(browserLabel("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0")).toBe("Edge on Windows");
+    expect(browserLabel("curl/8")).toBe("Browser");
+  });
+
   it("keeps no login when the service refuses the code or sends no token", async () => {
     for (const token of [new Response("no", { status: 400 }), Response.json({ access_token: "x" })]) {
       sessionStorage.clear();
+      localStorage.clear();
       const { fetcher } = fakeFetch({ token });
       const url = new URL(await loginUrl("/", "http://forge-web.example.com", fetcher));
       const back = new URLSearchParams({ code: "abc", state: url.searchParams.get("state")! });

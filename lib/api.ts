@@ -35,6 +35,25 @@ export function webTransport(): Transport {
   return createConnectTransport({ baseUrl: apiUrl, interceptors: [bearer] });
 }
 
+// startForgeSession trades a fresh ID token for a Forge session of 7 days.
+// It answers null when the API keeps no sessions.
+export async function startForgeSession(idToken: string, label: string, transport?: Transport): Promise<{ token: string; expiresAt: number } | null> {
+  const withLogin: Interceptor = (next) => async (req) => {
+    req.header.set("Authorization", `Bearer ${idToken}`);
+    return next(req);
+  };
+  const auth = createClient(AuthService, transport ?? createConnectTransport({ baseUrl: apiUrl, interceptors: [withLogin] }));
+  try {
+    const res = await auth.createSession({ label });
+    const ends = res.session?.expireTime;
+    if (!res.token || !ends) return null;
+    return { token: res.token, expiresAt: Number(ends.seconds) * 1000 };
+  } catch (err) {
+    if (isCode(err, Code.Unimplemented)) return null;
+    throw err;
+  }
+}
+
 export function makeApi(transport: Transport): Api {
   return {
     auth: createClient(AuthService, transport),

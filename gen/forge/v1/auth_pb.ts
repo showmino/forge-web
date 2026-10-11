@@ -2,15 +2,211 @@
 // @generated from file forge/v1/auth.proto (package forge.v1, syntax proto3)
 /* eslint-disable */
 
-import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
-import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
+import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file forge/v1/auth.proto.
  */
 export const file_forge_v1_auth: GenFile = /*@__PURE__*/
-  fileDesc("ChNmb3JnZS92MS9hdXRoLnByb3RvEghmb3JnZS52MSIWChRHZXRTZXJ2ZXJJbmZvUmVxdWVzdCJvChVHZXRTZXJ2ZXJJbmZvUmVzcG9uc2USFgoOc2VydmVyX3ZlcnNpb24YASABKAkSGgoSbWluX2NsaWVudF92ZXJzaW9uGAIgASgJEiIKBG9pZGMYAyABKAsyFC5mb3JnZS52MS5PSURDQ29uZmlnImoKCk9JRENDb25maWcSDgoGaXNzdWVyGAEgASgJEhEKCWNsaWVudF9pZBgCIAEoCRIOCgZzY29wZXMYAyADKAkSFQoNd2ViX2NsaWVudF9pZBgEIAEoCRISCgp3ZWJfc2NvcGVzGAUgAygJIhIKEEdldFN0YXR1c1JlcXVlc3QiWAoRR2V0U3RhdHVzUmVzcG9uc2USDwoHc3ViamVjdBgBIAEoCRINCgVlbWFpbBgCIAEoCRIOCgZncm91cHMYAyADKAkSEwoLcGVybWlzc2lvbnMYBCADKAkyrwEKC0F1dGhTZXJ2aWNlElUKDUdldFNlcnZlckluZm8SHi5mb3JnZS52MS5HZXRTZXJ2ZXJJbmZvUmVxdWVzdBofLmZvcmdlLnYxLkdldFNlcnZlckluZm9SZXNwb25zZSIDkAIBEkkKCUdldFN0YXR1cxIaLmZvcmdlLnYxLkdldFN0YXR1c1JlcXVlc3QaGy5mb3JnZS52MS5HZXRTdGF0dXNSZXNwb25zZSIDkAIBYgZwcm90bzM");
+  fileDesc("ChNmb3JnZS92MS9hdXRoLnByb3RvEghmb3JnZS52MSK4AgoHU2Vzc2lvbhIMCgRuYW1lGAEgASgJEigKBmNsaWVudBgCIAEoDjIYLmZvcmdlLnYxLlNlc3Npb24uQ2xpZW50Eg0KBWxhYmVsGAMgASgJEi8KC2NyZWF0ZV90aW1lGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIxCg1sYXN0X3VzZV90aW1lGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtleHBpcmVfdGltZRgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHY3VycmVudBgHIAEoCCJACgZDbGllbnQSFgoSQ0xJRU5UX1VOU1BFQ0lGSUVEEAASDgoKQ0xJRU5UX0NMSRABEg4KCkNMSUVOVF9XRUIQAiIlChRDcmVhdGVTZXNzaW9uUmVxdWVzdBINCgVsYWJlbBgBIAEoCSJKChVDcmVhdGVTZXNzaW9uUmVzcG9uc2USIgoHc2Vzc2lvbhgBIAEoCzIRLmZvcmdlLnYxLlNlc3Npb24SDQoFdG9rZW4YAiABKAkiFQoTTGlzdFNlc3Npb25zUmVxdWVzdCI7ChRMaXN0U2Vzc2lvbnNSZXNwb25zZRIjCghzZXNzaW9ucxgBIAMoCzIRLmZvcmdlLnYxLlNlc3Npb24iJAoURGVsZXRlU2Vzc2lvblJlcXVlc3QSDAoEbmFtZRgBIAEoCSIXChVEZWxldGVTZXNzaW9uUmVzcG9uc2UiFgoUR2V0U2VydmVySW5mb1JlcXVlc3QibwoVR2V0U2VydmVySW5mb1Jlc3BvbnNlEhYKDnNlcnZlcl92ZXJzaW9uGAEgASgJEhoKEm1pbl9jbGllbnRfdmVyc2lvbhgCIAEoCRIiCgRvaWRjGAMgASgLMhQuZm9yZ2UudjEuT0lEQ0NvbmZpZyJqCgpPSURDQ29uZmlnEg4KBmlzc3VlchgBIAEoCRIRCgljbGllbnRfaWQYAiABKAkSDgoGc2NvcGVzGAMgAygJEhUKDXdlYl9jbGllbnRfaWQYBCABKAkSEgoKd2ViX3Njb3BlcxgFIAMoCSISChBHZXRTdGF0dXNSZXF1ZXN0InwKEUdldFN0YXR1c1Jlc3BvbnNlEg8KB3N1YmplY3QYASABKAkSDQoFZW1haWwYAiABKAkSDgoGZ3JvdXBzGAMgAygJEhMKC3Blcm1pc3Npb25zGAQgAygJEiIKB3Nlc3Npb24YBSABKAsyES5mb3JnZS52MS5TZXNzaW9uMqcDCgtBdXRoU2VydmljZRJVCg1HZXRTZXJ2ZXJJbmZvEh4uZm9yZ2UudjEuR2V0U2VydmVySW5mb1JlcXVlc3QaHy5mb3JnZS52MS5HZXRTZXJ2ZXJJbmZvUmVzcG9uc2UiA5ACARJJCglHZXRTdGF0dXMSGi5mb3JnZS52MS5HZXRTdGF0dXNSZXF1ZXN0GhsuZm9yZ2UudjEuR2V0U3RhdHVzUmVzcG9uc2UiA5ACARJQCg1DcmVhdGVTZXNzaW9uEh4uZm9yZ2UudjEuQ3JlYXRlU2Vzc2lvblJlcXVlc3QaHy5mb3JnZS52MS5DcmVhdGVTZXNzaW9uUmVzcG9uc2USUgoMTGlzdFNlc3Npb25zEh0uZm9yZ2UudjEuTGlzdFNlc3Npb25zUmVxdWVzdBoeLmZvcmdlLnYxLkxpc3RTZXNzaW9uc1Jlc3BvbnNlIgOQAgESUAoNRGVsZXRlU2Vzc2lvbhIeLmZvcmdlLnYxLkRlbGV0ZVNlc3Npb25SZXF1ZXN0Gh8uZm9yZ2UudjEuRGVsZXRlU2Vzc2lvblJlc3BvbnNlYgZwcm90bzM", [file_google_protobuf_timestamp]);
+
+/**
+ * Session is a login Forge keeps for one client. Its token is shown once,
+ * by CreateSession.
+ *
+ * @generated from message forge.v1.Session
+ */
+export type Session = Message<"forge.v1.Session"> & {
+  /**
+   * "sessions/{id}".
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: forge.v1.Session.Client client = 2;
+   */
+  client: Session_Client;
+
+  /**
+   * Where it was made, as the client said: a host name, a browser.
+   *
+   * @generated from field: string label = 3;
+   */
+  label: string;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp create_time = 4;
+   */
+  createTime?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp last_use_time = 5;
+   */
+  lastUseTime?: Timestamp | undefined;
+
+  /**
+   * When it ends if it is not used again (CLI) or at the latest (web).
+   *
+   * @generated from field: google.protobuf.Timestamp expire_time = 6;
+   */
+  expireTime?: Timestamp | undefined;
+
+  /**
+   * True for the session this call was made with.
+   *
+   * @generated from field: bool current = 7;
+   */
+  current: boolean;
+};
+
+/**
+ * Describes the message forge.v1.Session.
+ * Use `create(SessionSchema)` to create a new message.
+ */
+export const SessionSchema: GenMessage<Session> = /*@__PURE__*/
+  messageDesc(file_forge_v1_auth, 0);
+
+/**
+ * Client is what holds the session.
+ *
+ * @generated from enum forge.v1.Session.Client
+ */
+export enum Session_Client {
+  /**
+   * @generated from enum value: CLIENT_UNSPECIFIED = 0;
+   */
+  UNSPECIFIED = 0,
+
+  /**
+   * @generated from enum value: CLIENT_CLI = 1;
+   */
+  CLI = 1,
+
+  /**
+   * @generated from enum value: CLIENT_WEB = 2;
+   */
+  WEB = 2,
+}
+
+/**
+ * Describes the enum forge.v1.Session.Client.
+ */
+export const Session_ClientSchema: GenEnum<Session_Client> = /*@__PURE__*/
+  enumDesc(file_forge_v1_auth, 0, 0);
+
+/**
+ * @generated from message forge.v1.CreateSessionRequest
+ */
+export type CreateSessionRequest = Message<"forge.v1.CreateSessionRequest"> & {
+  /**
+   * Where the session is made, to tell sessions apart: at most 100
+   * printable characters.
+   *
+   * @generated from field: string label = 1;
+   */
+  label: string;
+};
+
+/**
+ * Describes the message forge.v1.CreateSessionRequest.
+ * Use `create(CreateSessionRequestSchema)` to create a new message.
+ */
+export const CreateSessionRequestSchema: GenMessage<CreateSessionRequest> = /*@__PURE__*/
+  messageDesc(file_forge_v1_auth, 1);
+
+/**
+ * @generated from message forge.v1.CreateSessionResponse
+ */
+export type CreateSessionResponse = Message<"forge.v1.CreateSessionResponse"> & {
+  /**
+   * @generated from field: forge.v1.Session session = 1;
+   */
+  session?: Session | undefined;
+
+  /**
+   * The bearer token. It is not stored and cannot be read again.
+   *
+   * @generated from field: string token = 2;
+   */
+  token: string;
+};
+
+/**
+ * Describes the message forge.v1.CreateSessionResponse.
+ * Use `create(CreateSessionResponseSchema)` to create a new message.
+ */
+export const CreateSessionResponseSchema: GenMessage<CreateSessionResponse> = /*@__PURE__*/
+  messageDesc(file_forge_v1_auth, 2);
+
+/**
+ * @generated from message forge.v1.ListSessionsRequest
+ */
+export type ListSessionsRequest = Message<"forge.v1.ListSessionsRequest"> & {
+};
+
+/**
+ * Describes the message forge.v1.ListSessionsRequest.
+ * Use `create(ListSessionsRequestSchema)` to create a new message.
+ */
+export const ListSessionsRequestSchema: GenMessage<ListSessionsRequest> = /*@__PURE__*/
+  messageDesc(file_forge_v1_auth, 3);
+
+/**
+ * @generated from message forge.v1.ListSessionsResponse
+ */
+export type ListSessionsResponse = Message<"forge.v1.ListSessionsResponse"> & {
+  /**
+   * Newest first.
+   *
+   * @generated from field: repeated forge.v1.Session sessions = 1;
+   */
+  sessions: Session[];
+};
+
+/**
+ * Describes the message forge.v1.ListSessionsResponse.
+ * Use `create(ListSessionsResponseSchema)` to create a new message.
+ */
+export const ListSessionsResponseSchema: GenMessage<ListSessionsResponse> = /*@__PURE__*/
+  messageDesc(file_forge_v1_auth, 4);
+
+/**
+ * @generated from message forge.v1.DeleteSessionRequest
+ */
+export type DeleteSessionRequest = Message<"forge.v1.DeleteSessionRequest"> & {
+  /**
+   * "sessions/{id}", or "sessions/current" for the one this call uses.
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message forge.v1.DeleteSessionRequest.
+ * Use `create(DeleteSessionRequestSchema)` to create a new message.
+ */
+export const DeleteSessionRequestSchema: GenMessage<DeleteSessionRequest> = /*@__PURE__*/
+  messageDesc(file_forge_v1_auth, 5);
+
+/**
+ * @generated from message forge.v1.DeleteSessionResponse
+ */
+export type DeleteSessionResponse = Message<"forge.v1.DeleteSessionResponse"> & {
+};
+
+/**
+ * Describes the message forge.v1.DeleteSessionResponse.
+ * Use `create(DeleteSessionResponseSchema)` to create a new message.
+ */
+export const DeleteSessionResponseSchema: GenMessage<DeleteSessionResponse> = /*@__PURE__*/
+  messageDesc(file_forge_v1_auth, 6);
 
 /**
  * @generated from message forge.v1.GetServerInfoRequest
@@ -23,7 +219,7 @@ export type GetServerInfoRequest = Message<"forge.v1.GetServerInfoRequest"> & {
  * Use `create(GetServerInfoRequestSchema)` to create a new message.
  */
 export const GetServerInfoRequestSchema: GenMessage<GetServerInfoRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 0);
+  messageDesc(file_forge_v1_auth, 7);
 
 /**
  * @generated from message forge.v1.GetServerInfoResponse
@@ -54,7 +250,7 @@ export type GetServerInfoResponse = Message<"forge.v1.GetServerInfoResponse"> & 
  * Use `create(GetServerInfoResponseSchema)` to create a new message.
  */
 export const GetServerInfoResponseSchema: GenMessage<GetServerInfoResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 1);
+  messageDesc(file_forge_v1_auth, 8);
 
 /**
  * OIDCConfig is what a public client needs to log in: the CLI runs the
@@ -101,7 +297,7 @@ export type OIDCConfig = Message<"forge.v1.OIDCConfig"> & {
  * Use `create(OIDCConfigSchema)` to create a new message.
  */
 export const OIDCConfigSchema: GenMessage<OIDCConfig> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 2);
+  messageDesc(file_forge_v1_auth, 9);
 
 /**
  * @generated from message forge.v1.GetStatusRequest
@@ -114,7 +310,7 @@ export type GetStatusRequest = Message<"forge.v1.GetStatusRequest"> & {
  * Use `create(GetStatusRequestSchema)` to create a new message.
  */
 export const GetStatusRequestSchema: GenMessage<GetStatusRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 3);
+  messageDesc(file_forge_v1_auth, 10);
 
 /**
  * @generated from message forge.v1.GetStatusResponse
@@ -144,6 +340,13 @@ export type GetStatusResponse = Message<"forge.v1.GetStatusResponse"> & {
    * @generated from field: repeated string permissions = 4;
    */
   permissions: string[];
+
+  /**
+   * The session this call was made with; unset for a call with an ID token.
+   *
+   * @generated from field: forge.v1.Session session = 5;
+   */
+  session?: Session | undefined;
 };
 
 /**
@@ -151,7 +354,7 @@ export type GetStatusResponse = Message<"forge.v1.GetStatusResponse"> & {
  * Use `create(GetStatusResponseSchema)` to create a new message.
  */
 export const GetStatusResponseSchema: GenMessage<GetStatusResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 4);
+  messageDesc(file_forge_v1_auth, 11);
 
 /**
  * AuthService tells clients how to log in and who they are.
@@ -179,6 +382,41 @@ export const AuthService: GenService<{
     methodKind: "unary";
     input: typeof GetStatusRequestSchema;
     output: typeof GetStatusResponseSchema;
+  },
+  /**
+   * CreateSession turns a fresh login into a Forge session: a token of
+   * Forge's own that keeps working without the identity provider. The caller
+   * must present the ID token of a login made in the last few minutes, never
+   * a session. The client the ID token was issued to decides the kind: the
+   * CLI's lasts until it has not been used for 90 days, the web dashboard's
+   * for 7 days.
+   *
+   * @generated from rpc forge.v1.AuthService.CreateSession
+   */
+  createSession: {
+    methodKind: "unary";
+    input: typeof CreateSessionRequestSchema;
+    output: typeof CreateSessionResponseSchema;
+  },
+  /**
+   * ListSessions returns the caller's own sessions.
+   *
+   * @generated from rpc forge.v1.AuthService.ListSessions
+   */
+  listSessions: {
+    methodKind: "unary";
+    input: typeof ListSessionsRequestSchema;
+    output: typeof ListSessionsResponseSchema;
+  },
+  /**
+   * DeleteSession ends one of the caller's own sessions at once.
+   *
+   * @generated from rpc forge.v1.AuthService.DeleteSession
+   */
+  deleteSession: {
+    methodKind: "unary";
+    input: typeof DeleteSessionRequestSchema;
+    output: typeof DeleteSessionResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_forge_v1_auth, 0);

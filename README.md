@@ -16,8 +16,12 @@ decides what they may see and do. The server only serves the pages and
 
 - **Login:** the authorization code flow with PKCE against Forge's login
   service, as the public client forge-api names in `GetServerInfo`
-  (`lib/auth`). The ID token lives in the tab's `sessionStorage` for an hour;
-  there is no refresh token.
+  (`lib/auth`). Right after the sign-in the page trades the ID token for a
+  Forge session (`AuthService.CreateSession`): a token of forge-api's own
+  that lasts 7 days, kept in `localStorage` so every tab shares it, and ended
+  on the API by Sign out. There is no refresh token. Against an API that
+  keeps no sessions, the ID token lives in the tab's `sessionStorage` for an
+  hour, as before.
 - **Delete:** a writer deletes a service from its page. The name is typed to
   confirm, as on the CLI; the API then takes down everything the service
   runs (previews, staging, production, their namespaces) and removes it from

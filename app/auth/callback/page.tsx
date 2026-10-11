@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { TextLink } from "@/components/ui/button";
 import { ErrorNote, Loading } from "@/components/ui/layout";
-import { finishLogin } from "@/lib/auth/login";
+import { startForgeSession } from "@/lib/api";
+import { browserLabel, finishLogin } from "@/lib/auth/login";
 
 // A code can be exchanged once, and React may run the effect twice while
 // developing: keep the one exchange of this page load.
@@ -15,7 +16,7 @@ export default function Callback() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    exchange ??= finishLogin(new URLSearchParams(window.location.search));
+    exchange ??= finishLogin(new URLSearchParams(window.location.search), fetch, (idToken) => startForgeSession(idToken, browserLabel()));
     exchange.then(
       (returnTo) => router.replace(returnTo),
       (err: unknown) => setError(err instanceof Error ? err : new Error("The login was not completed.")),
