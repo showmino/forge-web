@@ -23,6 +23,12 @@ export function Button({
   return <button type="button" {...props} className={`${base} ${kinds[kind]} ${className}`} />;
 }
 
+// ButtonLink goes to another page but carries the weight of a button: for the
+// one main action of a view when that action is a page of its own.
+export function ButtonLink({ kind = "secondary", className = "", ...props }: ComponentProps<typeof Link> & { kind?: Kind }) {
+  return <Link {...props} className={`${base} ${kinds[kind].replaceAll("enabled:", "")} ${className}`} />;
+}
+
 // TextLink is a link inside the dashboard or out of it, in the accent colour.
 export function TextLink({ className = "", ...props }: ComponentProps<typeof Link>) {
   return <Link {...props} className={`text-accent hover:underline ${className}`} />;

@@ -6,8 +6,10 @@ Next.js app with TypeScript and Tailwind CSS.
 
 ## What it is
 
-The web dashboard of Forge: the catalog, a page per service, the templates and
-the audit log. It is a thin client of the Forge API, like the CLI: every call
+The web dashboard of Forge: the catalog, a page per service, the templates,
+operations and the audit log. A writer also creates a service from a template,
+deploys, promotes, rolls back and manages previews from it, each behind a
+confirmation, with the work shown live (`WatchOperation`). It is a thin client of the Forge API, like the CLI: every call
 goes from the browser to forge-api with the reader's own token, and the API
 decides what they may see and do. The server only serves the pages and
 `/api/healthz`; it holds no secrets.

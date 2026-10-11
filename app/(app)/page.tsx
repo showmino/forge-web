@@ -3,7 +3,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useApi } from "@/components/providers";
-import { TextLink } from "@/components/ui/button";
+import { useCanWrite } from "@/components/app-shell";
+import { ButtonLink, TextLink } from "@/components/ui/button";
 import { Empty, ErrorNote, Loading, PageHeader, TableFrame, td, th, tr } from "@/components/ui/layout";
 import { StatusBadge } from "@/components/ui/status";
 import type { Deployment } from "@/gen/forge/v1/deploy_pb";
@@ -20,6 +21,7 @@ export default function Catalog() {
     queryFn: () => api.deploys.listDeployments({}).then((r) => r.deployments),
   });
   const [filter, setFilter] = useState("");
+  const canWrite = useCanWrite();
 
   const byEnv = useMemo(() => {
     const m = new Map<string, Deployment>();
@@ -45,6 +47,11 @@ export default function Catalog() {
             className="h-8 w-56 rounded-md border border-border-strong bg-surface px-3 text-ink placeholder:text-ink-muted"
           />
         </label>
+        {canWrite ? (
+          <ButtonLink kind="primary" href="/create">
+            Create service
+          </ButtonLink>
+        ) : null}
       </PageHeader>
       {services.isPending ? (
         <Loading what="services" />
@@ -52,7 +59,7 @@ export default function Catalog() {
         <ErrorNote error={services.error} />
       ) : services.data.length === 0 ? (
         <Empty>
-          No services yet. Create the first one with <code className="type-code">forge create</code>.
+          No services yet. {canWrite ? "Create the first one from a template." : "Writers create one from a template."}
         </Empty>
       ) : shown.length === 0 ? (
         <Empty>No service matches “{filter.trim()}”.</Empty>

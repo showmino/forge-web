@@ -116,7 +116,11 @@ function forge(router: ConnectRouter) {
   });
   router.service(TemplateService, {
     listTemplates: () => ({ templates: [template] }),
-    getTemplate: () => ({ template }),
+    getTemplate: (req) => {
+      // As the server: the name must be "templates/{template}".
+      if (req.name !== "templates/nextjs") throw new ConnectError(`name "${req.name}" must look like templates/{template}`, Code.InvalidArgument);
+      return { template };
+    },
   });
   router.service(AuditService, {
     listAuditEvents: (req) => {
@@ -128,7 +132,7 @@ function forge(router: ConnectRouter) {
 }
 
 const template = {
-  name: "nextjs",
+  name: "templates/nextjs",
   version: "v1.3.0",
   title: "Next.js web app",
   description: "Server-rendered Next.js app with CI, Dockerfile and forge.yaml",

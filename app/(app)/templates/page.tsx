@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useApi } from "@/components/providers";
 import { TextLink } from "@/components/ui/button";
 import { Empty, ErrorNote, Loading, PageHeader, TableFrame, td, th, tr } from "@/components/ui/layout";
+import { templateId } from "@/lib/api";
 
 // The templates a new service can start from.
 export default function Templates() {
@@ -37,8 +38,8 @@ export default function Templates() {
             {templates.data.map((t) => (
               <tr key={t.name} className={tr}>
                 <td className={td}>
-                  <TextLink href={`/templates/${t.name}`} className="type-code">
-                    {t.name}
+                  <TextLink href={`/templates/${templateId(t.name)}`} className="type-code">
+                    {templateId(t.name)}
                   </TextLink>
                 </td>
                 <td className={`${td} whitespace-normal`}>

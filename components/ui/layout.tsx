@@ -16,10 +16,13 @@ export function PageHeader({ title, lead, children }: { title: string; lead?: Re
   );
 }
 
-export function Section({ title, children }: { title: string; children: ReactNode }) {
+export function Section({ title, action, children }: { title: string; action?: ReactNode; children: ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="type-heading">{title}</h2>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="type-heading">{title}</h2>
+        {action}
+      </div>
       {children}
     </section>
   );

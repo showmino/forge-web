@@ -9,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { clearSession, loadSession, type Session } from "@/lib/auth/session";
 
 const nav = [
-  { href: "/", label: "Services", match: (p: string) => p === "/" || p.startsWith("/services") },
+  { href: "/", label: "Services", match: (p: string) => p === "/" || p.startsWith("/services") || p.startsWith("/create") },
   { href: "/templates", label: "Templates", match: (p: string) => p.startsWith("/templates") },
+  { href: "/operations", label: "Operations", match: (p: string) => p.startsWith("/operations") },
   { href: "/audit", label: "Audit log", match: (p: string) => p.startsWith("/audit") },
 ];
 

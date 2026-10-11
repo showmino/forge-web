@@ -21,11 +21,11 @@ function typeText(p: TemplateParameter): string {
 
 // One template: what it makes and what it asks for.
 export default function TemplatePage() {
-  const { name } = useParams<{ name: string }>();
+  const { name: id } = useParams<{ name: string }>();
   const api = useApi();
   const template = useQuery({
-    queryKey: ["template", name],
-    queryFn: () => api.templates.getTemplate({ name }).then((r) => r.template),
+    queryKey: ["template", id],
+    queryFn: () => api.templates.getTemplate({ name: `templates/${id}` }).then((r) => r.template),
   });
 
   if (template.isPending) return <Loading what="the template" />;
@@ -35,15 +35,15 @@ export default function TemplatePage() {
 
   return (
     <>
-      <PageHeader title={t.title || t.name} lead={t.description} />
+      <PageHeader title={t.title || id} lead={t.description} />
       <Panel className="p-6">
         <Facts
           items={[
-            ["Template", <span key="n" className="type-code">{t.name}</span>],
+            ["Template", <span key="n" className="type-code">{id}</span>],
             ["Version", <span key="v" className="type-code">{t.version || "–"}</span>],
             ["Tags", t.tags.join(", ") || "–"],
             ["Owner", t.owner || "–"],
-            ["Start from it", <code key="c" className="type-code">forge create &lt;name&gt; --template {t.name}</code>],
+            ["Start from it", <code key="c" className="type-code">forge create &lt;name&gt; --template {id}</code>],
           ]}
         />
       </Panel>
