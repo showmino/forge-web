@@ -10,3 +10,7 @@ service:
 run:
   port: 3000
   health: /api/healthz
+  # The dashboard stays on its internal address until the Forge API and
+  # the login have public HTTPS names too: a page served over HTTPS may
+  # not call an API over HTTP.
+  domain: none
