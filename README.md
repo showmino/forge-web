@@ -134,3 +134,10 @@ pages call the API from the browser, so it is built into them.
 The server listens on `$PORT` (`run:` in `forge.yaml`). In Forge the root
 filesystem is read-only, and Next's cache (`.next/cache`) is a link to the
 writable `/tmp`.
+
+## Docs
+
+`docs/` holds this service's docs for readers of Forge: an overview, how it is
+built, how to work on it, and a runbook, in the order `docs:` in `forge.yaml`
+gives. Forge reads them from `main` (`forge docs get forge-web runbook.md`).
+Check them with `forge docs lint` before a push.
