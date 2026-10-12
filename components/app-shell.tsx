@@ -29,6 +29,12 @@ const icon = {
     </>
   ),
   operations: <path d="M3 12h4l3-8 4 16 3-8h4" />,
+  docs: (
+    <>
+      <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10a2 2 0 0 1 2 2v14a1.5 1.5 0 0 0-1.5-1.5h-5A1.5 1.5 0 0 1 4 17z" />
+      <path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H14a2 2 0 0 0-2 2v14a1.5 1.5 0 0 1 1.5-1.5h5A1.5 1.5 0 0 0 20 17z" />
+    </>
+  ),
   environments: (
     <>
       <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" />
@@ -69,6 +75,7 @@ const groups: { label: string; items: Item[] }[] = [
         match: (p) => p.startsWith("/services") || p.startsWith("/create"),
       },
       { href: "/templates", label: "Templates", icon: "templates", match: (p) => p.startsWith("/templates") },
+      { href: "/docs", label: "Docs", icon: "docs", match: (p) => p.startsWith("/docs") },
     ],
   },
   {

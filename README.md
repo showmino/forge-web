@@ -46,6 +46,17 @@ decides what they may see and do. The server only serves the pages and
   services.
 - **Jump to** (top bar, Ctrl+K or ⌘K): a command palette over the pages,
   the services and the previews.
+- **Docs** (`/docs`, and a Docs tab on a service that has docs): a service's
+  Markdown under `docs/` in its repo, read through `DocsService` (Forge's
+  TechDocs). `/docs/<service>/<path>` is one page: the pages on the left, the
+  page in the middle, its headings on the right, with the commit it was read
+  at and "Edit on GitHub". `components/doc-reader.tsx` renders it with
+  react-markdown (GitHub tables, task lists, footnotes, highlighted code).
+  Raw HTML in a page is shown as text, never run; links between pages stay in
+  the dashboard; images come through `GetDocAsset` as `data:` URLs (the repos
+  are private, and the Content-Security-Policy allows no other site); an
+  image from another site is not loaded. Heading ids start with `doc-`, so a
+  page never takes an id the dashboard uses.
 - **Login:** the authorization code flow with PKCE against Forge's login
   service, as the public client forge-api names in `GetServerInfo`
   (`lib/auth`). Right after the sign-in the page trades the ID token for a
@@ -90,11 +101,12 @@ decides what they may see and do. The server only serves the pages and
   page the CLI command that does the same. Its tokens are the Tailwind theme
   in `app/globals.css`; its parts are in `components/ui` and
   `components/app-shell.tsx`. Every page follows the design's layout for
-  it: Services, a service, Templates (cards), Environments, Deployments,
+  it: Services, a service, Templates (cards), Docs, Environments, Deployments,
   Operations, Ownership, the Audit log and Create (with the whole
   command shown as the form is filled in). What the mockup shows that Forge
   does not know is left out: rules and approvals, the golden path, tiers
-  and SLOs, team members and on-call, TechDocs, template lint.
+  and SLOs, team members and on-call, docs search (TechDocs milestone 3),
+  template lint.
 
 ## Develop
 

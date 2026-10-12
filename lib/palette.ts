@@ -10,6 +10,7 @@ export const PAGES: [label: string, href: string][] = [
   ["Overview", "/"],
   ["Services", "/services"],
   ["Templates", "/templates"],
+  ["Docs", "/docs"],
   ["Create service", "/create"],
   ["Environments", "/environments"],
   ["Deployments", "/deployments"],

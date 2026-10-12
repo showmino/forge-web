@@ -299,3 +299,173 @@
     animation: turn 1.2s linear infinite;
   }
 }
+
+/* A page of a service's docs, rendered from Markdown. */
+.doc-article {
+  min-width: 0;
+  max-width: 72ch;
+  font-size: 15px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.doc-article h1,
+.doc-article .doc-h1 {
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 720;
+  font-size: 30px;
+  line-height: 1.15;
+  margin: 0 0 6px;
+}
+.doc-article h2,
+.doc-article h3,
+.doc-article h4 {
+  font-family: var(--font-display);
+  font-stretch: 108%;
+  font-weight: 680;
+  line-height: 1.25;
+  scroll-margin-top: 80px;
+}
+.doc-article h2 {
+  font-size: 20px;
+  margin: 32px 0 8px;
+}
+.doc-article h3 {
+  font-size: 15px;
+  margin: 24px 0 4px;
+}
+.doc-article h2.doc-h1 {
+  font-size: 26px;
+  margin: 0 0 6px;
+}
+.doc-article h4 {
+  font-size: 14px;
+  margin: 16px 0 4px;
+}
+.doc-article p,
+.doc-article ul,
+.doc-article ol,
+.doc-article blockquote {
+  margin: 0 0 12px;
+}
+.doc-article ul,
+.doc-article ol {
+  padding-left: 1.3em;
+}
+.doc-article ul {
+  list-style: disc;
+}
+.doc-article ol {
+  list-style: decimal;
+}
+.doc-article li {
+  margin: 2px 0;
+}
+.doc-article li.task-list-item {
+  list-style: none;
+}
+.doc-article li.task-list-item input {
+  margin-right: 6px;
+  accent-color: var(--ember);
+}
+.doc-article a {
+  color: var(--info-fg);
+  text-decoration: none;
+}
+.doc-article a:hover {
+  text-decoration: underline;
+}
+.doc-article blockquote {
+  border-left: 3px solid var(--line-strong);
+  padding-left: 12px;
+  color: var(--fg-2);
+}
+.doc-article hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 24px 0;
+}
+.doc-article :not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0 4px;
+}
+.doc-article pre {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.65;
+  background: var(--rail-bg);
+  color: var(--rail-fg);
+  border-radius: 6px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  margin: 0 0 16px;
+}
+.doc-article img {
+  max-width: 100%;
+  border-radius: 6px;
+}
+.doc-article .doc-table {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin: 0 0 16px;
+}
+.doc-article table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.doc-article th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--fg-3);
+  font-size: 12px;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.doc-article td {
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.doc-article tr:last-child td {
+  border-bottom: 0;
+}
+.doc-article .footnotes {
+  font-size: 13px;
+  color: var(--fg-2);
+  border-top: 1px solid var(--line);
+  margin-top: 32px;
+  padding-top: 8px;
+}
+/* Code highlighting on the dark ground of the rail. */
+.doc-article .hljs-comment,
+.doc-article .hljs-quote {
+  color: var(--rail-fg-2);
+}
+.doc-article .hljs-keyword,
+.doc-article .hljs-selector-tag,
+.doc-article .hljs-built_in,
+.doc-article .hljs-type {
+  color: oklch(0.8 0.13 60);
+}
+.doc-article .hljs-string,
+.doc-article .hljs-attr,
+.doc-article .hljs-template-variable {
+  color: oklch(0.82 0.1 155);
+}
+.doc-article .hljs-number,
+.doc-article .hljs-literal,
+.doc-article .hljs-variable {
+  color: oklch(0.8 0.1 250);
+}
+.doc-article .hljs-title,
+.doc-article .hljs-section,
+.doc-article .hljs-name {
+  color: oklch(0.86 0.09 300);
+}
