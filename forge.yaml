@@ -17,6 +17,9 @@ run:
 docs:
   - path: index.md
     title: Overview
+  - path: using.md
+  - path: writing-docs.md
   - path: architecture.md
+  - path: security.md
   - path: development.md
   - path: runbook.md
