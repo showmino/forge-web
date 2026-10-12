@@ -91,7 +91,8 @@ The image runs the standalone server (`node .next/standalone/server.js`); `npm s
 
 ## Ship
 
-CI tests every push. On `main` it pushes
+CI tests every pull request, once: the tests do not run again after the merge.
+On `main` it builds and pushes
 `ghcr.io/showmino/forge-web:<short-sha>`, then a `deploy`
 job deploys that commit to staging through Forge. It logs in with the job's
 GitHub OIDC token, and needs the organization variable `FORGE_API_URL`.
