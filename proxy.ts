@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
-import { contentSecurityPolicy, origin } from "@/lib/csp";
+import { type NextRequest, NextResponse } from "next/server";
+import { contentSecurityPolicy, newNonce, origin } from "@/lib/csp";
 
-// Sets the Content-Security-Policy on every page. The login service's address
+// Sets the Content-Security-Policy on every page, with a nonce of its own for
+// the page's scripts. The login service's address
 // is not known when the image is built: forge-api names it (GetServerInfo), so
 // this asks the API, remembers the answer for a while, and names both in the
 // policy. Until the API has answered, the policy allows any web address.
@@ -34,9 +35,16 @@ async function loginOrigin(): Promise<string | null> {
   return login.origin;
 }
 
-export async function proxy() {
-  const res = NextResponse.next();
-  res.headers.set("Content-Security-Policy", contentSecurityPolicy({ api: origin(API), login: await loginOrigin(), dev }));
+export async function proxy(request: NextRequest) {
+  const nonce = newNonce();
+  const policy = contentSecurityPolicy({ nonce, api: origin(API), login: await loginOrigin(), dev });
+  // The page is rendered with the policy in its request: the framework reads
+  // the nonce from it for its own scripts, and the layout for the theme's.
+  const headers = new Headers(request.headers);
+  headers.set("x-nonce", nonce);
+  headers.set("Content-Security-Policy", policy);
+  const res = NextResponse.next({ request: { headers } });
+  res.headers.set("Content-Security-Policy", policy);
   return res;
 }
 

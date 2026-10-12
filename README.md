@@ -38,10 +38,18 @@ decides what they may see and do. The server only serves the pages and
   with the teardown (showmino/forge#28): an older API removes only the
   catalog entry.
 - **Security headers:** `proxy.ts` sets the Content-Security-Policy on every
-  page. It asks forge-api which login service it uses and names the two in
-  `connect-src`; until the API has answered it allows any web address, so a
-  failed lookup never locks a reader out. Scripts still allow inline code
-  (Next's own), which is the remaining gap.
+  page (`lib/csp.ts`). Scripts run only with the nonce of their request: the
+  framework's own, the one line in the layout that sets the theme, and what
+  those load. An inline script or event handler that got into a page some
+  other way does not run, which is what protects the session kept in the
+  browser. A nonce is per request, so every page is rendered on request
+  (the layout reads `x-nonce`); nothing is prerendered. `connect-src` names
+  forge-api and the login service only; styles may be inline. Also sent:
+  `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`.
+- **Fonts:** Archivo, IBM Plex Sans and IBM Plex Mono are files in the repo
+  (`app/fonts`, Latin subsets from the Fontsource packages, SIL Open Font
+  License, licences beside them), loaded with `next/font/local`. A build
+  fetches nothing from Google.
 - **Owner:** a service is owned by a team of the GitHub organization. Create
   picks it from the teams the API lists from GitHub (`TeamService`); if the
   list cannot be read it says why and lets the team be typed.
