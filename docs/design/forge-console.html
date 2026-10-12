@@ -1,0 +1,1190 @@
+<title>Forge Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Forge design language v0.1
+   Layout: dark iron rail + light work surface; every screen = title, one primary action, its CLI equivalent, then summary before detail.
+   Color: iron neutrals (hue 250, low chroma) · ember for the one primary action and work in progress · status colors carry meaning only.
+   Type: Archivo (expanded) for titles and big numbers · IBM Plex Sans for UI · IBM Plex Mono for names, refs, commands. */
+:root{
+  --bg:oklch(0.975 0.004 250);
+  --surface:oklch(1 0 0);
+  --surface-2:oklch(0.965 0.005 250);
+  --line:oklch(0.905 0.007 250);
+  --line-strong:oklch(0.82 0.01 250);
+  --fg:oklch(0.22 0.014 250);
+  --fg-2:oklch(0.42 0.014 250);
+  --fg-3:oklch(0.52 0.012 250);
+  --ember:oklch(0.6 0.175 42);
+  --ember-hot:oklch(0.7 0.17 55);
+  --ember-on:oklch(0.99 0.01 60);
+  --ember-soft:oklch(0.95 0.035 52);
+  --ember-ink:oklch(0.47 0.15 40);
+  --ok-bg:oklch(0.95 0.045 155);  --ok-fg:oklch(0.42 0.11 155);  --ok-dot:oklch(0.62 0.15 155);
+  --warn-bg:oklch(0.95 0.06 85);  --warn-fg:oklch(0.45 0.1 70);  --warn-dot:oklch(0.75 0.15 75);
+  --bad-bg:oklch(0.95 0.035 25);  --bad-fg:oklch(0.48 0.17 25);  --bad-dot:oklch(0.6 0.2 25);
+  --info-bg:oklch(0.95 0.03 245); --info-fg:oklch(0.45 0.12 250); --info-dot:oklch(0.6 0.14 250);
+  --rail-bg:oklch(0.205 0.014 250);
+  --rail-fg:oklch(0.93 0.006 250);
+  --rail-fg-2:oklch(0.72 0.012 250);
+  --rail-line:oklch(0.3 0.014 250);
+  --rail-active:oklch(0.27 0.016 250);
+  --scrim:oklch(0.2 0.02 250 / 0.45);
+  --env-staging:oklch(0.58 0.16 300);
+  --env-production:oklch(0.56 0.15 250);
+  --env-preview:oklch(0.62 0.14 55);
+  --shadow-1:0 1px 2px oklch(0.2 0.02 250 / 0.06),0 0 0 1px oklch(0.2 0.02 250 / 0.03);
+  --shadow-3:0 12px 32px -8px oklch(0.2 0.02 250 / 0.22),0 0 0 1px oklch(0.2 0.02 250 / 0.06);
+  --font-display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --font-ui:"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --r-sm:4px; --r-md:6px; --r-lg:10px;
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:oklch(0.17 0.01 250); --surface:oklch(0.205 0.012 250); --surface-2:oklch(0.235 0.012 250);
+  --line:oklch(0.29 0.012 250); --line-strong:oklch(0.37 0.014 250);
+  --fg:oklch(0.95 0.005 250); --fg-2:oklch(0.78 0.01 250); --fg-3:oklch(0.68 0.012 250);
+  --ember:oklch(0.72 0.16 48); --ember-hot:oklch(0.8 0.15 62); --ember-on:oklch(0.2 0.03 40);
+  --ember-soft:oklch(0.3 0.06 45); --ember-ink:oklch(0.84 0.11 58);
+  --ok-bg:oklch(0.3 0.05 155); --ok-fg:oklch(0.86 0.1 155); --ok-dot:oklch(0.72 0.15 155);
+  --warn-bg:oklch(0.32 0.05 80); --warn-fg:oklch(0.88 0.1 85); --warn-dot:oklch(0.8 0.14 80);
+  --bad-bg:oklch(0.31 0.07 25); --bad-fg:oklch(0.86 0.09 25); --bad-dot:oklch(0.68 0.19 25);
+  --info-bg:oklch(0.3 0.05 250); --info-fg:oklch(0.86 0.07 250); --info-dot:oklch(0.7 0.13 250);
+  --rail-bg:oklch(0.14 0.01 250); --rail-fg:oklch(0.93 0.006 250); --rail-fg-2:oklch(0.7 0.012 250);
+  --rail-line:oklch(0.24 0.012 250); --rail-active:oklch(0.22 0.014 250);
+  --scrim:oklch(0.05 0.01 250 / 0.6);
+  --env-staging:oklch(0.74 0.13 300); --env-production:oklch(0.72 0.12 250); --env-preview:oklch(0.76 0.13 60);
+  --shadow-1:inset 0 1px 0 oklch(1 0 0 / 0.04),0 0 0 1px oklch(0 0 0 / 0.2);
+  --shadow-3:inset 0 1px 0 oklch(1 0 0 / 0.06),0 0 0 1px oklch(0 0 0 / 0.3),0 16px 40px -8px oklch(0 0 0 / 0.6);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:oklch(0.17 0.01 250); --surface:oklch(0.205 0.012 250); --surface-2:oklch(0.235 0.012 250);
+  --line:oklch(0.29 0.012 250); --line-strong:oklch(0.37 0.014 250);
+  --fg:oklch(0.95 0.005 250); --fg-2:oklch(0.78 0.01 250); --fg-3:oklch(0.68 0.012 250);
+  --ember:oklch(0.72 0.16 48); --ember-hot:oklch(0.8 0.15 62); --ember-on:oklch(0.2 0.03 40);
+  --ember-soft:oklch(0.3 0.06 45); --ember-ink:oklch(0.84 0.11 58);
+  --ok-bg:oklch(0.3 0.05 155); --ok-fg:oklch(0.86 0.1 155); --ok-dot:oklch(0.72 0.15 155);
+  --warn-bg:oklch(0.32 0.05 80); --warn-fg:oklch(0.88 0.1 85); --warn-dot:oklch(0.8 0.14 80);
+  --bad-bg:oklch(0.31 0.07 25); --bad-fg:oklch(0.86 0.09 25); --bad-dot:oklch(0.68 0.19 25);
+  --info-bg:oklch(0.3 0.05 250); --info-fg:oklch(0.86 0.07 250); --info-dot:oklch(0.7 0.13 250);
+  --rail-bg:oklch(0.14 0.01 250); --rail-fg:oklch(0.93 0.006 250); --rail-fg-2:oklch(0.7 0.012 250);
+  --rail-line:oklch(0.24 0.012 250); --rail-active:oklch(0.22 0.014 250);
+  --scrim:oklch(0.05 0.01 250 / 0.6);
+  --env-staging:oklch(0.74 0.13 300); --env-production:oklch(0.72 0.12 250); --env-preview:oklch(0.76 0.13 60);
+  --shadow-1:inset 0 1px 0 oklch(1 0 0 / 0.04),0 0 0 1px oklch(0 0 0 / 0.2);
+  --shadow-3:inset 0 1px 0 oklch(1 0 0 / 0.06),0 0 0 1px oklch(0 0 0 / 0.3),0 16px 40px -8px oklch(0 0 0 / 0.6);
+  color-scheme:dark;
+}
+:root[data-theme="light"]{color-scheme:light}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--font-ui);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--ember);outline-offset:2px;border-radius:var(--r-sm)}
+.mono{font-family:var(--font-mono);font-size:.92em}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--fg-2)}
+.faint{color:var(--fg-3)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- Shell ---------- */
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100%}
+.rail{background:var(--rail-bg);color:var(--rail-fg);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding:var(--s4) var(--s3);gap:var(--s4)}
+.brand{display:flex;align-items:center;gap:10px;padding:2px 8px 6px;text-decoration:none}
+.brand-word{font-family:var(--font-display);font-stretch:118%;font-weight:750;font-size:19px;letter-spacing:.01em}
+.brand-ver{font-family:var(--font-mono);font-size:11px;color:var(--rail-fg-2);margin-left:auto}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--rail-fg-2);padding:var(--s3) 10px 6px}
+.nav a{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:var(--r-md);color:var(--rail-fg-2);text-decoration:none;font-weight:500;position:relative}
+.nav a svg{flex:none;opacity:.9}
+.nav a .count{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--rail-fg-2)}
+.nav a[aria-current="page"]{background:var(--rail-active);color:var(--rail-fg)}
+.nav a[aria-current="page"]::before{content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:3px;border-radius:0 3px 3px 0;background:var(--ember)}
+@media (hover:hover) and (pointer:fine){.nav a:hover:not([aria-current="page"]){color:var(--rail-fg);background:color-mix(in oklab,var(--rail-active) 60%,transparent)}}
+.rail-foot{margin-top:auto;border-top:1px solid var(--rail-line);padding-top:var(--s3);display:flex;align-items:center;gap:10px;padding-inline:8px}
+.avatar{width:28px;height:28px;border-radius:50%;display:inline-grid;place-items:center;font-size:11px;font-weight:600;background:var(--ember-soft);color:var(--ember-ink);flex:none}
+.rail .avatar{background:var(--rail-active);color:var(--rail-fg)}
+.who{font-size:13px;line-height:1.25}
+.who small{display:block;color:var(--rail-fg-2);font-size:11.5px}
+
+.rail-scrim{display:none;position:fixed;inset:0;background:var(--scrim);z-index:35}
+.main{min-width:0;display:flex;flex-direction:column}
+.topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;gap:var(--s3);padding:10px var(--s6);background:color-mix(in oklab,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.icon-btn.menu-btn{display:none}
+.ctx{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-md);padding:5px 10px;font-size:13px;cursor:pointer}
+.ctx .dot{width:7px;height:7px;border-radius:50%;background:var(--ok-dot)}
+.search{flex:1;max-width:420px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-md);padding:6px 10px;color:var(--fg-3);cursor:text;text-align:left}
+.search>span:not(.kbd){flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.search{min-width:0}
+.kbd{font-family:var(--font-mono);font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:var(--r-sm);padding:0 5px;color:var(--fg-2);background:var(--surface-2)}
+.top-right{margin-left:auto;display:flex;align-items:center;gap:var(--s2)}
+.content{padding:var(--s6) var(--s6) var(--s7);max-width:1320px;width:100%;display:flex;flex-direction:column;gap:var(--s6)}
+
+/* ---------- Page header ---------- */
+.ph{display:flex;flex-wrap:wrap;align-items:flex-end;gap:var(--s4) var(--s5)}
+.ph-text{flex:1 1 360px;min-width:0;display:flex;flex-direction:column;gap:6px}
+.crumbs{font-size:12.5px;color:var(--fg-3);display:flex;gap:6px;align-items:center}
+.crumbs a{text-decoration:none;color:var(--fg-2)}
+h1{font-family:var(--font-display);font-stretch:112%;font-weight:720;font-size:30px;line-height:1.1;letter-spacing:-.01em;margin:0;text-wrap:balance}
+h2{font-family:var(--font-display);font-stretch:108%;font-weight:680;font-size:17px;line-height:1.25;margin:0}
+h3{font-size:14px;font-weight:600;margin:0}
+.lede{color:var(--fg-2);margin:0;max-width:62ch}
+.ph-actions{display:flex;flex-wrap:wrap;gap:var(--s2);align-items:center}
+
+/* CLI equivalent: the Forge signature. Every screen names its command. */
+.cli{display:inline-flex;align-items:center;gap:10px;max-width:100%;font-family:var(--font-mono);font-size:12.5px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:5px 6px 5px 10px;color:var(--fg-2);align-self:flex-start}
+.cli code{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cli code b{color:var(--ember-ink);font-weight:500}
+.cli .prompt{color:var(--fg-3);user-select:none}
+.cli button{border:0;background:transparent;color:var(--fg-3);cursor:pointer;padding:2px 4px;border-radius:var(--r-sm);font-size:11.5px;font-family:var(--font-ui)}
+@media (hover:hover) and (pointer:fine){.cli button:hover{color:var(--fg);background:var(--surface)}}
+
+/* ---------- Buttons ---------- */
+.btn{display:inline-flex;align-items:center;gap:7px;border-radius:var(--r-md);padding:7px 13px;font-weight:500;font-size:13.5px;border:1px solid var(--line-strong);background:var(--surface);color:var(--fg);cursor:pointer;text-decoration:none;line-height:1.3;white-space:nowrap}
+.btn-primary{background:var(--ember);border-color:var(--ember);color:var(--ember-on);box-shadow:inset 0 1px 0 oklch(1 0 0 / 0.18),0 1px 2px oklch(0.4 0.12 40 / 0.3)}
+.btn-ghost{border-color:transparent;background:transparent;color:var(--fg-2)}
+.btn-danger{background:var(--bad-dot);border-color:var(--bad-dot);color:oklch(0.99 0 0)}
+.btn-sm{padding:4px 9px;font-size:12.5px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.icon-btn{display:inline-grid;place-items:center;width:32px;height:32px;border-radius:var(--r-md);border:1px solid transparent;background:transparent;color:var(--fg-2);cursor:pointer}
+@media (hover:hover) and (pointer:fine){
+  .btn:hover:not(:disabled){border-color:var(--fg-3)}
+  .btn-primary:hover:not(:disabled){background:color-mix(in oklab,var(--ember) 88%,var(--fg));border-color:transparent}
+  .btn-ghost:hover:not(:disabled){background:var(--surface-2);color:var(--fg);border-color:transparent}
+  .icon-btn:hover{background:var(--surface-2);color:var(--fg)}
+}
+
+/* ---------- Status pills ---------- */
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:1px 8px 1px 7px;border-radius:999px;white-space:nowrap;line-height:1.6}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.ok{background:var(--ok-bg);color:var(--ok-fg)} .pill.ok::before{background:var(--ok-dot)}
+.pill.warn{background:var(--warn-bg);color:var(--warn-fg)} .pill.warn::before{background:var(--warn-dot)}
+.pill.bad{background:var(--bad-bg);color:var(--bad-fg)} .pill.bad::before{background:var(--bad-dot)}
+.pill.info{background:var(--info-bg);color:var(--info-fg)} .pill.info::before{background:var(--info-dot)}
+.pill.run{background:var(--ember-soft);color:var(--ember-ink)} .pill.run::before{background:var(--ember);animation:pulse 1.4s ease-in-out infinite}
+.pill.neutral{background:var(--surface-2);color:var(--fg-2);box-shadow:inset 0 0 0 1px var(--line)} .pill.neutral::before{background:var(--fg-3)}
+.tag{display:inline-block;font-family:var(--font-mono);font-size:11.5px;padding:0 6px;border-radius:var(--r-sm);border:1px solid var(--line);color:var(--fg-2);white-space:nowrap}
+@keyframes pulse{50%{opacity:.35}}
+
+/* ---------- Surfaces ---------- */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-1);min-width:0}
+.panel-h{display:flex;align-items:center;gap:var(--s3);padding:var(--s4) var(--s4) var(--s3)}
+.panel-h .btn{margin-left:auto}
+.panel-b{padding:0 var(--s4) var(--s4)}
+.section{display:flex;flex-direction:column;gap:var(--s3);min-width:0}
+.section-h{display:flex;align-items:baseline;gap:var(--s3);flex-wrap:wrap}
+.section-h a{margin-left:auto;font-size:13px;color:var(--fg-2)}
+.grid-2{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:var(--s5)}
+.grid-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:var(--s4)}
+
+/* Stats strip: one quiet row, numbers lead labels */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);box-shadow:var(--shadow-1)}
+.stat{padding:var(--s4) var(--s5);display:flex;flex-direction:column;gap:2px;min-width:0}
+.stat+.stat{border-left:1px solid var(--line)}
+.stat-v{font-family:var(--font-display);font-stretch:112%;font-weight:700;font-size:28px;line-height:1.15;font-variant-numeric:tabular-nums}
+.stat-v small{font-size:15px;color:var(--fg-3);font-weight:600}
+.stat-l{color:var(--fg-2);font-size:13px}
+.stat-n{font-size:12px;color:var(--fg-3)}
+
+/* ---------- Tables ---------- */
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);box-shadow:var(--shadow-1)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;font-weight:500;color:var(--fg-3);font-size:12px;padding:9px var(--s4);border-bottom:1px solid var(--line);background:var(--surface-2);white-space:nowrap}
+td{padding:11px var(--s4);border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tbody tr.link{cursor:pointer}
+@media (hover:hover) and (pointer:fine){tbody tr.link:hover td{background:var(--surface-2)}}
+.cell-name{display:flex;flex-direction:column;gap:1px;min-width:0}
+.cell-name a{font-family:var(--font-mono);font-weight:500;text-decoration:none;font-size:13.5px}
+.cell-name span{color:var(--fg-3);font-size:12.5px}
+
+/* ---------- Toolbar / chips ---------- */
+.toolbar{display:flex;flex-wrap:wrap;gap:var(--s2);align-items:center}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 11px;font-size:13px;cursor:pointer;color:var(--fg-2)}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.chip .n{font-family:var(--font-mono);font-size:11.5px;margin-left:4px;opacity:.8}
+@media (hover:hover) and (pointer:fine){.chip:hover:not([aria-pressed="true"]){border-color:var(--fg-3);color:var(--fg)}}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;font-weight:500}
+.field .hint{font-size:12px;color:var(--fg-3)}
+.input,.select{width:100%;border:1px solid var(--line-strong);background:var(--surface);border-radius:var(--r-md);padding:7px 10px;font-size:13.5px}
+.input:focus,.select:focus{outline:none;border-color:var(--ember);box-shadow:0 0 0 3px color-mix(in oklab,var(--ember) 25%,transparent)}
+.input.mono{font-family:var(--font-mono)}
+.filter{max-width:260px}
+
+/* ---------- The forge line: deploy pipeline ---------- */
+.line{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.seg{display:flex;flex-direction:column;gap:6px;min-width:0}
+.seg-bar{height:8px;border-radius:2px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line)}
+.seg.done .seg-bar{background:var(--fg-2);box-shadow:none}
+.seg.active .seg-bar{background:linear-gradient(90deg,var(--ember),var(--ember-hot),var(--ember));background-size:200% 100%;animation:heat 1.6s linear infinite;box-shadow:0 0 0 3px color-mix(in oklab,var(--ember) 18%,transparent)}
+.seg.fail .seg-bar{background:var(--bad-dot);box-shadow:none}
+.seg-l{font-size:12px;color:var(--fg-3);display:flex;justify-content:space-between;gap:4px;white-space:nowrap;overflow:hidden}
+.seg.active .seg-l{color:var(--ember-ink);font-weight:500}
+.seg.fail .seg-l{color:var(--bad-fg);font-weight:500}
+.seg.done .seg-l{color:var(--fg-2)}
+@keyframes heat{to{background-position:-200% 0}}
+.mini{display:inline-grid;grid-template-columns:repeat(5,14px);gap:2px;vertical-align:middle}
+.mini i{height:6px;border-radius:1px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line)}
+.mini i.done{background:var(--fg-2);box-shadow:none}
+.mini i.active{background:var(--ember);box-shadow:none}
+.mini i.fail{background:var(--bad-dot);box-shadow:none}
+
+.flight{display:flex;flex-direction:column;gap:var(--s4);padding:var(--s5)}
+.flight-top{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2) var(--s4)}
+.flight-title{font-family:var(--font-mono);font-size:16px;font-weight:600}
+.flight-meta{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s5);font-size:13px;color:var(--fg-2)}
+.flight-log{font-family:var(--font-mono);font-size:12.5px;background:var(--surface-2);border-radius:var(--r-md);padding:10px 12px;color:var(--fg-2);line-height:1.7;overflow-x:auto;white-space:pre}
+.flight-log b{color:var(--ember-ink);font-weight:500}
+.flight-log em{color:var(--ok-fg);font-style:normal}
+
+/* ---------- Lists ---------- */
+.list{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:var(--s3);align-items:center;padding:11px var(--s4);border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row-t{font-weight:500;min-width:0}
+.row-t .mono{font-weight:500}
+.row-s{font-size:12.5px;color:var(--fg-3);margin-top:1px}
+.sev{width:3px;align-self:stretch;border-radius:2px;background:var(--line-strong)}
+.sev.bad{background:var(--bad-dot)} .sev.warn{background:var(--warn-dot)} .sev.info{background:var(--info-dot)}
+
+/* ---------- Service detail ---------- */
+.tabs{display:flex;gap:var(--s5);border-bottom:1px solid var(--line);overflow-x:auto}
+.tab{border:0;background:transparent;padding:10px 0;font-weight:500;color:var(--fg-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--ember)}
+@media (hover:hover) and (pointer:fine){.tab:hover:not([aria-selected="true"]){color:var(--fg)}}
+.ladder{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;position:relative}
+.rung{padding:var(--s4) var(--s5);display:flex;flex-direction:column;gap:6px;min-width:0;position:relative}
+.rung+.rung{border-left:1px dashed var(--line-strong)}
+.rung-env{font-size:12.5px;color:var(--fg-3);display:flex;align-items:center;gap:8px}
+.rung-ver{font-family:var(--font-mono);font-size:22px;font-weight:600;letter-spacing:-.01em}
+.rung-ver.ahead{color:var(--ember-ink)}
+.rung-s{font-size:12.5px;color:var(--fg-2)}
+.rung .btn{align-self:flex-start;margin-top:4px}
+.kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px var(--s4);font-size:13.5px;margin:0}
+.kv dt{color:var(--fg-3)}
+.kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.checks{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.checks li{display:flex;gap:10px;align-items:center;font-size:13.5px}
+.tick{width:18px;height:18px;border-radius:50%;display:inline-grid;place-items:center;flex:none}
+.tick.y{background:var(--ok-bg);color:var(--ok-fg)} .tick.n{background:var(--warn-bg);color:var(--warn-fg)}
+.score{display:flex;gap:3px}
+.score i{width:16px;height:6px;border-radius:1px;background:var(--line)}
+.score i.on{background:var(--ok-dot)}
+.deps{display:flex;flex-wrap:wrap;gap:var(--s2)}
+.dep{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:var(--r-md);padding:5px 10px;font-family:var(--font-mono);font-size:12.5px;text-decoration:none;background:var(--surface)}
+.dep .k{font-family:var(--font-ui);font-size:11px;color:var(--fg-3)}
+.side{display:flex;flex-direction:column;gap:var(--s5)}
+
+/* ---------- Environments ---------- */
+.env-card{padding:var(--s4) var(--s5);display:flex;flex-direction:column;gap:var(--s3)}
+.env-top{display:flex;align-items:center;gap:var(--s2)}
+.env-name{font-family:var(--font-mono);font-weight:600;font-size:15px}
+.env-top .pill{margin-left:auto}
+.env-facts{display:flex;gap:var(--s5);font-size:12.5px;color:var(--fg-2);flex-wrap:wrap}
+.env-facts b{display:block;font-family:var(--font-display);font-stretch:110%;font-size:20px;font-weight:700;color:var(--fg);font-variant-numeric:tabular-nums}
+.ttl{display:flex;flex-direction:column;gap:4px;min-width:150px}
+.ttl-bar{height:6px;border-radius:3px;background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--line);overflow:hidden}
+.ttl-bar i{display:block;height:100%;background:var(--fg-3);border-radius:3px}
+.ttl-bar i.low{background:var(--warn-dot)}
+.ttl span{font-size:12px;color:var(--fg-2)}
+
+/* ---------- Templates ---------- */
+.tpl{padding:var(--s5);display:flex;flex-direction:column;gap:var(--s3)}
+.tpl-top{display:flex;align-items:center;gap:var(--s3)}
+.tpl-mark{width:36px;height:36px;border-radius:var(--r-md);display:grid;place-items:center;background:var(--surface-2);border:1px solid var(--line);font-family:var(--font-mono);font-size:12px;font-weight:600;color:var(--fg-2)}
+.tpl-name{font-family:var(--font-mono);font-weight:600;font-size:15px}
+.tpl p{margin:0;color:var(--fg-2);font-size:13.5px}
+.baked{display:flex;flex-wrap:wrap;gap:6px}
+.tpl-foot{display:flex;align-items:center;gap:var(--s3);margin-top:auto;padding-top:var(--s2);font-size:12.5px;color:var(--fg-3)}
+.tpl-foot .btn{margin-left:auto}
+
+/* ---------- Drawer / dialog / palette ---------- */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:50;display:flex}
+.drawer{margin-left:auto;width:min(480px,100%);height:100%;background:var(--surface);box-shadow:var(--shadow-3);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
+.drawer-h{display:flex;align-items:center;gap:var(--s3);padding:var(--s5) var(--s5) var(--s4);border-bottom:1px solid var(--line)}
+.drawer-h .icon-btn{margin-left:auto}
+.drawer-b{padding:var(--s5);display:flex;flex-direction:column;gap:var(--s4);overflow-y:auto;flex:1}
+.drawer-f{padding:var(--s4) var(--s5) calc(var(--s4) + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);display:flex;gap:var(--s2);justify-content:flex-end}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:13.5px}
+.check input{margin-top:3px;accent-color:var(--ember)}
+.preview-cli{font-family:var(--font-mono);font-size:12.5px;background:var(--rail-bg);color:var(--rail-fg);border-radius:var(--r-md);padding:12px 14px;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.preview-cli .p{color:var(--rail-fg-2)}
+.preview-cli .f{color:oklch(0.8 0.13 60)}
+.dialog{margin:auto;width:min(440px,calc(100% - 32px));background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow-3);padding:var(--s5);display:flex;flex-direction:column;gap:var(--s4)}
+.dialog p{margin:0;color:var(--fg-2)}
+.dialog-f{display:flex;gap:var(--s2);justify-content:flex-end}
+.palette{margin:12vh auto auto;width:min(560px,calc(100% - 32px));background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow-3);overflow:hidden;align-self:flex-start}
+.palette input{width:100%;border:0;border-bottom:1px solid var(--line);padding:14px 16px;font-size:15px;background:transparent;outline:none}
+.palette ul{list-style:none;margin:0;padding:6px;max-height:320px;overflow-y:auto}
+.palette li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-md);cursor:pointer}
+.palette li[aria-selected="true"]{background:var(--surface-2)}
+.palette li .k{margin-left:auto;font-size:12px;color:var(--fg-3)}
+.palette .empty{padding:14px 16px;color:var(--fg-3)}
+.toast{position:fixed;right:var(--s5);bottom:calc(var(--s5) + env(safe-area-inset-bottom,0px));z-index:60;background:var(--fg);color:var(--bg);padding:10px 14px;border-radius:var(--r-md);box-shadow:var(--shadow-3);font-size:13.5px;max-width:calc(100% - 32px);display:flex;gap:10px;align-items:center}
+.toast code{font-family:var(--font-mono);font-size:12.5px;opacity:.85}
+
+/* ---------- Environments, lifecycle, addresses ---------- */
+.envchip{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:12.5px;padding:1px 8px;border:1px solid var(--line-strong);border-radius:var(--r-sm);white-space:nowrap;color:var(--fg);background:var(--surface)}
+.envchip::before{content:"";width:8px;height:8px;border-radius:1px;background:var(--env-preview)}
+.envchip.staging::before{background:var(--env-staging)}
+.envchip.production::before{background:var(--env-production)}
+.life{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;white-space:nowrap;color:var(--fg-2)}
+.life::before{content:"";width:7px;height:7px;border-radius:50%;border:1.5px solid var(--fg-3)}
+.life.production::before{background:var(--fg-2);border-color:var(--fg-2)}
+.life.experimental::before{border-style:dashed;border-color:var(--ember)}
+.life.deprecated{text-decoration:line-through;text-decoration-color:var(--fg-3)}
+.addr{font-family:var(--font-mono);font-size:12.5px;color:var(--info-fg);text-decoration:none;overflow-wrap:anywhere}
+@media (hover:hover) and (pointer:fine){.addr:hover{text-decoration:underline}}
+.mono.ahead{color:var(--ember-ink);font-weight:600}
+.cell-name .envchip{align-self:flex-start}
+.empty-note{padding:var(--s5);text-align:center;color:var(--fg-2);font-size:13.5px}
+.env-pair{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.role{font-size:11px;font-weight:600;padding:1px 6px;border-radius:var(--r-sm);background:var(--rail-active);color:var(--rail-fg);margin-left:auto}
+
+/* ---------- Governance ---------- */
+tr.group td{background:var(--surface-2);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);padding:6px var(--s4)}
+.seg-ctl{display:inline-flex;border:1px solid var(--line-strong);border-radius:var(--r-md);overflow:hidden;background:var(--surface)}
+.seg-ctl button{border:0;background:transparent;padding:4px 10px;font-size:12.5px;color:var(--fg-2);cursor:pointer}
+.seg-ctl button+button{border-left:1px solid var(--line)}
+.seg-ctl button[aria-pressed="true"]{background:var(--fg);color:var(--bg);font-weight:500}
+@media (hover:hover) and (pointer:fine){.seg-ctl button:hover:not([aria-pressed="true"]){background:var(--surface-2);color:var(--fg)}}
+.issue{font-size:13px;font-weight:500;text-decoration:none;white-space:nowrap}
+.issue.bad{color:var(--bad-fg)} .issue.warn{color:var(--warn-fg)}
+@media (hover:hover) and (pointer:fine){.issue:hover{text-decoration:underline}}
+.link-btn{border:0;background:none;padding:0;font:inherit;font-family:var(--font-mono);font-size:13.5px;font-weight:500;color:var(--fg);cursor:pointer}
+@media (hover:hover) and (pointer:fine){.link-btn:hover{text-decoration:underline}}
+.row .ph-actions{flex-wrap:nowrap}
+@media (max-width:560px){.row:has(.ph-actions){grid-template-columns:auto minmax(0,1fr)}.row .ph-actions{grid-column:2}}
+
+/* ---------- Service settings ---------- */
+.btn-icon{padding:7px 9px}
+.btn-icon[aria-pressed="true"]{background:var(--surface-2);border-color:var(--fg-3)}
+.settings{display:flex;flex-direction:column;gap:var(--s5);max-width:720px}
+.settings-form{display:flex;flex-direction:column;gap:var(--s4)}
+.settings-form .input[readonly]{background:var(--surface-2);color:var(--fg-2)}
+.panel.danger{border-color:color-mix(in oklab,var(--bad-dot) 45%,var(--line))}
+.panel.danger h2{color:var(--bad-fg)}
+.danger-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s3) var(--s5)}
+.danger-row>div{flex:1 1 280px;min-width:0}
+.danger-row b{font-weight:600}
+.danger-row p{margin:2px 0 0;color:var(--fg-2);font-size:13.5px}
+
+/* ---------- TechDocs ---------- */
+.doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:var(--s4)}
+.doc-card{padding:var(--s4) var(--s5);display:flex;flex-direction:column;gap:var(--s2);text-decoration:none;color:inherit}
+@media (hover:hover) and (pointer:fine){a.doc-card:hover{border-color:var(--line-strong)}}
+.doc-card-top{display:flex;align-items:center;gap:var(--s2)}
+.doc-card-top .pill{margin-left:auto}
+.doc-card h3{font-family:var(--font-mono);font-size:14.5px;font-weight:600}
+.doc-card p{margin:0;color:var(--fg-2);font-size:13.5px}
+.doc-card-foot{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s4);font-size:12.5px;color:var(--fg-3);margin-top:auto;padding-top:var(--s2)}
+.doc-feature{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:var(--s3)}
+.guide{display:flex;gap:var(--s3);align-items:flex-start;padding:var(--s4);text-decoration:none;color:inherit}
+.guide-n{font-family:var(--font-mono);font-size:12px;color:var(--ember-ink);background:var(--ember-soft);border-radius:var(--r-sm);padding:1px 6px;flex:none;margin-top:2px}
+.guide b{display:block;font-weight:600}
+.guide span{font-size:12.5px;color:var(--fg-3)}
+.reader{display:grid;grid-template-columns:200px minmax(0,1fr) 210px;gap:var(--s6);align-items:start}
+.doc-nav{position:sticky;top:76px;display:flex;flex-direction:column;gap:2px}
+.doc-nav-h{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--fg-3);padding:0 10px 6px}
+.doc-nav button{text-align:left;border:0;background:transparent;padding:6px 10px;border-radius:var(--r-md);color:var(--fg-2);cursor:pointer;font-size:13.5px}
+.doc-nav button[aria-current="page"]{background:var(--surface-2);color:var(--fg);font-weight:500;box-shadow:inset 2px 0 0 var(--ember)}
+@media (hover:hover) and (pointer:fine){.doc-nav button:hover:not([aria-current="page"]){color:var(--fg);background:var(--surface-2)}}
+.doc-nav-select{display:none}
+.article{min-width:0;max-width:72ch;font-size:15px;line-height:1.7}
+.article h1{font-size:30px;margin:0 0 6px}
+.article .doc-sub{color:var(--fg-2);margin:0 0 var(--s5);font-size:15px}
+.article h2{font-size:20px;margin:var(--s6) 0 var(--s2);scroll-margin-top:80px}
+.article h3{font-size:15px;margin:var(--s5) 0 var(--s1)}
+.article p{margin:0 0 var(--s3)}
+.article ul,.article ol{margin:0 0 var(--s3);padding-left:1.3em}
+.article li{margin:2px 0}
+.article code{font-family:var(--font-mono);font-size:.86em;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-sm);padding:0 4px}
+.article pre{font-family:var(--font-mono);font-size:13px;line-height:1.65;background:var(--rail-bg);color:var(--rail-fg);border-radius:var(--r-md);padding:12px 14px;overflow-x:auto;margin:0 0 var(--s4)}
+.article pre code{background:none;border:0;padding:0;font-size:inherit;color:inherit}
+.article pre .c{color:var(--rail-fg-2)}
+.article pre .f{color:oklch(0.8 0.13 60)}
+.article .table-wrap{margin:0 0 var(--s4)}
+.article table{font-size:13.5px;line-height:1.5}
+.admon{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;padding:12px 14px;border-radius:var(--r-md);margin:0 0 var(--s4);font-size:14px;line-height:1.6}
+.admon.note{background:var(--info-bg);color:var(--info-fg)}
+.admon.warn{background:var(--warn-bg);color:var(--warn-fg)}
+.admon b{font-weight:600}
+.admon p{margin:0}
+.admon code{background:transparent;border-color:currentColor}
+.admon svg{margin-top:4px}
+.doc-pager{display:flex;justify-content:space-between;gap:var(--s3);border-top:1px solid var(--line);margin-top:var(--s6);padding-top:var(--s4)}
+.doc-pager button{border:1px solid var(--line);background:var(--surface);border-radius:var(--r-md);padding:8px 12px;cursor:pointer;text-align:left;display:flex;flex-direction:column;min-width:0}
+.doc-pager button span{font-size:12px;color:var(--fg-3)}
+.doc-pager button b{font-weight:500}
+.doc-pager .next{text-align:right;margin-left:auto;align-items:flex-end}
+.doc-aside{position:sticky;top:76px;display:flex;flex-direction:column;gap:var(--s5);font-size:13px;min-width:0}
+.toc{display:flex;flex-direction:column;gap:2px;border-left:1px solid var(--line)}
+.toc button{border:0;background:transparent;text-align:left;padding:3px 12px;color:var(--fg-2);cursor:pointer;font-size:13px;margin-left:-1px;border-left:1px solid transparent}
+@media (hover:hover) and (pointer:fine){.toc button:hover{color:var(--fg);border-left-color:var(--fg-3)}}
+.doc-meta{display:flex;flex-direction:column;gap:var(--s2);color:var(--fg-2)}
+.doc-meta div{display:flex;flex-direction:column}
+.doc-meta .k{font-size:11.5px;color:var(--fg-3);text-transform:uppercase;letter-spacing:.06em}
+.doc-aside .cli code{white-space:normal;overflow-wrap:anywhere}
+.doc-banner{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s3);padding:10px 14px;border-radius:var(--r-md);background:var(--bad-bg);color:var(--bad-fg);font-size:13.5px}
+.doc-banner.stale{background:var(--warn-bg);color:var(--warn-fg)}
+.doc-banner .btn{margin-left:auto}
+@media (max-width:1180px){.reader{grid-template-columns:190px minmax(0,1fr)}.doc-aside{display:none}}
+@media (max-width:860px){.reader{grid-template-columns:minmax(0,1fr);gap:var(--s4)}.doc-nav{display:none}.doc-nav-select{display:flex}.article{font-size:14.5px}}
+
+/* ---------- Design language page ---------- */
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--s3)}
+.sw{border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden;background:var(--surface)}
+.sw div{height:52px}
+.sw p{margin:0;padding:8px 10px;font-size:12px;display:flex;flex-direction:column}
+.sw p code{font-family:var(--font-mono);color:var(--fg-3);font-size:11.5px}
+.type-row{display:grid;grid-template-columns:150px minmax(0,1fr);gap:var(--s4);align-items:baseline;padding:12px 0;border-top:1px solid var(--line)}
+.type-row:first-child{border-top:0}
+.type-row code{font-family:var(--font-mono);font-size:12px;color:var(--fg-3)}
+.principles{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--s4)}
+.principles li{padding:var(--s4) var(--s5)}
+.principles b{display:block;font-family:var(--font-display);font-stretch:110%;font-weight:680;font-size:15px;margin-bottom:4px}
+.principles span{color:var(--fg-2);font-size:13.5px}
+.demo-row{display:flex;flex-wrap:wrap;gap:var(--s3);align-items:center}
+
+/* ---------- Responsive ---------- */
+@media (max-width:1080px){.grid-2{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .rail{position:fixed;inset:0 auto 0 0;width:260px;z-index:40;transform:translateX(-100%);transition:transform .2s ease;height:100%;padding-top:calc(var(--s4) + env(safe-area-inset-top,0px))}
+  .app.nav-open .rail{transform:none}
+  .app.nav-open .rail-scrim{display:block}
+  .icon-btn.menu-btn{display:inline-grid}
+  .topbar{padding:10px var(--s4)}
+  .content{padding:var(--s5) var(--s4) var(--s7)}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat:nth-child(3){border-left:0}
+  .stat:nth-child(n+3){border-top:1px solid var(--line)}
+  .ctx-label,.search .kbd{display:none}
+}
+@media (max-width:560px){
+  h1{font-size:25px}
+  .ladder{grid-template-columns:minmax(0,1fr)}
+  .rung+.rung{border-left:0;border-top:1px dashed var(--line-strong)}
+  .line .seg-l{font-size:11px}
+  .type-row{grid-template-columns:minmax(0,1fr);gap:2px}
+  .hide-sm{display:none}
+}
+@media (prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
+</style>
+
+<div class="app" id="app">
+  <div class="rail-scrim" data-action="close-nav"></div>
+  <aside class="rail" aria-label="Primary">
+    <a class="brand" href="#overview" aria-label="Forge home">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="3" y="3" width="20" height="5" rx="1" fill="currentColor"/><rect x="3" y="10.5" width="13" height="5" rx="1" fill="currentColor"/><rect x="3" y="18" width="7" height="5" rx="1" fill="var(--ember)"/></svg>
+      <span class="brand-word">forge</span><span class="brand-ver">v0.4</span>
+    </a>
+    <nav class="nav" id="nav">
+      <a href="#overview" data-r="overview"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Overview</a>
+      <div class="nav-label">Build</div>
+      <a href="#catalog" data-r="catalog"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1"/><rect x="13.5" y="3.5" width="7" height="7" rx="1"/><rect x="3.5" y="13.5" width="7" height="7" rx="1"/><rect x="13.5" y="13.5" width="7" height="7" rx="1"/></svg>Services<span class="count" id="nav-svc"></span></a>
+      <a href="#templates" data-r="templates"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/></svg>Templates</a>
+      <a href="#docs" data-r="docs"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10a2 2 0 0 1 2 2v14a1.5 1.5 0 0 0-1.5-1.5h-5A1.5 1.5 0 0 1 4 17z"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H14a2 2 0 0 0-2 2v14a1.5 1.5 0 0 1 1.5-1.5h5A1.5 1.5 0 0 0 20 17z"/></svg>TechDocs</a>
+      <div class="nav-label">Run</div>
+      <a href="#environments" data-r="environments"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/></svg>Environments</a>
+      <a href="#deployments" data-r="deployments"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h11M11 6l6 6-6 6"/><path d="M20 4v16"/></svg>Deployments<span class="count" id="nav-run"></span></a>
+      <a href="#resources" data-r="resources"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="6" rx="7.5" ry="2.8"/><path d="M4.5 6v12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V6M4.5 12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8"/></svg>Resources</a>
+      <div class="nav-label">Govern</div>
+      <a href="#rules" data-r="rules"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2"/></svg>Rules<span class="count" id="nav-apr"></span></a>
+      <a href="#ownership" data-r="ownership"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.3-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.5 3 5.2"/></svg>Ownership</a>
+      <a href="#audit" data-r="audit"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v6c0 4.5-3.2 7.8-7.5 9-4.3-1.2-7.5-4.5-7.5-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Audit log</a>
+      <a href="#design" data-r="design"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="4.5"/><circle cx="16" cy="8" r="4.5"/><circle cx="12" cy="15.5" r="4.5"/></svg>Design language</a>
+    </nav>
+    <div class="rail-foot">
+      <span class="avatar">SM</span>
+      <span class="who">Showmino<small>deogratias-saidi</small></span><span class="role">Writer</span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn menu-btn" data-action="open-nav" aria-label="Open navigation"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <button class="search" data-action="palette"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4"/></svg><span>Jump to…</span><span class="kbd">⌘K</span></button>
+      <div class="top-right">
+        <button class="icon-btn" data-action="theme" aria-label="Switch color theme"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor"/></svg></button>
+      </div>
+    </header>
+    <main class="content" id="view" tabindex="-1"></main>
+  </div>
+</div>
+<div id="layer"></div>
+<div id="toast-slot" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------------- Sample data (example records) ---------------- */
+var STAGES=["Build","Test","Plan","Sync","Verify"];
+var D={
+  services:[
+    {name:"forge-web",live:true,team:"platform-engineering",owner:"deogratias.saidi@outlook.com",life:"Experimental",tpl:null,lang:"Go",tier:null,status:"healthy",desc:"The Forge web console.",env:{staging:["4468dbb","6 h ago","github:showmino/forge-web","healthy"],production:["4468dbb","6 h ago","deogratias.saidi@outlook.com","healthy"]},updated:"6 h ago",registered:"6 h ago",deps:[],res:[],checks:null,slo:null,repo:"github.com/showmino/forge-web"},
+    {name:"payments",team:"billing",owner:"Amara Okafor",life:"Production",tpl:"go-grpc",lang:"Go",tier:1,status:"healthy",desc:"Charges, refunds and payouts for every checkout.",env:{staging:["3f0e8b1","2 h ago","github:acme/payments","healthy"],production:["4b7d1c0","Yesterday","amara.okafor","healthy"]},updated:"4 min ago",registered:"3 months ago",deps:["ledger","identity","fraud-scorer"],res:["payments-db","payments-events"],checks:[1,1,1,1,1],slo:"99.95%",repo:"github.com/acme/payments"},
+    {name:"checkout-api",team:"commerce",owner:"Jonas Weber",life:"Production",tpl:"go-http",lang:"Go",tier:1,status:"degraded",desc:"Turns carts into orders and applies pricing rules.",env:{staging:["e81a0b3","2 h ago","github:acme/checkout-api","healthy"],production:["5d20c9e","31 min ago","jonas.weber","degraded"]},updated:"31 min ago",registered:"5 months ago",deps:["payments","identity"],res:["checkout-cache"],checks:[1,1,1,0,1],slo:"99.9%",repo:"github.com/acme/checkout-api"},
+    {name:"ledger",team:"billing",owner:"Priya Nair",life:"Production",tpl:"go-grpc",lang:"Go",tier:1,status:"healthy",desc:"Double-entry ledger behind balances and payouts.",env:{staging:["0f6a2d4","3 h ago","github:acme/ledger","healthy"],production:["0f6a2d4","3 h ago","priya.nair","healthy"]},updated:"3 h ago",registered:"4 months ago",deps:["identity"],res:[],checks:[1,1,1,1,1],slo:"99.99%",repo:"github.com/acme/ledger"},
+    {name:"identity",team:"platform-engineering",owner:"Sam Rivera",life:"Production",tpl:"go-grpc",lang:"Go",tier:1,status:"healthy",desc:"Users, sessions and service tokens via Dex.",env:{staging:["a19c7e5","Yesterday","github:acme/identity","healthy"],production:["a19c7e5","Yesterday","sam.rivera","healthy"]},updated:"Yesterday",registered:"6 months ago",deps:[],res:[],checks:[1,1,1,1,1],slo:"99.99%",repo:"github.com/acme/identity"},
+    {name:"fraud-scorer",team:"risk",owner:"Lena Hoffmann",life:"Production",tpl:"python-worker",lang:"Python",tier:2,status:"healthy",desc:"Scores each payment attempt before capture.",env:{staging:["77be310","41 days ago","github:acme/fraud-scorer","healthy"],production:["77be310","41 days ago","lena.hoffmann","healthy"]},updated:"41 days ago",registered:"8 months ago",deps:[],res:[],checks:[1,1,0,0,1],slo:"99.5%",repo:"github.com/acme/fraud-scorer"},
+    {name:"notifications",team:"growth",owner:"Kofi Mensah",life:"Production",tpl:"go-http",lang:"Go",tier:2,status:"healthy",desc:"Email, SMS and push delivery with retries.",env:{staging:["c3d9f81","1 h ago","github:acme/notifications","healthy"],production:["b2e4a07","3 days ago","kofi.mensah","healthy"]},updated:"1 h ago",registered:"7 months ago",deps:["identity"],res:[],checks:[1,1,1,0,1],slo:"99.5%",repo:"github.com/acme/notifications"},
+    {name:"search-indexer",team:"discovery",owner:"Mei Tanaka",life:"Experimental",tpl:"python-worker",lang:"Python",tier:3,status:"failing",desc:"Keeps the product search index in sync.",env:{staging:["6e0b1d2","5 h ago","mei.tanaka","failing"],production:["2c71e95","12 days ago","mei.tanaka","healthy"]},updated:"5 h ago",registered:"3 weeks ago",deps:[],res:["search-index"],checks:[1,0,0,0,1],slo:"99%",repo:"github.com/acme/search-indexer"},
+    {name:"web-storefront",team:"commerce",owner:"Jonas Weber",life:"Production",tpl:"node-web",lang:"TypeScript",tier:1,status:"healthy",desc:"The customer-facing shop, server-rendered.",env:{staging:["d41f8aa","1 h ago","github:acme/web-storefront","healthy"],production:["d41f8aa","1 h ago","jonas.weber","healthy"]},updated:"1 h ago",registered:"1 year ago",deps:["checkout-api","identity"],res:["storefront-assets"],checks:[1,1,1,1,0],slo:"99.9%",repo:"github.com/acme/web-storefront"},
+    {name:"report-cron",team:"billing",owner:"Priya Nair",life:"Deprecated",tpl:"cron-job",lang:"Go",tier:3,status:"healthy",desc:"Nightly settlement reports for finance.",env:{staging:["3a8e6c1","9 days ago","github:acme/report-cron","healthy"],production:["3a8e6c1","9 days ago","priya.nair","healthy"]},updated:"9 days ago",registered:"2 years ago",deps:["ledger"],res:[],checks:[1,1,0,1,0],slo:null,repo:"github.com/acme/report-cron"}
+  ],
+  deploys:[
+    {id:"dep_7a31",op:"op_9f2c",svc:"payments",ref:"9c1e2fa",env:"staging",state:"running",stage:3,by:"amara.okafor",when:"4 min ago",dur:"3m 40s",today:true},
+    {id:"dep_7a32",op:"op_9f31",svc:"notifications",ref:"c3d9f81",env:"pr-391",state:"queued",stage:0,by:"kofi.mensah",when:"1 min ago",dur:"—",today:true},
+    {id:"dep_7a30",op:"op_9f1e",svc:"checkout-api",ref:"5d20c9e",env:"production",state:"succeeded",stage:4,by:"jonas.weber",when:"31 min ago",dur:"2m 05s",note:"Rollback",today:true},
+    {id:"dep_7a2f",op:"op_9f1a",svc:"checkout-api",ref:"e81a0b3",env:"production",state:"failed",stage:4,by:"github:acme/checkout-api",when:"38 min ago",dur:"6m 51s",note:"Error rate 4.1% above the 2% gate",today:true},
+    {id:"dep_7a2c",op:"op_9f0b",svc:"web-storefront",ref:"d41f8aa",env:"production",state:"succeeded",stage:4,by:"jonas.weber",when:"1 h ago",dur:"6m 12s",today:true},
+    {id:"dep_7a28",op:"op_9ef4",svc:"ledger",ref:"0f6a2d4",env:"production",state:"succeeded",stage:4,by:"priya.nair",when:"3 h ago",dur:"4m 50s",today:true},
+    {id:"dep_7a25",op:"op_9ee0",svc:"search-indexer",ref:"6e0b1d2",env:"staging",state:"failed",stage:0,by:"mei.tanaka",when:"5 h ago",dur:"1m 12s",note:"pip resolver: no matching opensearch-py>=3",today:true},
+    {id:"dep_7a22",op:"op_9eb3",svc:"forge-web",ref:"4468dbb",env:"production",state:"succeeded",stage:4,by:"deogratias.saidi@outlook.com",when:"6 h ago",dur:"—",today:true},
+    {id:"dep_7a21",op:"op_9eb0",svc:"forge-web",ref:"4468dbb",env:"staging",state:"succeeded",stage:4,by:"github:showmino/forge-web",when:"6 h ago",dur:"—",today:true},
+    {id:"dep_7a19",op:"op_9e71",svc:"payments",ref:"4b7d1c0",env:"production",state:"succeeded",stage:4,by:"amara.okafor",when:"Yesterday",dur:"5m 37s",today:false}
+  ],
+  envs:[
+    {name:"staging",kind:"shared",status:"healthy",desc:"Every merge to main lands here first."},
+    {name:"production",kind:"shared",status:"degraded",desc:"Promoted from staging. Serves real traffic."},
+    {name:"pr-142",kind:"preview",svc:"payments",by:"amara.okafor",ttl:48,left:31,status:"healthy"},
+    {name:"pr-388",kind:"preview",svc:"checkout-api",by:"jonas.weber",ttl:24,left:2,status:"healthy"},
+    {name:"pr-391",kind:"preview",svc:"notifications",by:"kofi.mensah",ttl:48,left:48,status:"creating"},
+    {name:"feat-ledger-v2",kind:"preview",svc:"ledger",by:"priya.nair",ttl:168,left:146,status:"healthy"}
+  ],
+  templates:[
+    {name:"go-grpc",mark:"gRPC",title:"Go gRPC service",desc:"ConnectRPC service with buf, health checks and graceful shutdown.",baked:["CI","OTel","SLO","Dockerfile","Argo CD app"],uses:4,ver:"v2.3.0"},
+    {name:"go-http",mark:"HTTP",title:"Go HTTP API",desc:"chi router, OpenAPI spec, structured logging and request tracing.",baked:["CI","OTel","SLO","Dockerfile","Argo CD app"],uses:2,ver:"v1.9.1"},
+    {name:"node-web",mark:"WEB",title:"Node web app",desc:"Server-rendered TypeScript app with CDN assets and preview URLs.",baked:["CI","OTel","Dockerfile","Argo CD app"],uses:1,ver:"v1.4.0"},
+    {name:"python-worker",mark:"PY",title:"Python worker",desc:"Queue consumer with retries, dead-letter topic and metrics.",baked:["CI","OTel","Dockerfile","Argo CD app"],uses:2,ver:"v0.8.2"},
+    {name:"cron-job",mark:"CRON",title:"Scheduled job",desc:"Kubernetes CronJob with run history and failure alerts.",baked:["CI","OTel","Alerts"],uses:1,ver:"v0.5.0"}
+  ],
+  resources:[
+    {name:"payments-db",kind:"PostgreSQL 16",svc:"payments",env:"production",state:"applied",plan:"",when:"2 d ago"},
+    {name:"payments-events",kind:"Kafka topic",svc:"payments",env:"production",state:"plan",plan:"+1 ~0 −0",when:"12 min ago"},
+    {name:"checkout-cache",kind:"Redis 7",svc:"checkout-api",env:"production",state:"applied",plan:"",when:"6 d ago"},
+    {name:"storefront-assets",kind:"S3 bucket",svc:"web-storefront",env:"production",state:"drift",plan:"+0 ~2 −0",when:"1 h ago"},
+    {name:"search-index",kind:"OpenSearch",svc:"search-indexer",env:"staging",state:"failed",plan:"+1 ~0 −0",when:"5 h ago"},
+    {name:"legacy-reports-bucket",kind:"S3 bucket",svc:null,env:"production",state:"applied",plan:"",when:"94 days ago",note:"Imported from the old Terraform state. Last written 94 days ago."},
+    {name:"ml-scratch-redis",kind:"Redis 7",svc:null,env:"staging",state:"applied",plan:"",when:"17 days ago",note:"Created by hand in staging. Not declared in any forge.yaml."}
+  ],
+  approvals:[
+    {id:"apr_31",svc:"payments",ref:"3f0e8b1",by:"amara.okafor",when:"12 min ago",rule:"Production needs approval"},
+    {id:"apr_32",svc:"notifications",ref:"c3d9f81",by:"kofi.mensah",when:"40 min ago",rule:"Production needs approval"}
+  ],
+  rules:[
+    {id:"prod-approval",kind:"Promotion",name:"Production needs approval",desc:"Tier 1 and 2 services need one approver from the owning team before a production deploy.",scope:"Tier 1 and 2",mode:"enforce",hits:2,unit:"waiting deploy",href:"#rules"},
+    {id:"staging-first",kind:"Promotion",name:"Staging before production",desc:"A commit must run healthy in staging for 30 minutes before it can be promoted.",scope:"All services",mode:"enforce",hits:0,unit:"block"},
+    {id:"freeze",kind:"Promotion",name:"Weekend freeze",desc:"No production deploys from Friday 18:00 to Monday 08:00.",scope:"production",mode:"warn",hits:0,unit:"deploy"},
+    {id:"naming",kind:"Naming",name:"Service names",desc:"Lowercase letters, numbers and dashes, 3 to 30 characters, starting with a letter.",scope:"All services",mode:"enforce",hits:0,unit:"service"},
+    {id:"preview-names",kind:"Naming",name:"Preview names",desc:"Previews are named after their branch or pull request, such as pr-142.",scope:"Previews",mode:"warn",hits:1,unit:"preview",href:"#environments"},
+    {id:"owner-required",kind:"Ownership",name:"Every resource has an owner",desc:"Resources must belong to a service in the catalog.",scope:"Resources",mode:"warn",unit:"resource",href:"#ownership"},
+    {id:"golden-path",kind:"Ownership",name:"Golden path for Tier 1",desc:"Tier 1 services need CI, an SLO, tracing, a runbook and an on-call rotation.",scope:"Tier 1",mode:"warn",unit:"service",href:"#catalog"},
+    {id:"preview-ttl",kind:"Safety",name:"Preview lifetime",desc:"Previews expire after at most 7 days.",scope:"Previews",mode:"enforce",hits:0,unit:"preview"},
+    {id:"public-bucket",kind:"Safety",name:"No public buckets",desc:"Storage resources cannot have a public access setting.",scope:"Resources",mode:"enforce",hits:1,unit:"blocked attempt",href:"#audit"}
+  ],
+  audit:[
+    {t:"01:33",actor:"amara.okafor",verb:"deploy start",res:"services/payments",ctx:"staging",ok:true},
+    {t:"01:31",actor:"kofi.mensah",verb:"env create",res:"environments/pr-391",ctx:"staging",ok:true},
+    {t:"01:06",actor:"jonas.weber",verb:"deploy rollback",res:"services/checkout-api",ctx:"production",ok:true},
+    {t:"00:59",actor:"ci:github-actions",verb:"deploy start",res:"services/checkout-api",ctx:"production",ok:true},
+    {t:"00:41",actor:"mei.tanaka",verb:"env destroy",res:"environments/staging",ctx:"staging",ok:false,why:"Requires the Admin role"},
+    {t:"00:22",actor:"priya.nair",verb:"resource plan",res:"resources/payments-events",ctx:"production",ok:true},
+    {t:"Yesterday",actor:"sam.rivera",verb:"template lint",res:"templates/go-grpc",ctx:"—",ok:true},
+    {t:"Yesterday",actor:"lena.hoffmann",verb:"service update",res:"services/fraud-scorer",ctx:"production",ok:true},
+    {t:"Yesterday",actor:"ci:gitlab",verb:"resource apply",res:"resources/storefront-assets",ctx:"production",ok:false,why:"Policy: public bucket ACL"}
+  ]
+};
+var CHECKS=["CI pipeline","SLO defined","Tracing with OpenTelemetry","Runbook linked","On-call rotation"];
+
+/* ---------------- Helpers ---------------- */
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function svc(n){for(var i=0;i<D.services.length;i++)if(D.services[i].name===n)return D.services[i];return null;}
+var SVC_PILL={healthy:["ok","Healthy"],degraded:["warn","Degraded"],failing:["bad","Failing"],creating:["run","Creating"]};
+var DEP_PILL={running:["run","In progress"],queued:["neutral","Queued"],succeeded:["ok","Succeeded"],failed:["bad","Failed"]};
+var RES_PILL={applied:["ok","Applied"],plan:["info","Plan ready"],drift:["warn","Drift"],failed:["bad","Apply failed"]};
+function pill(map,k){var p=map[k];return '<span class="pill '+p[0]+'">'+p[1]+'</span>';}
+function segState(d,i){
+  if(d.state==="succeeded")return "done";
+  if(d.state==="queued")return "";
+  if(i<d.stage)return "done";
+  if(i===d.stage)return d.state==="failed"?"fail":"active";
+  return "";
+}
+function line(d){
+  var h='<div class="line" role="img" aria-label="Pipeline: '+esc(d.state)+' at '+STAGES[d.stage]+'">';
+  STAGES.forEach(function(s,i){var st=segState(d,i);
+    var right=st==="active"?"running":st==="fail"?"failed":"";
+    h+='<div class="seg '+st+'"><div class="seg-bar"></div><div class="seg-l"><span>'+s+(right?' · '+right:'')+'</span></div></div>';});
+  return h+'</div>';
+}
+function mini(d){var h='<span class="mini" role="img" aria-label="Stage '+(d.stage+1)+' of 5, '+esc(d.state)+'">';STAGES.forEach(function(s,i){h+='<i class="'+segState(d,i)+'"></i>';});return h+'</span>';}
+function cli(cmd){
+  var parts=cmd.split(" ");var html='<b>'+esc(parts.slice(0,3).join(" "))+'</b>'+(parts.length>3?" "+esc(parts.slice(3).join(" ")):"");
+  return '<div class="cli" title="Same action from the terminal"><span class="prompt">$</span><code>'+html+'</code><button data-action="copy" data-copy="'+esc(cmd)+'" aria-label="Copy command">Copy</button></div>';
+}
+function header(o){
+  return '<div class="ph"><div class="ph-text">'+(o.crumbs||"")+'<h1>'+o.title+'</h1>'+(o.lede?'<p class="lede">'+o.lede+'</p>':"")+(o.cli?cli(o.cli):"")+'</div><div class="ph-actions">'+(o.actions||"")+'</div></div>';
+}
+var I={
+  plus:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  ship:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h11M11 6l6 6-6 6"/><path d="M20 4v16"/></svg>',
+  gear:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  x:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  ok:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  no:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M12 7v6M12 17h.01"/></svg>'
+};
+function plural(n,w){return n+" "+w+(n===1?"":"s");}
+
+/* ---------------- Views ---------------- */
+var V={};
+var ui={depFilter:"all",catTeam:"all",catQuery:"",svcTab:"overview",auditQuery:"",docQuery:"",docPage:0};
+
+V.overview=function(){
+  var today=D.deploys.filter(function(d){return d.today;});
+  var finished=today.filter(function(d){return d.state==="succeeded"||d.state==="failed";});
+  var failed=today.filter(function(d){return d.state==="failed";}).length;
+  var previews=D.envs.filter(function(e){return e.kind==="preview";});
+  var running=D.deploys.filter(function(d){return d.state==="running";})[0];
+  var attention=[
+    {sev:"bad",t:'<span class="mono">checkout-api</span> failed verification in production',s:"Error rate 4.1% above the 2% gate. Rolled back to 5d20c9e.",href:"#service-checkout-api",a:"Open"},
+    {sev:"bad",t:'<span class="mono">search-indexer</span> build is failing',s:"pip resolver: no matching opensearch-py>=3",href:"#deployments",a:"View"},
+    {sev:"warn",t:'Preview <span class="mono">pr-388</span> expires in 2 hours',s:"checkout-api · created by jonas.weber",href:"#environments",a:"Extend"},
+    {sev:"warn",t:'<span class="mono">storefront-assets</span> drifted from its definition',s:"2 attributes changed outside Forge",href:"#resources",a:"Review"}
+  ];
+  if(D.approvals.length)attention.splice(1,0,{sev:"warn",t:plural(D.approvals.length,"deploy")+' waiting for approval',s:"Blocking "+D.approvals.map(function(a){return a.svc;}).join(" and ")+" from reaching production",href:"#rules",a:"Review"});
+  if(unowned().length)attention.push({sev:"warn",t:plural(unowned().length,"resource")+' with no owner',s:"Ownership at "+coverage().pct+"%, against a "+OWNER_TARGET+"% target",href:"#ownership",a:"Assign"});
+  var h=header({title:"Overview",lede:"What is shipping, what is broken and what needs you, in staging and production.",cli:"forge deploy history --since 24h",actions:'<a class="btn" href="#environments">'+I.plus+'Preview env</a><a class="btn btn-primary" href="#templates">'+I.plus+'Create service</a>'});
+  h+='<div class="stats">'+
+    '<div class="stat"><span class="stat-v num">'+D.services.length+'</span><span class="stat-l">Services in the catalog</span></div>'+
+    '<div class="stat"><span class="stat-v num">'+today.length+'</span><span class="stat-l">Deploys today</span></div>'+
+    '<div class="stat"><span class="stat-v num">'+failed+'<small> of '+finished.length+'</small></span><span class="stat-l">Finished deploys that failed</span></div>'+
+    '<div class="stat"><span class="stat-v num">'+previews.length+'</span><span class="stat-l">Preview environments live</span></div></div>';
+  if(running){
+    h+='<section class="section"><div class="section-h"><h2>In flight</h2><a href="#deployments">All deployments</a></div><div class="panel flight">'+
+      '<div class="flight-top"><span class="flight-title">'+running.svc+' <span class="faint">→</span> '+running.env+'</span>'+pill(DEP_PILL,running.state)+'<span class="tag">'+running.ref+'</span><button class="btn btn-sm" style="margin-left:auto" data-action="toast" data-msg="Watching '+running.op+'" data-code="forge op watch '+running.op+'">Watch</button></div>'+
+      line(running)+
+      '<div class="flight-meta"><span>Started by <span class="mono">'+running.by+'</span> '+running.when+'</span><span>Operation <span class="mono">'+running.op+'</span></span><span>Argo CD app <span class="mono">payments-staging</span></span></div>'+
+      '<div class="flight-log">01:33:02  build    <em>ok</em>   image ghcr.io/acme/payments:9c1e2fa  (sha256:4be1…)\n01:34:10  test     <em>ok</em>   412 passed, 0 failed\n01:35:01  plan     <em>ok</em>   no infra changes\n01:35:20  <b>sync     …    argo cd: 2 of 3 pods ready (rolling)</b></div>'+
+      '</div></section>';
+  }
+  h+='<div class="grid-2"><section class="section"><div class="section-h"><h2>Needs attention</h2><span class="faint num">'+attention.length+'</span></div><div class="panel list">';
+  attention.forEach(function(a){h+='<div class="row"><span class="sev '+a.sev+'"></span><div style="min-width:0"><div class="row-t">'+a.t+'</div><div class="row-s">'+esc(a.s)+'</div></div><a class="btn btn-sm" href="'+a.href+'">'+a.a+'</a></div>';});
+  h+='</div></section><section class="section"><div class="section-h"><h2>Recent deploys</h2><a href="#deployments">History</a></div><div class="panel list">';
+  D.deploys.filter(function(d){return d.state!=="running";}).slice(0,5).forEach(function(d){
+    h+='<div class="row">'+mini(d)+'<div style="min-width:0"><div class="row-t"><span class="mono">'+d.svc+'</span> <span class="faint">'+d.ref+' → '+d.env+'</span></div><div class="row-s">'+(d.note?esc(d.note)+' · ':'')+d.when+'</div></div>'+pill(DEP_PILL,d.state)+'</div>';});
+  h+='</div></section></div>';
+  return h;
+};
+
+var ENVS=["staging","production"];
+var NIP=".10.150.1.222.nip.io";
+function addr(svcName,envName){return svcName+"."+envName+NIP;}
+function envchip(n){return '<span class="envchip '+(n==="staging"||n==="production"?n:"preview")+'">'+n+'</span>';}
+function life(l){return '<span class="life '+l.toLowerCase()+'">'+l+'</span>';}
+
+V.catalog=function(){
+  var teams=["all"];D.services.forEach(function(s){if(teams.indexOf(s.team)<0)teams.push(s.team);});
+  var q=ui.catQuery.toLowerCase();
+  var rows=D.services.filter(function(s){return (ui.catTeam==="all"||s.team===ui.catTeam)&&(!q||(s.name+" "+s.owner+" "+s.team+" "+s.desc).toLowerCase().indexOf(q)>=0);});
+  var h=header({title:"Services",lede:"Every service in the catalog, and how its environments are doing.",cli:"forge service list"+(ui.catTeam!=="all"?" --team "+ui.catTeam:""),actions:'<button class="btn" data-action="toast" data-msg="Reads forge.yaml from the repo" data-code="forge service register">Register existing</button><a class="btn btn-primary" href="#templates">'+I.plus+'Create service</a>'});
+  h+='<div class="toolbar"><label class="sr" for="cat-q">Filter services</label><input id="cat-q" class="input filter" placeholder="Name or team" value="'+esc(ui.catQuery)+'">';
+  teams.forEach(function(t){var n=t==="all"?D.services.length:D.services.filter(function(s){return s.team===t;}).length;h+='<button class="chip" data-action="team" data-team="'+t+'" aria-pressed="'+(ui.catTeam===t)+'">'+(t==="all"?"All teams":t)+'<span class="n">'+n+'</span></button>';});
+  h+='</div><div class="table-wrap"><table><thead><tr><th>Service</th><th>Team</th><th>Lifecycle</th><th>Staging</th><th>Production</th><th class="hide-sm">Golden path</th><th>Updated</th></tr></thead><tbody>';
+  if(!rows.length)h+='<tr><td colspan="7" class="faint">No services match. Clear the filter or pick another team.</td></tr>';
+  rows.forEach(function(s){
+    var score=s.checks?'<span class="score" role="img" aria-label="'+sum(s.checks)+' of 5 checks">'+[0,1,2,3,4].map(function(i){return '<i class="'+(i<sum(s.checks)?"on":"")+'"></i>';}).join("")+'</span>':'<span class="faint">Not checked</span>';
+    h+='<tr class="link" data-href="#service-'+s.name+'"><td><div class="cell-name"><a href="#service-'+s.name+'">'+s.name+'</a><span>'+esc(s.desc)+'</span></div></td><td>'+s.team+'</td><td>'+life(s.life)+'</td><td>'+pill(SVC_PILL,s.env.staging[3])+'</td><td>'+pill(SVC_PILL,s.env.production[3])+'</td><td class="hide-sm">'+score+'</td><td class="faint" style="white-space:nowrap">'+s.updated+'</td></tr>';});
+  h+='</tbody></table></div><p class="faint" style="margin:0;font-size:12.5px">'+plural(rows.length,"service")+' shown. Golden path counts CI, SLO, tracing, runbook and on-call.</p>';
+  return h;
+};
+function sum(a){return a.reduce(function(x,y){return x+y;},0);}
+
+V.service=function(name){
+  var s=svc(name);if(!s)return header({title:"Service not found",lede:"No service named "+esc(name)+". Check the catalog."});
+  var deps=D.deploys.filter(function(d){return d.svc===s.name;});
+  var running=deps.filter(function(d){return d.state==="running";})[0];
+  var used=D.services.filter(function(o){return o.deps.indexOf(s.name)>=0;});
+  var previews=D.envs.filter(function(e){return e.kind==="preview"&&e.svc===s.name;});
+  var st=s.env.staging,pr=s.env.production,ahead=st[0]!==pr[0];
+  var h=header({crumbs:'<div class="crumbs"><a href="#catalog">Services</a><span>/</span><span>'+s.team+'</span></div>',
+    title:'<span class="mono" style="font-family:var(--font-mono);font-stretch:100%">'+s.name+'</span>',
+    lede:esc(s.desc)+' '+life(s.life),
+    cli:"forge service get "+s.name,
+    actions:'<button class="btn btn-icon" data-action="svctab" data-tab="settings" aria-label="Service settings" title="Settings"'+(ui.svcTab==="settings"?' aria-pressed="true"':'')+'>'+I.gear+'</button><button class="btn" data-action="toast" data-msg="Preview environment requested" data-code="forge env create pr-new --service '+s.name+' --ttl 48h">'+I.plus+'Preview env</button>'+
+      (ahead?'<button class="btn btn-primary" data-action="toast" data-msg="Promoting '+st[0]+' to production" data-code="forge deploy promote '+s.name+' --to production">'+I.ship+'Promote '+st[0]+'</button>'
+            :'<button class="btn btn-primary" data-action="toast" data-msg="Deploy started for '+s.name+'" data-code="forge deploy start '+s.name+' --env staging">'+I.ship+'Deploy</button>')});
+  var tabs=[["overview","Overview"],["deploys","Deployments"],["deps","Dependencies"],["docs","Docs"],["settings","Settings"]];
+  h+='<div class="tabs" role="tablist">'+tabs.map(function(t){return '<button class="tab" role="tab" data-action="svctab" data-tab="'+t[0]+'" aria-selected="'+(ui.svcTab===t[0])+'">'+t[1]+(t[0]==="deploys"?' <span class="faint num">'+deps.length+'</span>':'')+'</button>';}).join("")+'</div>';
+  if(ui.svcTab==="overview"){
+    h+='<section class="section"><div class="section-h"><h2>Staging and production</h2>'+(ahead?'<span class="faint" style="font-size:13px">Staging is ahead of production</span>':'<span class="faint" style="font-size:13px">Both run the same commit</span>')+'</div>';
+    h+='<div class="table-wrap"><table><thead><tr><th>Environment</th><th>Status</th><th>Commit</th><th>Deployed</th><th class="hide-sm">By</th><th>Address</th></tr></thead><tbody>';
+    ENVS.forEach(function(n){var e=s.env[n];
+      h+='<tr><td>'+envchip(n)+'</td><td>'+pill(SVC_PILL,e[3])+'</td><td><span class="mono'+(n==="staging"&&ahead?' ahead':'')+'">'+e[0]+'</span></td><td class="faint" style="white-space:nowrap">'+e[1]+'</td><td class="hide-sm" style="font-size:13px">'+esc(e[2])+'</td><td><a class="addr" href="http://'+addr(s.name,n)+'" target="_blank" rel="noopener">'+addr(s.name,n)+'</a></td></tr>';});
+    h+='</tbody></table></div></section>';
+    h+='<div class="grid-2"><div class="side">';
+    if(running)h+='<section class="section"><h2>Deploying now</h2><div class="panel flight"><div class="flight-top"><span class="flight-title">'+running.ref+' → '+running.env+'</span>'+pill(DEP_PILL,"running")+'</div>'+line(running)+'</div></section>';
+    h+='<section class="section"><div class="section-h"><h2>Previews</h2><span class="faint num">'+previews.length+'</span></div>';
+    if(previews.length){h+='<div class="panel list">'+previews.map(function(e){return '<div class="row">'+envchip(e.name)+'<div style="min-width:0"><div class="row-t"><a class="addr" href="http://'+addr(s.name,e.name)+'" target="_blank" rel="noopener">'+addr(s.name,e.name)+'</a></div><div class="row-s">'+e.by+' · '+e.left+'h left</div></div>'+pill(SVC_PILL,e.status)+'</div>';}).join("")+'</div>';}
+    else h+='<div class="panel empty-note">No previews. Create one for any branch with <span class="mono">forge env create &lt;name&gt; --service '+s.name+'</span>.</div>';
+    h+='</section>';
+    h+='<section class="section"><div class="section-h"><h2>Recent deploys</h2></div><div class="panel list">';
+    deps.slice(0,4).forEach(function(d){h+='<div class="row">'+mini(d)+'<div style="min-width:0"><div class="row-t"><span class="mono">'+d.ref+'</span> <span class="faint">→ '+d.env+'</span></div><div class="row-s">'+(d.note?esc(d.note)+' · ':'')+esc(d.by)+' · '+d.when+'</div></div>'+pill(DEP_PILL,d.state)+'</div>';});
+    if(!deps.length)h+='<div class="row"><span></span><span class="faint">No deploys yet. Deploy sends main to staging.</span><span></span></div>';
+    h+='</div></section></div><div class="side">';
+    h+='<section class="panel"><div class="panel-h"><h2>About</h2></div><div class="panel-b"><dl class="kv"><dt>Team</dt><dd>'+s.team+'</dd><dt>Owners</dt><dd>'+esc(s.owner)+'</dd><dt>Lifecycle</dt><dd>'+s.life+'</dd><dt>Repository</dt><dd><a class="addr" href="https://'+s.repo+'" target="_blank" rel="noopener">'+s.repo+'</a></dd><dt>Depends on</dt><dd>'+(s.deps.length?s.deps.map(function(d){return '<a class="mono" href="#service-'+d+'">'+d+'</a>';}).join(", "):'–')+'</dd><dt>Tier</dt><dd>'+(s.tier||'–')+'</dd><dt>SLO</dt><dd class="num">'+(s.slo?s.slo+' availability':'–')+'</dd><dt>Template</dt><dd>'+(s.tpl?'<span class="tag">'+s.tpl+'</span>':'–')+'</dd><dt>Registered</dt><dd>'+s.registered+'</dd></dl></div></section>';
+    if(s.checks)h+='<section class="panel"><div class="panel-h"><h2>Golden path</h2><span class="faint num" style="margin-left:auto">'+sum(s.checks)+' of 5</span></div><div class="panel-b"><ul class="checks">'+CHECKS.map(function(c,i){return '<li><span class="tick '+(s.checks[i]?"y":"n")+'">'+(s.checks[i]?I.ok:I.no)+'</span>'+c+(s.checks[i]?'':' <span class="faint">· missing</span>')+'</li>';}).join("")+'</ul></div></section>';
+    else h+='<section class="panel"><div class="panel-h"><h2>Golden path</h2></div><div class="panel-b"><p class="muted" style="margin:0">No checks recorded yet for this service.</p></div></section>';
+    h+='</div></div>';
+  }else if(ui.svcTab==="deploys"){
+    h+=deployTable(deps);
+  }else if(ui.svcTab==="deps"){
+    h+='<section class="section"><h2>Calls</h2><div class="deps">'+(s.deps.length?s.deps.map(function(d){return '<a class="dep" href="#service-'+d+'"><span class="k">service</span>'+d+'</a>';}).join(""):'<span class="faint">No service dependencies.</span>')+s.res.map(function(r){return '<a class="dep" href="#resources"><span class="k">resource</span>'+r+'</a>';}).join("")+'</div></section>';
+    h+='<section class="section"><h2>Called by</h2><div class="deps">'+(used.length?used.map(function(o){return '<a class="dep" href="#service-'+o.name+'"><span class="k">service</span>'+o.name+'</a>';}).join(""):'<span class="faint">Nothing in the catalog calls this service.</span>')+'</div></section>';
+  }else if(ui.svcTab==="settings"){
+    var lifeOpts=["Experimental","Production","Deprecated"].map(function(l){return '<option'+(l===s.life?" selected":"")+'>'+l+'</option>';}).join("");
+    var teamOpts=Object.keys(TEAMS).map(function(t){return '<option'+(t===s.team?" selected":"")+'>'+t+'</option>';}).join("");
+    h+='<div class="settings">';
+    h+='<section class="panel"><div class="panel-h"><h2>General</h2></div><form class="panel-b settings-form" id="svc-settings" data-svc="'+s.name+'">'+
+      '<div class="field"><label for="set-team">Owning team</label><select class="select" id="set-team">'+teamOpts+'</select></div>'+
+      '<div class="field"><label for="set-contacts">Contacts</label><input class="input" id="set-contacts" value="'+esc(s.owner)+'"><span class="hint">Who gets alerts and review requests. Separate several with commas.</span></div>'+
+      '<div class="field"><label for="set-life">Lifecycle</label><select class="select" id="set-life">'+lifeOpts+'</select></div>'+
+      '<div class="field"><label for="set-repo">Repository</label><input class="input mono" id="set-repo" value="'+s.repo+'" readonly><span class="hint">Change this in the repo\'s forge.yaml.</span></div>'+
+      '<div><button class="btn btn-primary" data-action="save-settings">Save changes</button></div></form></section>';
+    h+='<section class="panel danger"><div class="panel-h"><h2>Danger zone</h2></div><div class="panel-b list">'+
+      '<div class="danger-row"><div><b>Delete service</b><p>Destroys staging, production and any previews, and removes '+s.name+' from the catalog. The repository is kept.</p></div><button class="btn btn-danger" data-action="delete-svc" data-svc="'+s.name+'">Delete service</button></div></div></section>';
+    h+='</div>';
+  }else{
+    var dk=docsFor(s.name);
+    h+='<section class="panel"><div class="panel-h"><h2>Docs</h2>'+pill(DOC_PILL,dk.status)+'<a class="btn btn-sm" href="#docs-'+s.name+'">Open in TechDocs</a></div><div class="panel-b"><p class="muted" style="margin:0 0 12px">Built from <span class="mono">docs/</span> in <span class="mono">'+s.repo+'</span> '+dk.built+'.</p><div class="deps">'+dk.pages.map(function(pg,i){return '<a class="dep" href="#docs-'+s.name+'" data-action="docpage-link" data-i="'+i+'">'+esc(pg.file)+'</a>';}).join("")+'</div></div></section>';
+  }
+  return h;
+};
+
+function deployTable(rows){
+  var h='<div class="table-wrap"><table><thead><tr><th>Service</th><th>Ref</th><th>Environment</th><th>Pipeline</th><th>Status</th><th class="hide-sm">By</th><th class="hide-sm">Duration</th><th>When</th></tr></thead><tbody>';
+  if(!rows.length)h+='<tr><td colspan="8" class="faint">No deployments match this filter.</td></tr>';
+  rows.forEach(function(d){h+='<tr><td><a class="mono" style="text-decoration:none;font-weight:500" href="#service-'+d.svc+'">'+d.svc+'</a>'+(d.note?'<div class="faint" style="font-size:12.5px;max-width:280px">'+esc(d.note)+'</div>':'')+'</td><td><span class="tag">'+d.ref+'</span></td><td class="mono">'+d.env+'</td><td>'+mini(d)+' <span class="faint" style="font-size:12px">'+STAGES[d.stage]+'</span></td><td>'+pill(DEP_PILL,d.state)+'</td><td class="mono hide-sm" style="font-size:12.5px">'+d.by+'</td><td class="num hide-sm">'+d.dur+'</td><td class="faint" style="white-space:nowrap">'+d.when+'</td></tr>';});
+  return h+'</tbody></table></div>';
+}
+
+V.deployments=function(){
+  var f=ui.depFilter;
+  var groups=[["all","All"],["running","In progress"],["failed","Failed"],["succeeded","Succeeded"]];
+  var rows=D.deploys.filter(function(d){return f==="all"||d.state===f||(f==="running"&&d.state==="queued");});
+  var h=header({title:"Deployments",lede:"Releases go through Argo CD. A failed verify step rolls back on its own.",cli:"forge deploy history"+(f==="failed"?" --status failed":""),actions:'<button class="btn btn-primary" data-action="toast" data-msg="Pick a service to deploy from the catalog" data-code="forge deploy start <service> --env staging">'+I.ship+'New deploy</button>'});
+  h+='<div class="toolbar">'+groups.map(function(g){var n=g[0]==="all"?D.deploys.length:D.deploys.filter(function(d){return d.state===g[0]||(g[0]==="running"&&d.state==="queued");}).length;return '<button class="chip" data-action="depf" data-f="'+g[0]+'" aria-pressed="'+(f===g[0])+'">'+g[1]+'<span class="n">'+n+'</span></button>';}).join("")+'</div>';
+  return h+deployTable(rows);
+};
+
+V.environments=function(){
+  var prev=D.envs.filter(function(e){return e.kind==="preview";});
+  var h=header({title:"Environments",lede:"Every service runs in staging and production. Previews are short-lived copies for a branch.",cli:"forge env list",actions:'<button class="btn btn-primary" data-action="newenv">'+I.plus+'Preview env</button>'});
+  h+='<section class="section"><h2>Staging and production</h2><div class="grid-cards env-pair">';
+  ENVS.forEach(function(n){
+    var e=D.envs.filter(function(x){return x.name===n;})[0];
+    var bad=D.services.filter(function(s){return s.env[n][3]!=="healthy";});
+    var dr=D.deploys.filter(function(d){return d.env===n&&d.today;}).length;
+    h+='<div class="panel env-card"><div class="env-top">'+envchip(n)+pill(SVC_PILL,bad.length?(bad.some(function(s){return s.env[n][3]==="failing";})?"failing":"degraded"):"healthy")+'</div><p class="muted" style="margin:0;font-size:13.5px">'+e.desc+'</p><div class="env-facts"><span><b>'+D.services.length+'</b>services</span><span><b>'+(D.services.length-bad.length)+'</b>healthy</span><span><b>'+dr+'</b>deploys today</span></div>'+
+      (bad.length?'<div style="font-size:12.5px;color:var(--fg-2)">Needs a look: '+bad.map(function(s){return '<a class="mono" href="#service-'+s.name+'">'+s.name+'</a>';}).join(", ")+'</div>':'')+
+      '<div class="faint mono" style="font-size:12px">&lt;service&gt;.'+n+NIP+'</div></div>';});
+  h+='</div></section><section class="section"><div class="section-h"><h2>Previews</h2><span class="faint num">'+prev.length+'</span></div>';
+  if(!prev.length){h+='<div class="panel empty-note">No previews. Create one for any branch with <span class="mono">forge env create &lt;name&gt; --service &lt;service&gt;</span>.</div></section>';return h;}
+  h+='<div class="table-wrap"><table><thead><tr><th>Name</th><th>Service</th><th>Status</th><th>Time left</th><th class="hide-sm">Owner</th><th><span class="sr">Actions</span></th></tr></thead><tbody>';
+  prev.forEach(function(e){var pct=Math.round(e.left/e.ttl*100);var low=pct<15;
+    h+='<tr><td><div class="cell-name">'+envchip(e.name)+'<a class="addr" style="font-size:12px" href="http://'+addr(e.svc,e.name)+'" target="_blank" rel="noopener">'+addr(e.svc,e.name)+'</a></div></td><td><a class="mono" style="text-decoration:none" href="#service-'+e.svc+'">'+e.svc+'</a></td><td>'+pill(SVC_PILL,e.status)+'</td><td><div class="ttl"><div class="ttl-bar"><i class="'+(low?"low":"")+'" style="width:'+pct+'%"></i></div><span class="num">'+e.left+'h of '+e.ttl+'h'+(low?' · expiring':'')+'</span></div></td><td class="mono hide-sm" style="font-size:12.5px">'+e.by+'</td><td style="white-space:nowrap;text-align:right"><button class="btn btn-sm" data-action="extend" data-env="'+e.name+'">Extend 24h</button> <button class="btn btn-sm btn-ghost" data-action="destroy" data-env="'+e.name+'">Destroy</button></td></tr>';});
+  h+='</tbody></table></div></section>';
+  return h;
+};
+
+V.templates=function(){
+  var h=header({title:"Templates",lede:"Golden paths owned by the platform team. CI, tracing and deploy config come with every new service.",cli:"forge template list",actions:'<button class="btn" data-action="toast" data-msg="Template lint passed" data-code="forge template lint ./templates">Lint templates</button>'});
+  h+='<div class="grid-cards">';
+  D.templates.forEach(function(t){
+    h+='<div class="panel tpl"><div class="tpl-top"><span class="tpl-mark">'+t.mark+'</span><div><div class="tpl-name">'+t.name+'</div><div class="faint" style="font-size:12.5px">'+t.title+'</div></div></div><p>'+t.desc+'</p><div class="baked">'+t.baked.map(function(b){return '<span class="tag">'+b+'</span>';}).join("")+'</div><div class="tpl-foot"><span class="num">'+plural(t.uses,"service")+' · '+t.ver+'</span><button class="btn btn-sm btn-primary" data-action="create" data-tpl="'+t.name+'">Use template</button></div></div>';});
+  return h+'</div>';
+};
+
+V.resources=function(){
+  var h=header({title:"Resources",lede:"Databases, queues and buckets declared in forge.yaml. Forge plans and applies them with OpenTofu.",cli:"forge resource list",actions:'<button class="btn btn-primary" data-action="toast" data-msg="Plan queued" data-code="forge resource plan -f forge.yaml">Plan changes</button>'});
+  h+='<div class="table-wrap"><table><thead><tr><th>Resource</th><th>Owner</th><th>Environment</th><th>State</th><th>Pending plan</th><th>Updated</th><th><span class="sr">Actions</span></th></tr></thead><tbody>';
+  D.resources.forEach(function(r){h+='<tr><td><div class="cell-name"><span class="mono" style="font-weight:500;color:var(--fg);font-size:13.5px">'+r.name+'</span><span>'+r.kind+'</span></div></td><td>'+(r.svc?'<a class="mono" style="text-decoration:none" href="#service-'+r.svc+'">'+r.svc+'</a>':'<a class="issue warn" href="#ownership">No owner</a>')+'</td><td class="mono">'+r.env+'</td><td>'+pill(RES_PILL,r.state)+'</td><td class="mono">'+(r.plan||'<span class="faint">none</span>')+'</td><td class="faint" style="white-space:nowrap">'+r.when+'</td><td style="text-align:right">'+(r.state==="plan"||r.state==="drift"?'<button class="btn btn-sm" data-action="toast" data-msg="Apply started for '+r.name+'" data-code="forge resource apply '+r.name+'">Apply</button>':'')+'</td></tr>';});
+  return h+'</tbody></table></div>';
+};
+
+/* ---------------- Governance: rules and ownership ---------------- */
+var MODES=[["enforce","Enforce"],["warn","Warn"],["off","Off"]];
+var TEAMS={"platform-engineering":{members:4,oncall:"platform-primary"},"billing":{members:6,oncall:"billing-primary"},"commerce":{members:5,oncall:"commerce-primary"},"risk":{members:2,oncall:null},"growth":{members:3,oncall:"growth-primary"},"discovery":{members:2,oncall:"discovery-primary"},"mobile":{members:4,oncall:null}};
+var OWNER_TARGET=90;
+function goldenGaps(){return D.services.filter(function(s){return s.tier&&s.tier<=1&&s.checks&&sum(s.checks)<5;});}
+function unowned(){return D.resources.filter(function(r){return !r.svc;});}
+function coverage(){var total=D.services.length+D.resources.length;var owned=D.services.filter(function(s){return s.team;}).length+D.resources.filter(function(r){return r.svc;}).length;return {owned:owned,total:total,pct:Math.round(owned/total*100)};}
+function ruleHits(r){
+  if(r.id==="golden-path")return goldenGaps().length;
+  if(r.id==="owner-required")return unowned().length;
+  return r.hits||0;
+}
+
+V.rules=function(){
+  var waiting=D.approvals;
+  var h=header({title:"Rules",lede:"What Forge checks before it creates, deploys or changes anything. Admins set the rules and every action is checked against them.",cli:"forge policy list",actions:'<button class="btn" data-action="toast" data-msg="Dry run: 0 of 12 recent deploys would be blocked" data-code="forge policy test --since 7d">Test against last 7 days</button>'});
+  h+='<section class="section"><div class="section-h"><h2>Waiting for approval</h2><span class="faint num">'+waiting.length+'</span></div>';
+  if(!waiting.length)h+='<div class="panel empty-note">Nothing is waiting. Deploys that need approval appear here.</div>';
+  else{h+='<div class="panel list">';waiting.forEach(function(a){
+    h+='<div class="row"><span class="sev warn"></span><div style="min-width:0"><div class="row-t"><span class="mono">'+a.svc+'</span> <span class="mono ahead">'+a.ref+'</span> <span class="faint">→ production</span></div><div class="row-s">Requested by '+esc(a.by)+' '+a.when+' · '+a.rule+'</div></div><div class="ph-actions"><button class="btn btn-sm btn-ghost" data-action="approval" data-id="'+a.id+'" data-ok="0">Reject</button><button class="btn btn-sm btn-primary" data-action="approval" data-id="'+a.id+'" data-ok="1">Approve</button></div></div>';});
+    h+='</div>';}
+  h+='</section>';
+  var kinds=[];D.rules.forEach(function(r){if(kinds.indexOf(r.kind)<0)kinds.push(r.kind);});
+  h+='<section class="section"><div class="section-h"><h2>Rules</h2><span class="faint">'+D.rules.filter(function(r){return r.mode==="enforce";}).length+' enforced, '+D.rules.filter(function(r){return r.mode==="warn";}).length+' warning only</span></div>';
+  h+='<div class="table-wrap"><table style="min-width:720px"><thead><tr><th>Rule</th><th>Applies to</th><th>Open issues</th><th>Mode</th></tr></thead><tbody>';
+  kinds.forEach(function(k){
+    h+='<tr class="group"><td colspan="4">'+k+'</td></tr>';
+    D.rules.filter(function(r){return r.kind===k;}).forEach(function(r){var n=ruleHits(r);
+      h+='<tr><td><div class="cell-name"><span style="font-weight:500;color:var(--fg);font-size:13.5px">'+r.name+'</span><span>'+r.desc+'</span></div></td><td style="white-space:nowrap">'+r.scope+'</td><td>'+(n?'<a class="issue '+(r.mode==="enforce"?"bad":"warn")+'" href="'+r.href+'">'+plural(n,r.unit)+'</a>':'<span class="faint">None</span>')+'</td><td><div class="seg-ctl" role="group" aria-label="Mode for '+esc(r.name)+'">'+MODES.map(function(m){return '<button data-action="mode" data-id="'+r.id+'" data-mode="'+m[0]+'" aria-pressed="'+(r.mode===m[0])+'">'+m[1]+'</button>';}).join("")+'</div></td></tr>';});});
+  h+='</tbody></table></div><p class="faint" style="margin:0;font-size:12.5px">Warn lets the action through and records it in the audit log. Enforce blocks it.</p></section>';
+  return h;
+};
+
+V.ownership=function(){
+  var c=coverage(),miss=unowned(),below=c.pct<OWNER_TARGET;
+  var teams=Object.keys(TEAMS).map(function(t){
+    var svcs=D.services.filter(function(s){return s.team===t;});
+    var last=D.deploys.filter(function(d){return svcs.some(function(s){return s.name===d.svc;});})[0];
+    var flag=!svcs.length?["neutral","No services yet"]:!TEAMS[t].oncall?["warn","No on-call rotation"]:null;
+    return {name:t,svcs:svcs,members:TEAMS[t].members,oncall:TEAMS[t].oncall,last:last?last.when:(svcs.length?svcs[0].updated:"Never"),flag:flag};
+  });
+  var flagged=teams.filter(function(t){return t.flag;}).length;
+  var h=header({title:"Ownership",lede:"Every service and resource needs a team that answers for it. Unowned things get no alerts and no reviews.",cli:"forge service owners --missing",actions:''});
+  h+='<div class="stats" style="grid-template-columns:repeat(3,minmax(0,1fr))">'+
+    '<div class="stat"><span class="stat-v num">'+c.pct+'%</span><span class="stat-l">Owned, against a '+OWNER_TARGET+'% target</span><span class="stat-n">'+(below?'<span class="pill warn">Below target</span>':'<span class="pill ok">On target</span>')+'</span></div>'+
+    '<div class="stat"><span class="stat-v num">'+miss.length+'</span><span class="stat-l">Resources with no owner</span><span class="stat-n">'+c.owned+' of '+c.total+' services and resources owned</span></div>'+
+    '<div class="stat"><span class="stat-v num">'+flagged+'<small> of '+teams.length+'</small></span><span class="stat-l">Teams that need a look</span><span class="stat-n">No services or no on-call rotation</span></div></div>';
+  h+='<section class="section"><div class="section-h"><h2>Missing an owner</h2><span class="faint num">'+miss.length+'</span></div>';
+  if(!miss.length)h+='<div class="panel empty-note">Everything has an owner.</div>';
+  else{h+='<div class="panel list">';miss.forEach(function(r){
+    h+='<div class="row"><span class="sev warn"></span><div style="min-width:0"><div class="row-t"><span class="mono">'+r.name+'</span> <span class="faint">'+r.kind+' · '+r.env+'</span></div><div class="row-s">'+esc(r.note||"Not declared in any forge.yaml")+'</div></div><button class="btn btn-sm" data-action="assign" data-res="'+r.name+'">Assign owner</button></div>';});
+    h+='</div>';}
+  h+='</section>';
+  h+='<section class="section"><div class="section-h"><h2>Teams</h2><span class="faint num">'+teams.length+'</span></div><div class="table-wrap"><table><thead><tr><th>Team</th><th>Services</th><th class="hide-sm">Members</th><th>On-call</th><th class="hide-sm">Last deploy</th><th><span class="sr">Flags</span></th></tr></thead><tbody>';
+  teams.forEach(function(t){
+    h+='<tr><td><button class="link-btn" data-action="goteam" data-team="'+t.name+'">'+t.name+'</button></td><td>'+(t.svcs.length?t.svcs.map(function(s){return '<a class="mono" style="font-size:12.5px" href="#service-'+s.name+'">'+s.name+'</a>';}).join(", "):'<span class="faint">None</span>')+'</td><td class="num hide-sm">'+t.members+'</td><td class="mono" style="font-size:12.5px">'+(t.oncall||'<span class="faint" style="font-family:var(--font-ui)">None</span>')+'</td><td class="faint hide-sm" style="white-space:nowrap">'+t.last+'</td><td style="text-align:right">'+(t.flag?'<span class="pill '+t.flag[0]+'">'+t.flag[1]+'</span>':'')+'</td></tr>';});
+  h+='</tbody></table></div></section>';
+  return h;
+};
+
+function assignDialog(res){
+  var opts=D.services.map(function(s){return '<option value="'+s.name+'">'+s.name+' ('+s.team+')</option>';}).join("");
+  openLayer('<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="as-h"><h2 id="as-h">Assign an owner to '+esc(res)+'</h2><p>The resource joins this service\'s forge.yaml, and its team gets the alerts and reviews.</p><div class="field"><label for="as-svc">Service</label><select class="select" id="as-svc">'+opts+'</select></div><div class="dialog-f"><button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="do-assign" data-res="'+esc(res)+'">Assign owner</button></div></div>',"#as-svc");
+}
+
+V.audit=function(){
+  var q=ui.auditQuery.toLowerCase();
+  var rows=D.audit.filter(function(a){return !q||(a.actor+" "+a.verb+" "+a.res).toLowerCase().indexOf(q)>=0;});
+  var h=header({title:"Audit log",lede:"Every platform action, from the CLI, the console or CI, with the RBAC decision.",cli:"forge audit list --since 24h",actions:''});
+  h+='<div class="toolbar"><label class="sr" for="audit-q">Filter audit log</label><input id="audit-q" class="input filter" placeholder="Filter by actor, action or resource" value="'+esc(ui.auditQuery)+'"></div>';
+  h+='<div class="table-wrap"><table><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Resource</th><th class="hide-sm">Environment</th><th>Decision</th></tr></thead><tbody>';
+  if(!rows.length)h+='<tr><td colspan="6" class="faint">No entries match.</td></tr>';
+  rows.forEach(function(a){h+='<tr><td class="num faint" style="white-space:nowrap">'+a.t+'</td><td class="mono" style="font-size:12.5px">'+a.actor+'</td><td class="mono" style="font-size:12.5px"><b style="font-weight:500;color:var(--ember-ink)">'+a.verb+'</b></td><td class="mono" style="font-size:12.5px">'+a.res+'</td><td class="mono hide-sm" style="font-size:12.5px">'+a.ctx+'</td><td>'+(a.ok?'<span class="pill ok">Allowed</span>':'<span class="pill bad">Denied</span><div class="faint" style="font-size:12px;margin-top:2px">'+esc(a.why)+'</div>')+'</td></tr>';});
+  return h+'</tbody></table></div>';
+};
+
+/* ---------------- TechDocs ---------------- */
+var DOC_PILL={built:["ok","Built"],stale:["warn","Stale"],failed:["bad","Build failed"]};
+var NOTE_I='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>';
+function admon(kind,title,body){return '<div class="admon '+kind+'">'+NOTE_I+'<p><b>'+title+'</b> '+body+'</p></div>';}
+function tbl(head,rows){return '<div class="table-wrap"><table><thead><tr>'+head.map(function(x){return '<th>'+x+'</th>';}).join("")+'</tr></thead><tbody>'+rows.map(function(r){return '<tr>'+r.map(function(c){return '<td>'+c+'</td>';}).join("")+'</tr>';}).join("")+'</tbody></table></div>';}
+var DOCS={
+  payments:{status:"built",built:"2 h ago",commit:"a41c9e2",pages:[
+    {file:"index.md",title:"Payments",sub:"Charges, refunds and payouts for every checkout.",body:
+      '<h2>What it does</h2><p>Payments takes an order from <code>checkout-api</code>, authorizes the card with the processor, scores it with <code>fraud-scorer</code> and records the result in <code>ledger</code>. Refunds and payouts go through the same path in reverse.</p>'+
+      '<h2>Who owns it</h2><p>The billing team owns payments. Amara Okafor is the tech lead, and the on-call rotation is <code>billing-primary</code>.</p>'+
+      tbl(["Fact","Value"],[["Tier","1, customer facing"],["SLO",'99.95% of <code>Charge</code> calls succeed over 28 days'],["Language","Go 1.23, ConnectRPC"],["Data","PostgreSQL <code>payments-db</code>, Kafka <code>payments-events</code>"]])+
+      '<h2>Where to go next</h2><ul><li>New to the service? Start with Getting started.</li><li>Paged? Go straight to the Runbook.</li><li>Changing the API? Read ADR 0003 on idempotency first.</li></ul>'},
+    {file:"getting-started.md",title:"Getting started",sub:"Run payments locally and ship a change to a preview environment.",body:
+      '<h2>Prerequisites</h2><ul><li>The <code>forge</code> CLI, signed in with <code>forge auth login</code></li><li>Go 1.23 and Docker</li><li>Membership of the billing team in Forge</li></ul>'+
+      '<h2>Run it locally</h2><pre><code><span class="c"># clone and start dependencies</span>\ngit clone git@github.com:acme/payments.git && cd payments\nmake deps-up\n\n<span class="c"># run the service against local Postgres</span>\ngo run ./cmd/payments</code></pre>'+
+      admon("note","Local card processor.","The service talks to a processor stub on port 9090 when <code>PAYMENTS_PROCESSOR=stub</code>. Never point local runs at the real processor.")+
+      '<h2>Ship to a preview</h2><p>Open a pull request, then create a preview environment for it. Forge builds the branch, deploys it and posts the URL on the PR.</p><pre><code>forge env create pr-142 <span class="f">--service</span> payments <span class="f">--ttl</span> 48h</code></pre>'+
+      '<h2>Promote</h2><p>When the PR merges, Forge deploys <code>main</code> to staging. Promote to production from the service page or the CLI.</p><pre><code>forge deploy promote payments <span class="f">--to</span> production</code></pre>'},
+    {file:"architecture.md",title:"Architecture",sub:"How a charge moves through the system.",body:
+      '<h2>Request flow</h2><ol><li><code>checkout-api</code> calls <code>Charge</code> with an idempotency key.</li><li>Payments asks <code>fraud-scorer</code> for a score and rejects anything above 0.85.</li><li>The processor authorizes and captures the card.</li><li>Payments writes a double entry to <code>ledger</code> and emits <code>payment.captured</code>.</li></ol>'+
+      '<h2>Data</h2><p>Each charge is one row in <code>charges</code>, keyed by the idempotency key. State only moves forward: <code>pending</code>, <code>authorized</code>, <code>captured</code>, then <code>refunded</code> if needed.</p>'+
+      '<h2>Failure modes</h2>'+tbl(["Failure","What happens"],[["Processor timeout","The charge stays pending and a reconciler retries for 15 minutes"],["fraud-scorer down","Charges under 50 EUR pass; larger ones are held"],["ledger down","Capture succeeds and the ledger write is queued in Kafka"]])},
+    {file:"api.md",title:"API reference",sub:"Generated from proto/payments/v1/payments.proto.",body:
+      '<h2>PaymentsService</h2>'+tbl(["RPC","Purpose"],[["<code>Charge</code>","Authorize and capture a card payment"],["<code>Refund</code>","Refund all or part of a captured charge"],["<code>GetCharge</code>","Read a charge and its state history"],["<code>ListPayouts</code>","Payouts to a merchant, newest first"]])+
+      '<h2>Charge</h2><pre><code>rpc Charge(ChargeRequest) returns (ChargeResponse);\n\nmessage ChargeRequest {\n  string idempotency_key = 1;  <span class="c">// required, 1 to 64 chars</span>\n  string order_id = 2;\n  Money amount = 3;\n  string payment_method_id = 4;\n}</code></pre>'+
+      admon("warn","Breaking changes fail CI.","<code>buf breaking</code> runs on every pull request. Removing or renumbering a field fails the build.")},
+    {file:"runbook.md",title:"Runbook",sub:"What to do when payments pages you.",body:
+      '<h2>Charge error rate above 2%</h2><ol><li>Check the processor status page and the payments processor dashboard.</li><li>If only one processor region is failing, fail over to the secondary region.</li><li>If errors started right after a deploy, roll back.</li></ol><pre><code>forge deploy rollback payments <span class="f">--env</span> production</code></pre>'+
+      '<h2>Charges stuck in pending</h2><p>The reconciler retries pending charges for 15 minutes. After that they need a manual decision.</p><pre><code>forge op list <span class="f">--service</span> payments</code></pre>'+
+      admon("warn","Never refund to fix a stuck charge.","A pending charge may still capture, and refunding it can pay the customer twice.")+
+      '<h2>Escalation</h2><p>Page <code>billing-secondary</code> after 20 minutes without progress.</p>'},
+    {file:"adr/0003-idempotency.md",title:"ADR 0003: Idempotency keys",sub:"Accepted on 2026-08-14.",body:
+      '<h2>Context</h2><p>Clients retry on timeouts. Without a key, a retry can capture the same card twice.</p><h2>Decision</h2><p>Every mutating RPC requires an <code>idempotency_key</code>. The first response for a key is stored for 24 hours and returned on every retry with the same key.</p><h2>Consequences</h2><ul><li>Clients generate one key per logical attempt, not per HTTP request.</li><li>The keys table grows by about 2 million rows a day and is pruned nightly.</li></ul>'}
+  ]},
+  "platform-handbook":{status:"built",built:"yesterday",commit:"09be71d",team:"platform",pages:[
+    {file:"index.md",title:"Platform handbook",sub:"How to build, ship and run services on Forge.",body:'<h2>Start here</h2><p>Forge gives every service the same path from template to production. This handbook explains that path and the rules around it.</p><ul><li>Your first service</li><li>The <code>forge.yaml</code> reference</li><li>Writing docs that TechDocs can build</li></ul>'},
+    {file:"first-service.md",title:"Your first service",sub:"From a template to a running preview.",body:'<h2>Create it</h2><pre><code>forge create payouts <span class="f">--template</span> go-grpc <span class="f">--team</span> billing <span class="f">--preview</span></code></pre><p>Forge creates the repo, CI, the Argo CD app and a catalog entry, then builds and deploys a preview.</p><h2>Check it</h2><pre><code>forge service get payouts\nforge env list</code></pre>'},
+    {file:"forge-yaml.md",title:"forge.yaml reference",sub:"The manifest in every service repo.",body:'<h2>Example</h2><pre><code>service: payments\nteam: billing\ntier: 1\ntemplate: go-grpc@v2.3.0\ndocs: ./docs\nresources:\n  - name: payments-db\n    type: postgres\n    version: "16"</code></pre><h2>Fields</h2>'+tbl(["Field","Meaning"],[["<code>service</code>","Catalog name, unique across Forge"],["<code>team</code>","Owning team in Forge RBAC"],["<code>docs</code>","Folder TechDocs builds; defaults to <code>./docs</code>"],["<code>resources</code>","Infrastructure planned and applied with OpenTofu"]])},
+    {file:"writing-docs.md",title:"Writing docs",sub:"How TechDocs builds your docs.",body:'<h2>Layout</h2><p>Put Markdown in <code>docs/</code> with an <code>index.md</code>. TechDocs builds it on every merge to <code>main</code> and on every preview.</p><pre><code>docs/\n  index.md\n  getting-started.md\n  runbook.md\n  adr/</code></pre>'+admon("note","Check before you push.","Run <code>forge docs build</code> locally to catch broken links.")}
+  ]}
+};
+var DOC_STATE={"search-indexer":["failed","5 h ago"],"fraud-scorer":["stale","41 days ago"],"report-cron":["stale","63 days ago"]};
+var DOC_AGE=["3 h ago","1 day ago","2 days ago","5 h ago"];
+function docsFor(name){
+  if(DOCS[name])return DOCS[name];
+  var s=svc(name);if(!s)return null;var st=DOC_STATE[name]||["built",DOC_AGE[name.length%4]];
+  DOCS[name]={status:st[0],built:st[1],commit:"7f3"+name.length+"c0d",pages:[
+    {file:"index.md",title:s.name,sub:esc(s.desc),body:'<h2>What it does</h2><p>'+esc(s.desc)+'</p><h2>Who owns it</h2><p>The '+s.team+' team owns '+s.name+', and '+s.owner+' is the contact.</p>'+tbl(["Fact","Value"],[["Tier",String(s.tier||"–")],["SLO",s.slo||"–"],["Language",s.lang],["Template",s.tpl?"<code>"+s.tpl+"</code>":"–"]])},
+    {file:"getting-started.md",title:"Getting started",sub:"Run "+s.name+" locally and ship a preview.",body:'<h2>Run it locally</h2><pre><code>git clone git@'+s.repo.replace("/",":")+'.git\ncd '+s.name+' && make run</code></pre><h2>Ship to a preview</h2><pre><code>forge env create pr-1 <span class="f">--service</span> '+s.name+'</code></pre>'},
+    {file:"runbook.md",title:"Runbook",sub:"What to do when "+s.name+" pages you.",body:'<h2>First steps</h2><ol><li>Check the service page in Forge for failing deploys.</li><li>If a deploy caused it, roll back.</li></ol><pre><code>forge deploy rollback '+s.name+' <span class="f">--env</span> production</code></pre>'}
+  ]};
+  return DOCS[name];
+}
+
+V.docs=function(){
+  var q=ui.docQuery.toLowerCase();
+  var hb=DOCS["platform-handbook"];
+  var list=D.services.map(function(s){return {name:s.name,desc:s.desc,team:s.team,d:docsFor(s.name)};})
+    .filter(function(x){return !q||(x.name+" "+x.desc+" "+x.team+" "+x.d.pages.map(function(p){return p.title;}).join(" ")).toLowerCase().indexOf(q)>=0;});
+  var attention=D.services.filter(function(s){return docsFor(s.name).status!=="built";}).length;
+  var h=header({title:"TechDocs",lede:"Docs live in each service repo next to the code. Forge rebuilds them on every merge to main.",cli:"forge docs build",actions:'<a class="btn" href="#docs-platform-handbook">Platform handbook</a>'});
+  h+='<section class="section"><div class="section-h"><h2>Start here</h2></div><div class="doc-feature">'+
+    hb.pages.slice(1).map(function(p,i){return '<a class="panel guide" href="#docs-platform-handbook" data-action="docpage-link" data-i="'+(i+1)+'"><span class="guide-n">'+(i+1)+'</span><div><b>'+p.title+'</b><span>'+p.sub+'</span></div></a>';}).join("")+'</div></section>';
+  h+='<section class="section"><div class="section-h"><h2>Service docs</h2><span class="faint">'+attention+' need attention</span></div>';
+  h+='<div class="toolbar"><label class="sr" for="doc-q">Search docs</label><input id="doc-q" class="input filter" placeholder="Search services and page titles" value="'+esc(ui.docQuery)+'"></div><div class="doc-grid">';
+  if(!list.length)h+='<p class="faint" style="margin:0">No docs match. Try a service name or a page title such as runbook.</p>';
+  list.forEach(function(x){
+    h+='<a class="panel doc-card" href="#docs-'+x.name+'"><div class="doc-card-top"><h3>'+x.name+'</h3>'+pill(DOC_PILL,x.d.status)+'</div><p>'+esc(x.desc)+'</p><div class="doc-card-foot"><span>'+plural(x.d.pages.length,"page")+'</span><span>'+x.team+'</span><span>Built '+x.d.built+'</span></div></a>';});
+  return h+'</div></section>';
+};
+
+V.docreader=function(name){
+  var d=docsFor(name);
+  if(!d)return header({title:"Docs not found",lede:"No docs for "+esc(name)+". Check the TechDocs list."});
+  var s=svc(name);
+  if(ui.docPage>=d.pages.length)ui.docPage=0;
+  var pg=d.pages[ui.docPage];
+  var h='<div class="crumbs"><a href="#docs">TechDocs</a><span>/</span>'+(s?'<a href="#service-'+name+'" class="mono">'+name+'</a>':'<span class="mono">'+name+'</span>')+'<span>/</span><span class="mono">'+esc(pg.file)+'</span></div>';
+  if(d.status==="failed")h+='<div class="doc-banner" role="status"><span><b>The last docs build failed.</b> You are reading the version built '+d.built+'. A link in <span class="mono">runbook.md</span> points to a missing file.</span><button class="btn btn-sm" data-action="toast" data-msg="Docs build queued" data-code="forge docs build '+name+'">Rebuild</button></div>';
+  else if(d.status==="stale")h+='<div class="doc-banner stale" role="status"><span><b>Not updated in '+d.built.replace(" ago","")+'.</b> The code has changed since, so ask the '+(s?s.team:"owning")+' team to review these docs.</span></div>';
+  h+='<div class="reader"><nav class="doc-nav" aria-label="Pages"><div class="doc-nav-h">'+(s?s.name:"Handbook")+'</div>'+d.pages.map(function(p,i){return '<button data-action="docpage" data-i="'+i+'"'+(i===ui.docPage?' aria-current="page"':'')+'>'+esc(p.title)+'</button>';}).join("")+'</nav>';
+  h+='<div class="doc-nav-select field"><label for="doc-sel">Page</label><select class="select" id="doc-sel">'+d.pages.map(function(p,i){return '<option value="'+i+'"'+(i===ui.docPage?" selected":"")+'>'+esc(p.title)+'</option>';}).join("")+'</select></div>';
+  h+='<article class="article" id="doc-article"><h1>'+pg.title+'</h1><p class="doc-sub">'+pg.sub+'</p>'+pg.body;
+  var prev=d.pages[ui.docPage-1],next=d.pages[ui.docPage+1];
+  h+='<div class="doc-pager">'+(prev?'<button data-action="docpage" data-i="'+(ui.docPage-1)+'"><span>Previous</span><b>'+esc(prev.title)+'</b></button>':'')+(next?'<button class="next" data-action="docpage" data-i="'+(ui.docPage+1)+'"><span>Next</span><b>'+esc(next.title)+'</b></button>':'')+'</div></article>';
+  var heads=[];pg.body.replace(/<h2>(.*?)<\/h2>/g,function(m,t){heads.push(t);});
+  h+='<aside class="doc-aside"><div><div class="doc-nav-h" style="padding-left:12px">On this page</div><div class="toc">'+heads.map(function(t,i){return '<button data-action="toc" data-i="'+i+'">'+t+'</button>';}).join("")+'</div></div>'+
+    '<div class="doc-meta"><div><span class="k">Owner</span>'+(s?s.team+' · '+s.owner:(d.team||"platform"))+'</div><div><span class="k">Built</span><span>'+d.built+' from <span class="mono">'+d.commit+'</span></span></div><div><span class="k">Source</span><span class="mono" style="font-size:12px;overflow-wrap:anywhere">docs/'+esc(pg.file)+'</span></div></div>'+
+    '<div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start"><button class="btn btn-sm" data-action="toast" data-msg="Opens docs/'+esc(pg.file)+' in the repo" data-code="'+(s?s.repo:"github.com/acme/platform-handbook")+'">Edit this page</button>'+cli("forge docs open "+name)+'</div></aside></div>';
+  return h;
+};
+
+V.design=function(){
+  var sw=[["--rail-bg","Iron rail"],["--bg","Ground"],["--surface","Surface"],["--line","Line"],["--fg","Ink"],["--fg-2","Ink 2"],["--ember","Ember"],["--ember-soft","Ember soft"],["--ok-dot","Healthy"],["--warn-dot","Warning"],["--bad-dot","Failing"],["--info-dot","Info"]];
+  var demo={state:"running",stage:2};
+  var h=header({title:"Forge design language",lede:"The tokens and parts every Forge screen is built from. Switch the theme in the top bar to see both palettes.",cli:"forge version",actions:''});
+  h+='<section class="section"><h2>Principles</h2><ul class="principles">'+
+    [["One command per screen","Each page shows its CLI equivalent. The console and the CLI call the same API."],
+     ["Ember means act or in progress","Use the ember color for the one primary action and for running work. Never for decoration."],
+     ["Status needs two cues","Every status has a word and a color dot. Color alone is never the signal."],
+     ["Summary, then detail","Numbers first, then records, then logs. Nothing important sits below a long table."],
+     ["Names are monospace","Services, envs, refs and op IDs are set in mono, exactly as typed in the terminal."],
+     ["Safe by default","Destructive actions ask you to type the resource name, as the CLI does."]
+    ].map(function(p){return '<li class="panel"><b>'+p[0]+'</b><span>'+p[1]+'</span></li>';}).join("")+'</ul></section>';
+  h+='<section class="section"><h2>Color</h2><div class="swatches">'+sw.map(function(s){return '<div class="sw"><div style="background:var('+s[0]+')"></div><p>'+s[1]+'<code>'+s[0]+'</code></p></div>';}).join("")+'</div></section>';
+  h+='<section class="section"><h2>Type</h2><div class="panel" style="padding:4px var(--s5)">'+
+    '<div class="type-row"><code>Archivo 720 · 30</code><span style="font-family:var(--font-display);font-stretch:112%;font-weight:720;font-size:30px;line-height:1.1">Ship payments today</span></div>'+
+    '<div class="type-row"><code>Archivo 700 · 28</code><span class="stat-v num">48 deploys</span></div>'+
+    '<div class="type-row"><code>Archivo 680 · 17</code><h2>Section heading</h2></div>'+
+    '<div class="type-row"><code>Plex Sans 400 · 14</code><span>Interface text for labels, descriptions and table cells.</span></div>'+
+    '<div class="type-row"><code>Plex Mono 500 · 13</code><span class="mono">payments 9c1e2fa → staging · op_9f2c</span></div></div></section>';
+  h+='<section class="section"><h2>Components</h2><div class="panel" style="padding:var(--s5);display:flex;flex-direction:column;gap:var(--s5)">'+
+    '<div class="demo-row"><button class="btn btn-primary">'+I.ship+'Deploy</button><button class="btn">Secondary</button><button class="btn btn-ghost">Ghost</button><button class="btn btn-danger">Destroy</button><button class="btn" disabled>Disabled</button></div>'+
+    '<div class="demo-row"><span class="pill ok">Healthy</span><span class="pill warn">Degraded</span><span class="pill bad">Failing</span><span class="pill run">In progress</span><span class="pill info">Plan ready</span><span class="pill neutral">Queued</span><span class="tag">go-grpc</span></div>'+
+    '<div class="demo-row"><button class="chip" aria-pressed="true">All<span class="n">9</span></button><button class="chip" aria-pressed="false">billing<span class="n">3</span></button>'+cli("forge env create pr-142 --service payments --ttl 48h")+'</div>'+
+    '<div><div class="faint" style="font-size:12.5px;margin-bottom:8px">The forge line: Build, Test, Plan, Sync, Verify</div>'+line(demo)+'</div>'+
+    '<div class="demo-row">'+mini({state:"succeeded",stage:4})+mini({state:"running",stage:2})+mini({state:"failed",stage:4})+mini({state:"queued",stage:0})+'</div>'+
+    '</div></section>';
+  h+='<section class="section"><h2>Spacing and shape</h2><div class="panel" style="padding:var(--s5)"><dl class="kv"><dt>Space</dt><dd class="mono">4 · 8 · 12 · 16 · 24 · 32 · 48</dd><dt>Radius</dt><dd class="mono">4 tags · 6 controls · 10 panels · full pills</dd><dt>Elevation</dt><dd>Panels sit on a 1px line with a faint shadow. Only drawers, dialogs and the command bar float.</dd><dt>Motion</dt><dd>Only running work moves: the heat on the active pipeline step and the dot on In progress. Off when reduced motion is set.</dd></dl></div></section>';
+  return h;
+};
+
+/* ---------------- Router ---------------- */
+var view=document.getElementById("view");
+var app=document.getElementById("app");
+function route(){
+  var h=(location.hash||"#overview").slice(1);
+  var key=h.indexOf("service-")===0?"catalog":h.indexOf("docs-")===0?"docs":h;
+  if(!V[h]&&h.indexOf("service-")!==0&&h.indexOf("docs-")!==0){h="overview";key="overview";}
+  document.querySelectorAll("#nav a").forEach(function(a){if(a.dataset.r===key)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
+  return h;
+}
+var lastRoute=null;var pendingDocPage=false;
+function render(){
+  var h=route();
+  if(h!==lastRoute&&h.indexOf("service-")===0&&lastRoute!==null)ui.svcTab="overview";
+  if(h!==lastRoute&&h.indexOf("docs-")===0&&!pendingDocPage)ui.docPage=0;
+  pendingDocPage=false;
+  var html=h.indexOf("service-")===0?V.service(h.slice(8)):h.indexOf("docs-")===0?V.docreader(h.slice(5)):V[h]();
+  view.innerHTML=html;
+  if(h!==lastRoute){window.scrollTo(0,0);app.classList.remove("nav-open");}
+  lastRoute=h;
+}
+document.getElementById("nav-svc").textContent=D.services.length;
+function navCounts(){document.getElementById("nav-apr").textContent=D.approvals.length||"";}
+navCounts();
+document.getElementById("nav-run").textContent=D.deploys.filter(function(d){return d.state==="running";}).length;
+window.addEventListener("hashchange",render);
+
+/* ---------------- Toast ---------------- */
+var toastT;
+function toast(msg,code){
+  var slot=document.getElementById("toast-slot");
+  slot.innerHTML='<div class="toast"><span>'+esc(msg)+'</span>'+(code?'<code>'+esc(code)+'</code>':'')+'</div>';
+  clearTimeout(toastT);toastT=setTimeout(function(){slot.innerHTML="";},3600);
+}
+
+/* ---------------- Layers: drawer, dialog, palette ---------------- */
+var layer=document.getElementById("layer");
+var lastFocus=null;
+function openLayer(html,focusSel){lastFocus=document.activeElement;layer.innerHTML='<div class="scrim" data-action="scrim">'+html+'</div>';var f=layer.querySelector(focusSel||"input,button");if(f)f.focus();}
+function closeLayer(){layer.innerHTML="";if(lastFocus&&lastFocus.focus)lastFocus.focus();}
+
+function createDrawer(tpl){
+  var opts=D.templates.map(function(t){return '<option value="'+t.name+'"'+(t.name===tpl?" selected":"")+'>'+t.name+'</option>';}).join("");
+  var teams=["billing","commerce","platform","risk","growth","discovery"].map(function(t){return '<option>'+t+'</option>';}).join("");
+  openLayer('<div class="drawer" role="dialog" aria-modal="true" aria-labelledby="cr-h"><div class="drawer-h"><h2 id="cr-h">Create service</h2><button class="icon-btn" data-action="close" aria-label="Close">'+I.x+'</button></div>'+
+    '<form class="drawer-b" id="cr-form"><div class="field"><label for="cr-name">Service name</label><input class="input mono" id="cr-name" value="payouts" autocomplete="off" spellcheck="false"><span class="hint">Lowercase letters, numbers and dashes. Becomes the repo and the catalog name.</span></div>'+
+    '<div class="field"><label for="cr-tpl">Template</label><select class="select" id="cr-tpl">'+opts+'</select></div>'+
+    '<div class="field"><label for="cr-team">Owning team</label><select class="select" id="cr-team">'+teams+'</select></div>'+
+    '<label class="check"><input type="checkbox" id="cr-prev" checked><span>Start a preview environment when the first build passes<br><span class="faint" style="font-size:12.5px">Expires after 48 hours unless extended.</span></span></label>'+
+    '<div class="field"><span style="font-size:13px;font-weight:500">Same thing from the terminal</span><div class="preview-cli" id="cr-cli"></div></div></form>'+
+    '<div class="drawer-f"><button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="do-create">Create service</button></div></div>',"#cr-name");
+  updateCreate();
+}
+function updateCreate(){
+  var n=document.getElementById("cr-name");if(!n)return;
+  var name=n.value.trim()||"<name>";var t=document.getElementById("cr-tpl").value;var team=document.getElementById("cr-team").value;var p=document.getElementById("cr-prev").checked;
+  document.getElementById("cr-cli").innerHTML='<span class="p">$</span> forge create '+esc(name)+' <span class="f">--template</span> '+t+' <span class="f">--team</span> '+team+(p?' <span class="f">--preview</span>':'');
+}
+function destroyDialog(env){
+  openLayer('<div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="ds-h"><h2 id="ds-h">Destroy '+esc(env)+'?</h2><p>This deletes the namespace and every resource in it. Type the environment name to confirm.</p><div class="field"><label for="ds-in">Environment name</label><input class="input mono" id="ds-in" autocomplete="off" spellcheck="false" placeholder="'+esc(env)+'"></div><div class="dialog-f"><button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-danger" id="ds-go" data-action="do-destroy" data-env="'+esc(env)+'" disabled>Destroy environment</button></div></div>',"#ds-in");
+}
+function deleteSvcDialog(name){
+  openLayer('<div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dsv-h"><h2 id="dsv-h">Delete '+esc(name)+'?</h2><p>This destroys staging, production and any previews, and removes the service from the catalog. The repository is kept. Type the service name to confirm.</p><div class="field"><label for="dsv-in">Service name</label><input class="input mono" id="dsv-in" autocomplete="off" spellcheck="false" placeholder="'+esc(name)+'"></div><div class="dialog-f"><button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-danger" id="dsv-go" data-action="do-delete-svc" data-svc="'+esc(name)+'" disabled>Delete service</button></div></div>',"#dsv-in");
+}
+function newEnvDialog(){
+  var opts=D.services.map(function(s){return '<option>'+s.name+'</option>';}).join("");
+  openLayer('<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="ne-h"><h2 id="ne-h">New preview environment</h2><div class="field"><label for="ne-svc">Service</label><select class="select" id="ne-svc">'+opts+'</select></div><div class="field"><label for="ne-name">Name</label><input class="input mono" id="ne-name" value="pr-402" spellcheck="false"></div><div class="field"><label for="ne-ttl">Time to live</label><select class="select" id="ne-ttl"><option>24h</option><option selected>48h</option><option>7d</option></select></div><div class="dialog-f"><button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="do-newenv">Create environment</button></div></div>',"#ne-svc");
+}
+
+/* Command palette */
+var palItems=[];var palSel=0;
+function palData(){
+  var items=[];
+  [["overview","Overview"],["catalog","Services"],["templates","Templates"],["environments","Environments"],["deployments","Deployments"],["resources","Resources"],["docs","TechDocs"],["rules","Rules"],["ownership","Ownership"],["audit","Audit log"],["design","Design language"]].forEach(function(p){items.push({label:p[1],href:"#"+p[0],k:"Page"});});
+  D.services.forEach(function(s){items.push({label:s.name,href:"#service-"+s.name,k:"Service · "+s.team,mono:true});});
+  D.envs.forEach(function(e){items.push({label:e.name,href:"#environments",k:"Environment",mono:true});});
+  D.services.forEach(function(s){items.push({label:s.name+" docs",href:"#docs-"+s.name,k:"TechDocs",mono:true});});
+  return items;
+}
+function openPalette(){
+  openLayer('<div class="palette" role="dialog" aria-modal="true" aria-label="Jump to"><label class="sr" for="pal-in">Jump to</label><input id="pal-in" placeholder="Jump to a service, environment or page" autocomplete="off" role="combobox" aria-expanded="true" aria-controls="pal-list"><ul id="pal-list" role="listbox"></ul></div>',"#pal-in");
+  palFilter("");
+}
+function palFilter(q){
+  q=q.toLowerCase();palItems=palData().filter(function(i){return !q||i.label.toLowerCase().indexOf(q)>=0||i.k.toLowerCase().indexOf(q)>=0;}).slice(0,9);palSel=0;drawPal();
+}
+function drawPal(){
+  var ul=document.getElementById("pal-list");if(!ul)return;
+  ul.innerHTML=palItems.length?palItems.map(function(i,n){return '<li role="option" data-action="pal-go" data-href="'+i.href+'" aria-selected="'+(n===palSel)+'"><span class="'+(i.mono?"mono":"")+'">'+esc(i.label)+'</span><span class="k">'+esc(i.k)+'</span></li>';}).join(""):'<li class="empty">Nothing matches. Try a service name.</li>';
+}
+
+/* ---------------- Events ---------------- */
+document.addEventListener("click",function(e){
+  var row=e.target.closest("tr.link");
+  if(row&&!e.target.closest("a,button")){location.hash=row.dataset.href;return;}
+  var el=e.target.closest("[data-action]");if(!el)return;
+  var a=el.dataset.action;
+  if(a==="scrim"){if(e.target===el)closeLayer();return;}
+  switch(a){
+    case "open-nav":app.classList.add("nav-open");break;
+    case "close-nav":app.classList.remove("nav-open");break;
+    case "theme":
+      var cur=document.documentElement.getAttribute("data-theme");
+      var dark=cur?cur==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.setAttribute("data-theme",dark?"light":"dark");break;
+    case "palette":openPalette();break;
+    case "pal-go":closeLayer();location.hash=el.dataset.href;break;
+    case "copy":
+      var txt=el.dataset.copy;
+      try{navigator.clipboard.writeText(txt).then(function(){toast("Copied to clipboard",txt);},function(){toast("Select the command to copy it",txt);});}catch(err){toast("Select the command to copy it",txt);}
+      break;
+    case "toast":toast(el.dataset.msg,el.dataset.code);break;
+    case "team":ui.catTeam=el.dataset.team;render();break;
+    case "depf":ui.depFilter=el.dataset.f;render();break;
+    case "svctab":ui.svcTab=el.dataset.tab;render();var t=view.querySelector('[data-tab="'+ui.svcTab+'"]');if(t)t.focus();break;
+    case "create":createDrawer(el.dataset.tpl);break;
+    case "docpage":ui.docPage=+el.dataset.i;render();window.scrollTo(0,0);break;
+    case "docpage-link":ui.docPage=+el.dataset.i;pendingDocPage=true;if(location.hash===el.getAttribute("href")){e.preventDefault();render();window.scrollTo(0,0);}break;
+    case "toc":var hs=document.querySelectorAll("#doc-article h2");if(hs[+el.dataset.i])hs[+el.dataset.i].scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});break;
+    case "close":closeLayer();break;
+    case "do-create":
+      var nm=document.getElementById("cr-name").value.trim();
+      if(!/^[a-z][a-z0-9-]{1,40}$/.test(nm)){var n=document.getElementById("cr-name");n.focus();n.setAttribute("aria-invalid","true");toast("Use lowercase letters, numbers and dashes, starting with a letter");break;}
+      closeLayer();toast("Scaffolding "+nm,"forge op watch op_a01c");break;
+    case "extend":
+      var env=D.envs.filter(function(x){return x.name===el.dataset.env;})[0];env.left+=24;env.ttl=Math.max(env.ttl,env.left);render();toast(env.name+" extended by 24 hours","forge env extend "+env.name+" --by 24h");break;
+    case "destroy":destroyDialog(el.dataset.env);break;
+    case "do-destroy":
+      var nmE=el.dataset.env;D.envs=D.envs.filter(function(x){return x.name!==nmE;});closeLayer();render();toast(nmE+" destroyed","forge env destroy "+nmE+" --yes");break;
+    case "newenv":newEnvDialog();break;
+    case "mode":var rl=D.rules.filter(function(x){return x.id===el.dataset.id;})[0];rl.mode=el.dataset.mode;render();toast(rl.name+": "+el.dataset.mode,"forge policy set "+rl.id+" --mode "+el.dataset.mode);break;
+    case "approval":var ap=D.approvals.filter(function(x){return x.id===el.dataset.id;})[0];D.approvals=D.approvals.filter(function(x){return x!==ap;});var pr=D.rules.filter(function(x){return x.id==="prod-approval";})[0];pr.hits=D.approvals.length;navCounts();render();
+      toast(el.dataset.ok==="1"?ap.svc+" "+ap.ref+" approved for production":ap.svc+" "+ap.ref+" rejected","forge deploy "+(el.dataset.ok==="1"?"approve":"reject")+" "+ap.id);break;
+    case "assign":assignDialog(el.dataset.res);break;
+    case "save-settings":e.preventDefault();var fs=svc(document.getElementById("svc-settings").dataset.svc);fs.team=document.getElementById("set-team").value;fs.owner=document.getElementById("set-contacts").value.trim()||fs.owner;fs.life=document.getElementById("set-life").value;render();toast("Settings saved for "+fs.name,"forge service update "+fs.name+" --team "+fs.team+" --lifecycle "+fs.life.toLowerCase());break;
+    case "delete-svc":deleteSvcDialog(el.dataset.svc);break;
+    case "do-delete-svc":var dn=el.dataset.svc;D.services=D.services.filter(function(x){return x.name!==dn;});closeLayer();document.getElementById("nav-svc").textContent=D.services.length;ui.svcTab="overview";location.hash="#catalog";render();toast(dn+" deleted. Its environments are being destroyed.","forge service delete "+dn+" --yes");break;
+    case "do-assign":var rs=D.resources.filter(function(x){return x.name===el.dataset.res;})[0];rs.svc=document.getElementById("as-svc").value;closeLayer();render();toast(rs.name+" now belongs to "+rs.svc,"forge resource update "+rs.name+" --service "+rs.svc);break;
+    case "goteam":ui.catTeam=el.dataset.team;location.hash="#catalog";render();break;
+    case "do-newenv":
+      var sv=document.getElementById("ne-svc").value,ne=document.getElementById("ne-name").value.trim()||"pr-402",ttl=document.getElementById("ne-ttl").value;
+      var hrs=ttl==="7d"?168:parseInt(ttl,10);
+      D.envs.push({name:ne,kind:"preview",svc:sv,by:"deogratias-saidi",ttl:hrs,left:hrs,status:"creating"});
+      closeLayer();location.hash="#environments";render();toast("Creating "+ne,"forge env create "+ne+" --service "+sv+" --ttl "+ttl);break;
+  }
+});
+document.addEventListener("input",function(e){
+  var id=e.target.id;
+  if(id==="cat-q"){ui.catQuery=e.target.value;render();var c=document.getElementById("cat-q");c.focus();c.setSelectionRange(c.value.length,c.value.length);}
+  else if(id==="doc-q"){ui.docQuery=e.target.value;render();var dq=document.getElementById("doc-q");dq.focus();dq.setSelectionRange(dq.value.length,dq.value.length);}
+  else if(id==="audit-q"){ui.auditQuery=e.target.value;render();var q=document.getElementById("audit-q");q.focus();q.setSelectionRange(q.value.length,q.value.length);}
+  else if(id==="pal-in")palFilter(e.target.value);
+  else if(id==="dsv-in"){document.getElementById("dsv-go").disabled=e.target.value!==document.getElementById("dsv-go").dataset.svc;}
+  else if(id==="ds-in"){document.getElementById("ds-go").disabled=e.target.value!==document.getElementById("ds-go").dataset.env;}
+  else if(id&&id.indexOf("cr-")===0){e.target.removeAttribute("aria-invalid");updateCreate();}
+});
+document.addEventListener("change",function(e){if(e.target.id==="doc-sel"){ui.docPage=+e.target.value;render();window.scrollTo(0,0);return;}if(e.target.id&&e.target.id.indexOf("cr-")===0)updateCreate();});
+document.addEventListener("submit",function(e){e.preventDefault();});
+document.addEventListener("keydown",function(e){
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();if(document.getElementById("pal-in"))closeLayer();else openPalette();return;}
+  if(e.key==="Escape"&&layer.innerHTML){closeLayer();return;}
+  if(e.key==="Escape"&&app.classList.contains("nav-open")){app.classList.remove("nav-open");return;}
+  if(document.getElementById("pal-in")&&palItems.length){
+    if(e.key==="ArrowDown"){e.preventDefault();palSel=(palSel+1)%palItems.length;drawPal();}
+    else if(e.key==="ArrowUp"){e.preventDefault();palSel=(palSel-1+palItems.length)%palItems.length;drawPal();}
+    else if(e.key==="Enter"){e.preventDefault();var it=palItems[palSel];closeLayer();location.hash=it.href;}
+  }
+});
+render();
+})();
+</script>

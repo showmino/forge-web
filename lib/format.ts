@@ -1,5 +1,13 @@
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
 import { timestampDate } from "@bufbuild/protobuf/wkt";
+import type { AuditEvent } from "@/gen/forge/v1/audit_pb";
+
+// actorText names who did it: a person by email, a CI run by its repository.
+export function actorText(e: Pick<AuditEvent, "actor">): string {
+  const a = e.actor;
+  if (!a) return "–";
+  return a.email || a.repository || a.subject || a.kind || "–";
+}
 
 // timeAgo says how long ago a moment was, in the words of the design system: "12 min ago", "2 h ago".
 export function timeAgo(then: Date, now = new Date()): string {

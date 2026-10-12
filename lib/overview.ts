@@ -4,7 +4,7 @@ import { type Deployment, Deployment_Health, Deployment_SyncStatus } from "@/gen
 import { type Environment, Environment_State } from "@/gen/forge/v1/environment_pb";
 import type { Operation, OperationEvent } from "@/gen/forge/v1/operation_pb";
 import { environmentId, serviceId } from "@/lib/api";
-import { timeUntil } from "@/lib/format";
+import { actorText, shortCommit, timeUntil } from "@/lib/format";
 
 // The overview answers three questions from what the API already knows: what
 // is shipping (running operations), what is broken or about to be (the state
@@ -80,6 +80,11 @@ export type RecentDeploy = {
   // Why it failed, without the code.
   note: string;
   operation: string;
+  // Who asked for it: a person's email, or the repository of a CI run.
+  by: string;
+  // The branch, tag or commit a deploy was asked for, or the deploy commit a
+  // rollback went back to. A promotion names none: it takes what staging runs.
+  ref: string;
 };
 
 function target(e: AuditEvent): { service: string; env: string } | null {
@@ -106,6 +111,8 @@ export function recentDeploys(events: AuditEvent[]): RecentDeploy[] {
       time: e.time ? timestampDate(e.time) : undefined,
       note: state === "failed" ? message.replace(/^[a-z_]+: /, "") : "",
       operation: e.operation,
+      by: actorText(e),
+      ref: e.details["ref"] || shortCommit(e.details["to"] ?? ""),
     });
   }
   return out;

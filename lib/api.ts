@@ -1,6 +1,7 @@
+import { timestampNow } from "@bufbuild/protobuf/wkt";
 import { Code, ConnectError, createClient, type Client, type Interceptor, type Transport } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
-import { AuditService } from "@/gen/forge/v1/audit_pb";
+import { type AuditEvent, AuditService } from "@/gen/forge/v1/audit_pb";
 import { AuthService } from "@/gen/forge/v1/auth_pb";
 import { ServiceCatalogService } from "@/gen/forge/v1/catalog_pb";
 import { DeployService } from "@/gen/forge/v1/deploy_pb";
@@ -84,6 +85,8 @@ export function errorText(err: unknown): string {
     case Code.Unavailable:
     case Code.DeadlineExceeded:
       return "The Forge API cannot be reached. Try again in a moment.";
+    case Code.Aborted:
+      return "Someone changed this since the page loaded. Reload the page and try again.";
     default:
       return e.rawMessage || "Something went wrong. Try again.";
   }
@@ -106,6 +109,29 @@ export function environmentId(name: string): string {
 }
 export function operationId(name: string): string {
   return name.replace(/^operations\//, "");
+}
+
+// listAuditSince reads the audit log back to `ms` milliseconds ago, newest
+// first, at most `pages` pages of 200. The log outlives a restart of the API,
+// which a list of operations does not.
+export async function listAuditSince(api: Api, ms: number, pages: number): Promise<AuditEvent[]> {
+  const since = timestampNow();
+  since.seconds -= BigInt(Math.floor(ms / 1000));
+  const events: AuditEvent[] = [];
+  let pageToken = "";
+  for (let page = 0; page < pages; page++) {
+    const res = await api.audit.listAuditEvents({ since, pageSize: 200, pageToken });
+    events.push(...res.events);
+    pageToken = res.nextPageToken;
+    if (!pageToken) break;
+  }
+  return events;
+}
+
+// lastDay reads the audit log of the last 24 hours, which always covers today.
+// A day of deploys fits in a few pages.
+export function lastDay(api: Api): Promise<AuditEvent[]> {
+  return listAuditSince(api, 24 * 3600_000, 5);
 }
 
 // listAllServices follows the pages of the catalog to its end.
