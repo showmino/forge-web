@@ -44,7 +44,9 @@ decides what they may see and do. The server only serves the pages and
   other way does not run, which is what protects the session kept in the
   browser. A nonce is per request, so every page is rendered on request
   (the layout reads `x-nonce`); nothing is prerendered. `connect-src` names
-  forge-api and the login service only; styles may be inline. Also sent:
+  forge-api and the login service only: the proxy asks forge-api which login
+  service it uses, and until the API has answered it allows any web address,
+  so a failed lookup never locks a reader out. Styles may be inline. Also sent:
   `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`.
 - **Fonts:** Archivo, IBM Plex Sans and IBM Plex Mono are files in the repo
   (`app/fonts`, Latin subsets from the Fontsource packages, SIL Open Font
