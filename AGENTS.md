@@ -22,8 +22,13 @@ says how this app is built, page by page.
 
 ## Rules
 
-- **Merging to `main` deploys.** CI tests, builds the image and deploys it to
-  staging through Forge, as a release candidate. That is the normal path and
+- **Merging to `main` deploys.** CI builds the image and deploys it to
+  staging through Forge, as a release candidate. The tests run once, on the
+  pull request, and not again after the merge (the owner's rule), so never
+  push to `main` directly, and before merging make sure the branch contains
+  the current `main` (`gh api repos/showmino/forge-web/compare/main...<branch>
+  --jq .behind_by` must be 0; if not, merge `main` into the branch and wait
+  for `test` again). That is the normal path and
   needs no extra OK. Merge only when every check of the commit has passed (a
   job skipped by design on a pull request does not count against it); read
   the result, do not assume it.
