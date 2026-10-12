@@ -3,15 +3,8 @@ import { TableFrame, td, th, tr } from "@/components/ui/layout";
 import { StatusBadge } from "@/components/ui/status";
 import type { AuditEvent } from "@/gen/forge/v1/audit_pb";
 import { serviceId } from "@/lib/api";
-import { exact, when } from "@/lib/format";
+import { actorText, exact, when } from "@/lib/format";
 import { auditStatus } from "@/lib/status";
-
-// actorText names who did it: a person by email, a CI run by its repository.
-export function actorText(e: AuditEvent): string {
-  const a = e.actor;
-  if (!a) return "–";
-  return a.email || a.repository || a.subject || a.kind || "–";
-}
 
 const mono = "font-mono text-[12.5px]";
 

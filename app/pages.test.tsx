@@ -7,11 +7,16 @@ import { AuthService } from "@/gen/forge/v1/auth_pb";
 import { Lifecycle, ServiceCatalogService } from "@/gen/forge/v1/catalog_pb";
 import { Deployment_Health, Deployment_SyncStatus, DeployService } from "@/gen/forge/v1/deploy_pb";
 import { Environment_State, EnvironmentService } from "@/gen/forge/v1/environment_pb";
+import { OperationService } from "@/gen/forge/v1/operation_pb";
+import { TeamService } from "@/gen/forge/v1/team_pb";
 import { TemplateParameter_Type, TemplateService } from "@/gen/forge/v1/template_pb";
 import { idToken, renderWithApi, signIn } from "@/test/helpers";
 import { saveForgeSession } from "@/lib/auth/session";
 import { AppShell } from "@/components/app-shell";
 import AuditLog from "./(app)/audit/page";
+import Deployments from "./(app)/deployments/page";
+import Environments from "./(app)/environments/page";
+import Ownership from "./(app)/ownership/page";
 import Catalog from "./(app)/services/page";
 import ServicePage from "./(app)/services/[name]/page";
 import TemplatePage from "./(app)/templates/[name]/page";
@@ -43,7 +48,7 @@ const payments = {
   updateTime: ago(12),
   createTime: ago(60 * 24 * 3),
 };
-const ledger = { name: "services/ledger", ownerTeam: "finance", lifecycle: Lifecycle.EXPERIMENTAL, updateTime: ago(120) };
+const ledger = { name: "services/ledger", ownerTeam: "finance", lifecycle: Lifecycle.EXPERIMENTAL, updateTime: ago(120), dependencies: ["services/payments"] };
 
 const deployments = [
   {
@@ -72,6 +77,8 @@ const events = [
     name: "auditEvents/1",
     time: ago(5),
     action: "deploy.promote",
+    kind: "outcome",
+    operation: "operations/op_aaaaaaaaaaaa",
     actor: { kind: "user", email: "ana@example.com" },
     service: "services/payments",
     target: "deployments/payments/production",
@@ -108,6 +115,25 @@ function forge(router: ConnectRouter) {
   });
   router.service(DeployService, {
     listDeployments: (req) => ({ deployments: deployments.filter((d) => !req.service || d.service === req.service) }),
+    listDeployHistory: (req) => {
+      if (req.name.endsWith("/production")) throw new ConnectError("no deploy yet", Code.NotFound);
+      return {
+        records: [
+          { deployCommit: "c2", kind: "deploy", version: "v0.2.0-rc.1", commit: deployments[0].commit, actor: "github:showmino/payments", time: ago(12) },
+          { deployCommit: "c1", kind: "deploy", commit: "57e0013aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", actor: "ana@example.com", time: ago(600) },
+        ],
+      };
+    },
+  });
+  router.service(OperationService, {
+    listOperations: () => ({
+      operations: [
+        { name: "operations/op_bbbbbbbbbbbb", kind: "deploy", target: "deployments/ledger/staging", creator: "bo@example.com", createTime: ago(1), events: [{ step: "resolve", message: "main is 5235eea" }] },
+      ],
+    }),
+  });
+  router.service(TeamService, {
+    listTeams: () => ({ teams: [{ name: "teams/platform-engineering", displayName: "Platform Engineering" }, { name: "teams/design" }] }),
   });
   router.service(EnvironmentService, {
     listEnvironments: () => ({
@@ -257,6 +283,74 @@ describe("a service", () => {
     renderWithApi(<ServicePage />, forge);
     expect((await screen.findByRole("alert")).textContent).toContain("does not exist");
   });
+
+  it("shows its deploy history and its dependencies in tabs", async () => {
+    nav.params = { name: "payments" };
+    renderWithApi(<ServicePage />, forge);
+    fireEvent.click(await screen.findByRole("tab", { name: "Deployments" }));
+    const staging = within(await screen.findByRole("table", { name: "History of staging" }));
+    expect(within(staging.getByText("v0.2.0-rc.1").closest("tr")!).getByText("runs now")).toBeTruthy();
+    expect(staging.getByText("57e0013")).toBeTruthy();
+    // Never deployed to production: no error, just nothing.
+    expect(await screen.findByText("Nothing was deployed to production yet.")).toBeTruthy();
+
+    // The arrow keys move between tabs.
+    fireEvent.keyDown(screen.getByRole("tab", { name: "Deployments" }), { key: "ArrowRight" });
+    expect(screen.getByRole("tab", { name: /^Dependencies/ }).getAttribute("aria-selected")).toBe("true");
+    expect(await screen.findByText("payments depends on no other service in the catalog.")).toBeTruthy();
+    expect((await screen.findByRole("link", { name: /ledger/ })).getAttribute("href")).toBe("/services/ledger");
+  });
+});
+
+describe("deployments", () => {
+  it("lists the running ones and the ones that ended, and filters them", async () => {
+    renderWithApi(<Deployments />, forge);
+    const table = within(await screen.findByRole("table", { name: "Deployments" }));
+    const running = (await table.findByRole("link", { name: "ledger" })).closest("tr")!;
+    expect(within(running).getByText("5235eea")).toBeTruthy();
+    expect(within(running).getByRole("link", { name: "Watch op_bbbbbbbbbbbb" }).getAttribute("href")).toBe("/operations/op_bbbbbbbbbbbb");
+    const promoted = table.getByRole("link", { name: "payments" }).closest("tr")!;
+    expect(within(promoted).getByText("Succeeded")).toBeTruthy();
+    expect(within(promoted).getByText("ana@example.com")).toBeTruthy();
+    // A refused rollback started nothing: it is in the audit log, not here.
+    expect(table.getAllByRole("row")).toHaveLength(3);
+
+    fireEvent.click(screen.getByRole("button", { name: /^Failed/ }));
+    expect(screen.getByText("No deployments match this filter.")).toBeTruthy();
+    expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge audit list --since 7d --failed");
+  });
+});
+
+describe("environments", () => {
+  it("sums up staging and production and lists every preview", async () => {
+    renderWithApi(<Environments />, forge);
+    const staging = within(await screen.findByRole("region", { name: "staging" }));
+    expect(staging.getByText("Healthy")).toBeTruthy();
+    const production = within(screen.getByRole("region", { name: "production" }));
+    expect(production.getByText("Degraded")).toBeTruthy();
+    expect(production.getByText(/Needs a look/).textContent).toContain("payments");
+
+    const previews = within(await screen.findByRole("table", { name: "Previews" }));
+    const pr42 = previews.getByText("pr-42").closest("tr")!;
+    expect(within(pr42).getByText("ends in 2 h")).toBeTruthy();
+    expect(within(pr42).getByText("Ready")).toBeTruthy();
+    expect(previews.getByText("other")).toBeTruthy();
+    // A reader sees no actions.
+    expect(previews.queryByRole("button", { name: "Extend pr-42" })).toBeNull();
+  });
+});
+
+describe("ownership", () => {
+  it("joins the services with the organization's teams and names what has no owner", async () => {
+    renderWithApi(<Ownership />, forge);
+    const needs = within(await screen.findByRole("list", { name: "Needs an owner" }));
+    expect(needs.getByRole("link", { name: "ledger" })).toBeTruthy();
+    expect(needs.getByText(/is not a team of the organization/).textContent).toContain("finance");
+    const teams = within(screen.getByRole("table", { name: "Teams" }));
+    expect(within(teams.getByText("platform-engineering").closest("tr")!).getByRole("link", { name: "payments" })).toBeTruthy();
+    expect(within(teams.getByText("finance").closest("tr")!).getByText("Not on GitHub")).toBeTruthy();
+    expect(within(teams.getByText("design").closest("tr")!).getByText("No services yet")).toBeTruthy();
+  });
 });
 
 describe("templates", () => {
@@ -353,5 +447,24 @@ describe("the frame around every page", () => {
       router.service(AuthService, { getStatus: () => ({ permissions: ["services.read", "services.write"] }) });
     });
     expect(await screen.findByText("Writer")).toBeTruthy();
+  });
+
+  it("jumps to a service from the palette", async () => {
+    renderWithApi(<AppShell>content</AppShell>, forge);
+    await screen.findByText("content");
+    fireEvent.keyDown(document, { key: "k", ctrlKey: true });
+    const input = await screen.findByRole("combobox", { name: "Jump to" });
+    expect(document.activeElement).toBe(input);
+    fireEvent.change(input, { target: { value: "led" } });
+    const option = await screen.findByRole("option", { name: /^ledger/ });
+    expect(option.getAttribute("aria-selected")).toBe("true");
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(nav.router.push).toHaveBeenCalledWith("/services/ledger");
+    expect(screen.queryByRole("combobox")).toBeNull();
+
+    // The button in the top bar opens it too, and Escape closes it.
+    fireEvent.click(screen.getByRole("button", { name: /Jump to/ }));
+    fireEvent.keyDown(await screen.findByRole("combobox"), { key: "Escape" });
+    expect(screen.queryByRole("combobox")).toBeNull();
   });
 });

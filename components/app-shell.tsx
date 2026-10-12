@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { CommandPalette } from "@/components/command-palette";
 import { useApi } from "@/components/providers";
 import { listAllServices } from "@/lib/api";
 import { clearSession, loadSession, SESSION_KEY, type Session } from "@/lib/auth/session";
@@ -27,10 +28,24 @@ const icon = {
       <path d="M3 13l9 5 9-5" />
     </>
   ),
-  operations: (
+  operations: <path d="M3 12h4l3-8 4 16 3-8h4" />,
+  environments: (
+    <>
+      <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z" />
+      <path d="M4 7.5l8 4.5 8-4.5M12 12v9" />
+    </>
+  ),
+  deployments: (
     <>
       <path d="M4 12h11M11 6l6 6-6 6" />
       <path d="M20 4v16" />
+    </>
+  ),
+  ownership: (
+    <>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20c.8-3.6 3.3-5.5 6.5-5.5s5.7 1.9 6.5 5.5" />
+      <path d="M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.8c1.6.8 2.6 2.5 3 5.2" />
     </>
   ),
   audit: (
@@ -56,8 +71,21 @@ const groups: { label: string; items: Item[] }[] = [
       { href: "/templates", label: "Templates", icon: "templates", match: (p) => p.startsWith("/templates") },
     ],
   },
-  { label: "Run", items: [{ href: "/operations", label: "Operations", icon: "operations", match: (p) => p.startsWith("/operations") }] },
-  { label: "Govern", items: [{ href: "/audit", label: "Audit log", icon: "audit", match: (p) => p.startsWith("/audit") }] },
+  {
+    label: "Run",
+    items: [
+      { href: "/environments", label: "Environments", icon: "environments", match: (p) => p.startsWith("/environments") },
+      { href: "/deployments", label: "Deployments", icon: "deployments", match: (p) => p.startsWith("/deployments") },
+      { href: "/operations", label: "Operations", icon: "operations", match: (p) => p.startsWith("/operations") },
+    ],
+  },
+  {
+    label: "Govern",
+    items: [
+      { href: "/ownership", label: "Ownership", icon: "ownership", match: (p) => p.startsWith("/ownership") },
+      { href: "/audit", label: "Audit log", icon: "audit", match: (p) => p.startsWith("/audit") },
+    ],
+  },
 ];
 
 // useCanWrite asks the API what the reader may do. It only hides buttons a
@@ -75,6 +103,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/";
   const [session, setSession] = useState<Session | null>(null);
   const [navOpen, setNavOpen] = useState(false);
+  const [jumping, setJumping] = useState(false);
   // Counts the changes other tabs made to the session, to look at it again.
   const [tabs, setTabs] = useState(0);
   const rail = useRef<HTMLElement>(null);
@@ -106,6 +135,18 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("storage", changed);
   }, []);
 
+  // Ctrl+K or ⌘K opens the palette from anywhere, and closes it again.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setJumping((j) => !j);
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
   // The open rail (narrow screens only) takes the focus, and Escape or the
   // scrim closes it and gives the focus back to the menu button.
   useEffect(() => {
@@ -131,9 +172,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       {navOpen ? <div className="fixed inset-0 z-[35] bg-scrim rail:hidden" onClick={closeNav} /> : null}
       <Rail pathname={pathname} session={session} open={navOpen} railRef={rail} />
       <div className="flex min-w-0 flex-col">
-        <TopBar onMenu={() => setNavOpen(true)} open={navOpen} menuRef={menu} />
+        <TopBar onMenu={() => setNavOpen(true)} onJump={() => setJumping(true)} open={navOpen} menuRef={menu} />
         <main className="flex w-full max-w-[1320px] flex-col gap-8 px-4 pb-12 pt-6 rail:px-8 rail:pt-8">{children}</main>
       </div>
+      {jumping ? <CommandPalette onClose={() => setJumping(false)} /> : null}
     </div>
   );
 }
@@ -264,7 +306,23 @@ function toggleTheme() {
 const iconButton =
   "inline-grid size-8 cursor-pointer place-items-center rounded-md border border-transparent text-fg-2 hover:bg-surface-2 hover:text-fg";
 
-function TopBar({ onMenu, open, menuRef }: { onMenu: () => void; open: boolean; menuRef: RefObject<HTMLButtonElement | null> }) {
+function TopBar({
+  onMenu,
+  onJump,
+  open,
+  menuRef,
+}: {
+  onMenu: () => void;
+  onJump: () => void;
+  open: boolean;
+  menuRef: RefObject<HTMLButtonElement | null>;
+}) {
+  // The server cannot know the reader's keyboard: the page says Ctrl until it can.
+  const [mac, setMac] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMac(/Mac|iPhone|iPad/.test(navigator.userAgent));
+  }, []);
   return (
     <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-line bg-bg/90 px-4 py-2.5 backdrop-blur-md rail:px-8">
       <button
@@ -279,6 +337,19 @@ function TopBar({ onMenu, open, menuRef }: { onMenu: () => void; open: boolean; 
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
           <path d="M4 7h16M4 12h16M4 17h16" />
         </svg>
+      </button>
+      <button
+        type="button"
+        onClick={onJump}
+        aria-keyshortcuts="Control+K Meta+K"
+        className="flex min-w-0 max-w-[420px] flex-1 cursor-text items-center gap-2 rounded-md border border-line bg-surface px-2.5 py-1.5 text-left text-fg-3"
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="6.5" />
+          <path d="M20 20l-4-4" />
+        </svg>
+        <span className="min-w-0 flex-1 truncate">Jump to…</span>
+        <kbd className="hidden rounded-sm border border-b-2 border-line bg-surface-2 px-[5px] font-mono text-[11px] text-fg-2 rail:inline">{mac ? "⌘K" : "Ctrl K"}</kbd>
       </button>
       <div className="ml-auto flex items-center gap-2">
         <button type="button" onClick={toggleTheme} aria-label="Switch color theme" className={iconButton}>

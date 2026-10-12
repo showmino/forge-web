@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogActions } from "@/components/ui/dialog";
 import { Field, inputClass } from "@/components/ui/field";
 import { ErrorNote, Loading } from "@/components/ui/layout";
+import { useToast } from "@/components/ui/toast";
 import { Bump, type Deployment } from "@/gen/forge/v1/deploy_pb";
 import type { Environment } from "@/gen/forge/v1/environment_pb";
 import { environmentId } from "@/lib/api";
@@ -68,11 +69,15 @@ const built = (r: { version: string; commit: string }) =>
 
 export function DeployDialog({ id, onClose, onStarted }: Common) {
   const api = useApi();
+  const toast = useToast();
   const [ref, setRef] = useState("main");
   const [requestId] = useState(randomString);
   const action = useAction(
     () => api.deploys.startDeploy({ service: `services/${id}`, env: "staging", ref: ref.trim(), requestId }),
-    (res) => onStarted(res.operation?.name),
+    (res) => {
+      toast(`Deploying ${id} to staging`, `forge deploy start ${id} --env staging --ref ${ref.trim()}`);
+      onStarted(res.operation?.name);
+    },
   );
   return (
     <Dialog title={`Deploy ${id} to staging?`} onClose={onClose}>
@@ -117,9 +122,14 @@ export function PromoteDialog({ id, staging, onClose, onStarted }: Common & { st
   const moved = !!next?.commit && !!staging?.commit && next.commit !== staging.commit;
   // A commit that was released before keeps its version: nothing to pick.
   const released = !!next?.version && next.version === staging?.version;
+  const toast = useToast();
   const action = useAction(
     () => api.deploys.promoteDeploy({ service: `services/${id}`, bump }),
-    (res) => onStarted(res.operation?.name),
+    (res) => {
+      const flag = bump === Bump.MINOR ? " --bump minor" : bump === Bump.MAJOR ? " --bump major" : "";
+      toast(`Promoting ${id} to production`, `forge deploy promote ${id}${flag}`);
+      onStarted(res.operation?.name);
+    },
   );
   return (
     <Dialog title={`Promote ${id} to production?`} onClose={onClose}>
@@ -213,10 +223,14 @@ export function RollbackDialog({ id, env, onClose, onStarted }: Common & { env: 
   const [to, setTo] = useState("");
   // The newest record is what runs now; anything older can be restored.
   const earlier = (history.data ?? []).slice(1);
+  const toast = useToast();
   const action = useAction(
     // "The one before the current" is named here, so what was shown is what is restored.
     () => api.deploys.rollbackDeploy({ name, to: to || earlier[0]?.deployCommit || "" }),
-    (res) => onStarted(res.operation?.name),
+    (res) => {
+      toast(`Rolling back ${id} in ${env}`, `forge deploy rollback ${id} --env ${env}${to ? ` --to ${to}` : ""}`);
+      onStarted(res.operation?.name);
+    },
   );
   return (
     <Dialog title={`Roll back ${id} in ${env}?`} onClose={onClose}>
@@ -257,34 +271,63 @@ export function RollbackDialog({ id, env, onClose, onStarted }: Common & { env: 
 
 const PREVIEW_NAME = /^[a-z]([a-z0-9-]{0,38}[a-z0-9])?$/;
 
-export function PreviewDialog({ id, onClose, onStarted }: Common) {
+// PreviewDialog creates a preview of the service `id`, or of one picked from
+// `services` when it is opened outside a service's page.
+export function PreviewDialog({ id, services = [], onClose, onStarted }: Omit<Common, "id"> & { id?: string; services?: string[] }) {
   const api = useApi();
+  const [service, setService] = useState(id ?? "");
   const [name, setName] = useState("");
   const [ref, setRef] = useState("main");
   const [life, setLife] = useState(24);
   const [checked, setChecked] = useState(false);
   const [requestId] = useState(randomString);
+  const toast = useToast();
   const bad = checked && !PREVIEW_NAME.test(name);
+  const noService = checked && !service;
   const action = useAction(
     () =>
       api.environments.createEnvironment({
         environmentId: name,
-        service: `services/${id}`,
+        service: `services/${service}`,
         ref: ref.trim(),
         ttl: hours(life),
         requestId,
       }),
-    (res) => onStarted(res.operation?.name),
+    (res) => {
+      toast(`Creating the preview ${name}`, `forge env create ${name} --service ${service} --ref ${ref.trim()} --ttl ${life}h`);
+      onStarted(res.operation?.name);
+    },
   );
   function submit(e: FormEvent) {
     e.preventDefault();
     setChecked(true);
-    if (PREVIEW_NAME.test(name)) action.run();
+    if (PREVIEW_NAME.test(name) && service) action.run();
   }
   return (
-    <Dialog title={`Create a preview of ${id}?`} onClose={onClose}>
+    <Dialog title={id ? `Create a preview of ${id}?` : "Create a preview?"} onClose={onClose}>
       <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
         <p>A preview runs one branch at its own address and is removed when its time is up.</p>
+        {id ? null : (
+          <Field id="preview-service" label="Service" error={noService ? "Choose the service to preview." : undefined}>
+            <select
+              id="preview-service"
+              className={inputClass}
+              value={service}
+              onChange={(e) => setService(e.target.value)}
+              aria-invalid={noService}
+              aria-describedby="preview-service-note"
+            >
+              <option value="" disabled>
+                Choose a service
+              </option>
+              {services.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </Field>
+        )}
         <Field
           id="preview-name"
           label="Preview name"
@@ -331,11 +374,15 @@ type OnPreview = Omit<Common, "id"> & { environment: Environment };
 export function ExtendDialog({ environment, onClose, onStarted }: OnPreview) {
   const api = useApi();
   const [life, setLife] = useState(24);
+  const toast = useToast();
+  const id = environmentId(environment.name);
   const action = useAction(
     () => api.environments.extendEnvironment({ name: environment.name, ttl: hours(life) }),
-    () => onStarted(undefined),
+    () => {
+      toast(`${id} is kept for ${LIFETIMES.find(([h]) => h === life)?.[1] ?? `${life} hours`} from now`, `forge env extend ${id} --ttl ${life}h`);
+      onStarted(undefined);
+    },
   );
-  const id = environmentId(environment.name);
   return (
     <Dialog title={`Extend ${id}?`} onClose={onClose}>
       <form onSubmit={action.run} className="flex flex-col gap-4">
@@ -363,11 +410,15 @@ export function ExtendDialog({ environment, onClose, onStarted }: OnPreview) {
 
 export function DestroyDialog({ environment, onClose, onStarted }: OnPreview) {
   const api = useApi();
+  const toast = useToast();
+  const id = environmentId(environment.name);
   const action = useAction(
     () => api.environments.destroyEnvironment({ name: environment.name }),
-    (res) => onStarted(res.operation?.name),
+    (res) => {
+      toast(`Destroying the preview ${id}`, `forge env destroy ${id} --yes`);
+      onStarted(res.operation?.name);
+    },
   );
-  const id = environmentId(environment.name);
   return (
     <Dialog title={`Destroy the preview ${id}?`} onClose={onClose}>
       <form onSubmit={action.run} className="flex flex-col gap-4">
@@ -402,9 +453,13 @@ export function DeleteServiceDialog({
 }: Common & { previews: string[]; deployed: string[] }) {
   const api = useApi();
   const [typed, setTyped] = useState("");
+  const toast = useToast();
   const action = useAction(
     () => api.catalog.deleteService({ name: `services/${id}` }),
-    (res) => onStarted(res.operation?.name),
+    (res) => {
+      toast(res.operation ? `Deleting ${id}` : `${id} was removed from the catalog`, `forge service delete ${id} --yes`);
+      onStarted(res.operation?.name);
+    },
   );
   const matches = typed.trim() === id;
   const runs = [

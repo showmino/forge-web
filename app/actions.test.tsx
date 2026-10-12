@@ -4,7 +4,7 @@ import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuditService } from "@/gen/forge/v1/audit_pb";
 import { AuthService } from "@/gen/forge/v1/auth_pb";
-import { CreateStep_State, ServiceCatalogService } from "@/gen/forge/v1/catalog_pb";
+import { CreateStep_State, Lifecycle, ServiceCatalogService } from "@/gen/forge/v1/catalog_pb";
 import { Bump, Deployment_Health, Deployment_SyncStatus, DeployService } from "@/gen/forge/v1/deploy_pb";
 import { Environment_State, EnvironmentService } from "@/gen/forge/v1/environment_pb";
 import { OperationService } from "@/gen/forge/v1/operation_pb";
@@ -12,6 +12,7 @@ import { TeamService } from "@/gen/forge/v1/team_pb";
 import { TemplateParameter_Type, TemplateService } from "@/gen/forge/v1/template_pb";
 import { renderWithApi, signIn } from "@/test/helpers";
 import CreateService from "./(app)/create/page";
+import Environments from "./(app)/environments/page";
 import OperationPage from "./(app)/operations/[id]/page";
 import Operations from "./(app)/operations/page";
 import ServicePage from "./(app)/services/[name]/page";
@@ -28,6 +29,15 @@ vi.mock("next/navigation", () => ({
 
 const ago = (minutes: number) => timestampFromDate(new Date(Date.now() - minutes * 60_000));
 const COMMIT = "18b12326d3df2c1a11b9f664f378b579eb472aaf";
+const payments = {
+  name: "services/payments",
+  displayName: "Payments",
+  ownerTeam: "platform-engineering",
+  owners: ["ana@example.com"],
+  lifecycle: Lifecycle.EXPERIMENTAL,
+  repoUrl: "https://github.com/showmino/payments",
+  etag: 'W/"3"',
+};
 
 type World = {
   writer: boolean;
@@ -76,7 +86,13 @@ function forge(w: World) {
       getStatus: () => ({ subject: "ana", permissions: w.writer ? ["services.read", "services.write"] : ["services.read"] }),
     });
     router.service(ServiceCatalogService, {
-      getService: () => ({ service: { name: "services/payments", displayName: "Payments", ownerTeam: "platform-engineering" } }),
+      getService: () => ({ service: payments }),
+      listServices: () => ({ services: [payments, { name: "services/ledger", ownerTeam: "finance" }] }),
+      updateService: (req) => {
+        record("update", req);
+        const s = req.service!;
+        return { service: { ...payments, ownerTeam: s.ownerTeam, owners: s.owners, lifecycle: s.lifecycle, etag: 'W/"4"' } };
+      },
       deleteService: (req) => {
         record("delete", req);
         return w.deleteRuns ? { operation: op("op_111111111111", "delete_service", "services/payments") } : {};
@@ -383,10 +399,16 @@ describe("promote", () => {
 });
 
 describe("delete a service", () => {
+  // Delete is in the danger zone of the service's settings.
+  async function openDelete() {
+    click(await screen.findByRole("button", { name: "Service settings" }));
+    click(await screen.findByRole("button", { name: "Delete service" }));
+  }
+
   it("says what goes and what stays, asks for the name, and shows the teardown to its end", async () => {
     const w = world();
     await openService(w);
-    click(await screen.findByRole("button", { name: "Delete service" }));
+    await openDelete();
     expect(dialog().getByRole("heading", { name: "Delete payments?" })).toBeTruthy();
     const text = screen.getByRole("dialog").textContent!;
     expect(text).toContain("its staging deployment and the namespace payments-staging");
@@ -426,7 +448,7 @@ describe("delete a service", () => {
     const w = world({ deleteRuns: false });
     await openService(w);
     nav.router.replace.mockClear();
-    click(await screen.findByRole("button", { name: "Delete service" }));
+    await openDelete();
     fireEvent.change(dialog().getByLabelText("Type payments to confirm"), { target: { value: "payments" } });
     click(dialog().getByRole("button", { name: "Delete service" }));
     await waitFor(() => expect(nav.router.replace).toHaveBeenCalledWith("/services"));
@@ -435,7 +457,7 @@ describe("delete a service", () => {
   it("brings the service back, with the reason, when the delete fails half way", async () => {
     const w = world({ opError: { code: "sync_timeout", message: "Argo CD still has the application payments-staging after 10m0s" } });
     await openService(w);
-    click(await screen.findByRole("button", { name: "Delete service" }));
+    await openDelete();
     fireEvent.change(dialog().getByLabelText("Type payments to confirm"), { target: { value: "payments" } });
     click(dialog().getByRole("button", { name: "Delete service" }));
     await screen.findByText(/This service is being deleted/);
@@ -454,7 +476,7 @@ describe("delete a service", () => {
   it("keeps the dialog open with the reason when the API refuses", async () => {
     const w = world({ fail: { delete: new ConnectError("services/payments is a dependency of services/checkout", Code.FailedPrecondition) } });
     await openService(w);
-    click(await screen.findByRole("button", { name: "Delete service" }));
+    await openDelete();
     fireEvent.change(dialog().getByLabelText("Type payments to confirm"), { target: { value: "payments" } });
     click(dialog().getByRole("button", { name: "Delete service" }));
     expect((await dialog().findByRole("alert")).textContent).toContain("is a dependency of services/checkout");
@@ -744,5 +766,80 @@ describe("create a service", () => {
     expect(screen.queryByLabelText("port (optional)")).toBeNull();
     expect(screen.getByText(/Only writers can create a service/)).toBeTruthy();
     expect((screen.getByRole("button", { name: "Create service" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+describe("service settings", () => {
+  it("changes the team, the contacts and the lifecycle, guarded by the etag", async () => {
+    const w = world();
+    await openService(w);
+    click(screen.getByRole("button", { name: "Service settings" }));
+    expect(screen.getByRole("tab", { name: "Settings" }).getAttribute("aria-selected")).toBe("true");
+    const save = screen.getByRole("button", { name: "Save changes" }) as HTMLButtonElement;
+    // Nothing changed yet: nothing to save.
+    expect(save.disabled).toBe(true);
+
+    await screen.findByRole("option", { name: /^finance/ });
+    fireEvent.change(screen.getByLabelText("Owning team"), { target: { value: "finance" } });
+    fireEvent.change(screen.getByLabelText("Contacts"), { target: { value: "ana@example.com, bo@example.com, ana@example.com" } });
+    fireEvent.change(screen.getByLabelText("Lifecycle"), { target: { value: String(Lifecycle.PRODUCTION) } });
+    const cli = screen.getAllByTitle("Same action from the terminal").map((c) => c.textContent).join("\n");
+    expect(cli).toContain("forge service update payments --team finance --owner ana@example.com,bo@example.com --lifecycle production");
+
+    click(save);
+    await waitFor(() => expect(w.calls.update).toHaveLength(1));
+    const req = w.calls.update[0] as { service: { etag: string; ownerTeam: string; owners: string[]; lifecycle: Lifecycle }; updateMask: { paths: string[] } };
+    expect(req.updateMask.paths).toEqual(["owner_team", "owners", "lifecycle"]);
+    expect(req.service).toMatchObject({ etag: 'W/"3"', ownerTeam: "finance", owners: ["ana@example.com", "bo@example.com"], lifecycle: Lifecycle.PRODUCTION });
+    expect(await screen.findByText("Settings saved for payments")).toBeTruthy();
+  });
+
+  it("says so when someone else changed the service first", async () => {
+    const w = world({ fail: { update: new ConnectError("services/payments changed since it was read", Code.Aborted) } });
+    await openService(w);
+    click(screen.getByRole("button", { name: "Service settings" }));
+    fireEvent.change(screen.getByLabelText("Contacts"), { target: { value: "bo@example.com" } });
+    click(screen.getByRole("button", { name: "Save changes" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("Someone changed this since the page loaded");
+  });
+
+  it("is not offered to a reader", async () => {
+    await openService(world({ writer: false }));
+    expect(screen.getByRole("tab", { name: "Overview" })).toBeTruthy();
+    expect(screen.queryByRole("tab", { name: "Settings" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Service settings" })).toBeNull();
+  });
+});
+
+describe("toasts", () => {
+  it("say what was started and name the command", async () => {
+    const w = world();
+    await openService(w);
+    click(await screen.findByRole("button", { name: "Deploy to staging" }));
+    click(dialog().getByRole("button", { name: "Deploy to staging" }));
+    expect(await screen.findByText("Deploying payments to staging")).toBeTruthy();
+    expect(screen.getByText("forge deploy start payments --env staging --ref main")).toBeTruthy();
+  });
+});
+
+describe("the environments page", () => {
+  it("creates a preview of the service the writer picks", async () => {
+    const w = world();
+    renderWithApi(<Environments />, forge(w));
+    click(await screen.findByRole("button", { name: "Preview env" }));
+    expect(dialog().getByRole("heading", { name: "Create a preview?" })).toBeTruthy();
+    // No service picked yet: it says so instead of asking the API.
+    fireEvent.change(dialog().getByLabelText("Preview name"), { target: { value: "pr-7" } });
+    click(dialog().getByRole("button", { name: "Create preview" }));
+    expect(dialog().getByText("Choose the service to preview.")).toBeTruthy();
+    expect(w.calls.createEnv).toBeUndefined();
+
+    await dialog().findByRole("option", { name: "ledger" });
+    fireEvent.change(dialog().getByLabelText("Service"), { target: { value: "ledger" } });
+    click(dialog().getByRole("button", { name: "Create preview" }));
+    await waitFor(() => expect(w.calls.createEnv).toHaveLength(1));
+    expect(w.calls.createEnv[0]).toMatchObject({ environmentId: "pr-7", service: "services/ledger" });
+    // The new preview is followed live on the page.
+    expect(await screen.findByRole("region", { name: "Operation op_dddddddddddd" })).toBeTruthy();
   });
 });

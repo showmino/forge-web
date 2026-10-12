@@ -7,9 +7,11 @@ Next.js app with TypeScript and Tailwind CSS.
 ## What it is
 
 The web dashboard of Forge: the catalog, a page per service, the templates,
-operations and the audit log. A writer also creates a service from a template,
-deploys, promotes, rolls back and manages previews from it, each behind a
-confirmation, with the work shown live (`WatchOperation`). It is a thin client of the Forge API, like the CLI: every call
+environments, deployments, operations, ownership and the audit log. A writer also creates a service from a template,
+deploys, promotes, rolls back, manages previews and changes a service's
+owner, contacts and lifecycle from it, each behind a
+confirmation, with the work shown live (`WatchOperation`) and a toast that
+names the CLI command. It is a thin client of the Forge API, like the CLI: every call
 goes from the browser to forge-api with the reader's own token, and the API
 decides what they may see and do. The server only serves the pages and
 `/api/healthz`; it holds no secrets.
@@ -23,6 +25,27 @@ decides what they may see and do. The server only serves the pages and
   (image, release, commit, namespace, sync): building and testing happen in
   the service's CI before Forge is asked. The services list is at
   `/services`.
+- **A service** (`/services/<name>`) has tabs: Overview (what runs in
+  staging and production, previews, recent activity, about), Deployments
+  (`ListDeployHistory` of both environments), Dependencies (what it depends
+  on, and what in the catalog depends on it) and, for a writer, Settings
+  (the gear button too): the owning team, the contacts and the lifecycle,
+  saved with `UpdateService` and the etag the page read, so a change someone
+  made meanwhile is refused, not overwritten. Delete is in its danger zone.
+  A link to `#settings` opens that tab.
+- **Environments** (`/environments`): staging and production across the
+  catalog (how many services run there, which are not healthy, deploys
+  today) and every preview with the time it has left. A writer creates a
+  preview of any service from here.
+- **Deployments** (`/deployments`): deploys, promotions and rollbacks of the
+  last 7 days from the audit log, and the running ones from the operations.
+  `/operations` stays: it also lists creates, previews and deletes.
+- **Ownership** (`/ownership`): the organization's teams (`TeamService`)
+  joined with the catalog: which team owns which service, services whose
+  team is not a team on GitHub, services with no contacts, teams with no
+  services.
+- **Jump to** (top bar, Ctrl+K or ⌘K): a command palette over the pages,
+  the services and the previews.
 - **Login:** the authorization code flow with PKCE against Forge's login
   service, as the public client forge-api names in `GetServerInfo`
   (`lib/auth`). Right after the sign-in the page trades the ID token for a
@@ -31,7 +54,8 @@ decides what they may see and do. The server only serves the pages and
   on the API by Sign out. There is no refresh token. Against an API that
   keeps no sessions, the ID token lives in the tab's `sessionStorage` for an
   hour, as before.
-- **Delete:** a writer deletes a service from its page. The name is typed to
+- **Delete:** a writer deletes a service from the danger zone of its
+  settings. The name is typed to
   confirm, as on the CLI; the API then takes down everything the service
   runs (previews, staging, production, their namespaces) and removes it from
   the catalog, shown live. The GitHub repo is kept. This needs a forge-api
@@ -59,15 +83,18 @@ decides what they may see and do. The server only serves the pages and
   `showmino/forge` at the commit in `proto/FORGE_COMMIT`. After an API change:
   `sh scripts/sync-proto.sh ../forge`.
 - **Look:** the Forge design language of the Forge Console design
-  (https://claude.ai/artifact/JH9WMXofSHtUrQcGB5AwfG): a dark iron rail beside
+  (https://claude.ai/artifact/JH9WMXofSHtUrQcGB5AwfG; the owner's later
+  mockup is `docs/design/forge-console.html`, sample data only): a dark iron rail beside
   a light work surface, ember for the one primary action and for work in
   progress, status pills with a dot and a word, names in mono, and on every
   page the CLI command that does the same. Its tokens are the Tailwind theme
   in `app/globals.css`; its parts are in `components/ui` and
   `components/app-shell.tsx`. Every page follows the design's layout for
-  it: Services, a service, Templates (cards), Operations (the design's
-  Deployments table and chips), the Audit log and Create (with the whole
-  command shown as the form is filled in).
+  it: Services, a service, Templates (cards), Environments, Deployments,
+  Operations, Ownership, the Audit log and Create (with the whole
+  command shown as the form is filled in). What the mockup shows that Forge
+  does not know is left out: rules and approvals, the golden path, tiers
+  and SLOs, team members and on-call, TechDocs, template lint.
 
 ## Develop
 

@@ -3,6 +3,7 @@
 import { Code, type Transport } from "@connectrpc/connect";
 import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createContext, useContext, useState, type ReactNode } from "react";
+import { ToastProvider } from "@/components/ui/toast";
 import { isCode, makeApi, webTransport, type Api } from "@/lib/api";
 import { startLogin } from "@/lib/auth/login";
 import { clearSession, loadSession } from "@/lib/auth/session";
@@ -61,7 +62,9 @@ export function Providers({ children, transport }: { children: ReactNode; transp
   }));
   return (
     <ApiContext.Provider value={value.api}>
-      <QueryClientProvider client={value.queries}>{children}</QueryClientProvider>
+      <QueryClientProvider client={value.queries}>
+        <ToastProvider>{children}</ToastProvider>
+      </QueryClientProvider>
     </ApiContext.Provider>
   );
 }

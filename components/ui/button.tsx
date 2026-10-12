@@ -76,8 +76,16 @@ const ship = (
   </>
 );
 
-// Icon is one of the two small marks buttons carry: plus for "new", ship for "send it on".
-export function Icon({ name }: { name: "plus" | "ship" }) {
+const gear = (
+  <>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
+  </>
+);
+const marks = { plus, ship, gear };
+
+// Icon is one of the small marks buttons carry: plus for "new", ship for "send it on", gear for settings.
+export function Icon({ name }: { name: keyof typeof marks }) {
   return (
     <svg
       width="15"
@@ -85,12 +93,12 @@ export function Icon({ name }: { name: "plus" | "ship" }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.1"
+      strokeWidth={name === "gear" ? 1.8 : 2.1}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
     >
-      {name === "plus" ? plus : ship}
+      {marks[name]}
     </svg>
   );
 }

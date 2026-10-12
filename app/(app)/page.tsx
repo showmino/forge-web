@@ -1,6 +1,5 @@
 "use client";
 
-import { timestampNow } from "@bufbuild/protobuf/wkt";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useCanWrite } from "@/components/app-shell";
@@ -11,34 +10,13 @@ import { Button, ButtonLink, Icon, TextLink } from "@/components/ui/button";
 import { ErrorNote, Loading, PageHeader, Panel, Section } from "@/components/ui/layout";
 import { MiniLine, StageLine, Stats } from "@/components/ui/pipeline";
 import { StatusBadge, Tag } from "@/components/ui/status";
-import type { AuditEvent } from "@/gen/forge/v1/audit_pb";
 import type { Environment } from "@/gen/forge/v1/environment_pb";
 import type { Operation } from "@/gen/forge/v1/operation_pb";
-import { type Api, listAllServices, operationId } from "@/lib/api";
+import { lastDay, listAllServices, operationId } from "@/lib/api";
 import { timeAgo, when } from "@/lib/format";
 import { attention, dayStats, deployKind, pipelineOf, recentDeploys, shipping, type Attention, type RecentDeploy } from "@/lib/overview";
 import { operationTitle, type Status, type Tone } from "@/lib/status";
 
-const DAY_MS = 24 * 3600_000;
-// The audit log is read a page at a time; a day of deploys fits in a few.
-const PAGES = 5;
-
-// lastDay reads the audit log of the last 24 hours, newest first. That always
-// covers today, and it outlives a restart of the API, which a list of
-// operations does not.
-async function lastDay(api: Api): Promise<AuditEvent[]> {
-  const since = timestampNow();
-  since.seconds -= BigInt(DAY_MS / 1000);
-  const events: AuditEvent[] = [];
-  let pageToken = "";
-  for (let page = 0; page < PAGES; page++) {
-    const res = await api.audit.listAuditEvents({ since, pageSize: 200, pageToken });
-    events.push(...res.events);
-    pageToken = res.nextPageToken;
-    if (!pageToken) break;
-  }
-  return events;
-}
 
 const mono = "font-mono text-[0.92em] font-medium";
 

@@ -1,12 +1,12 @@
 "use client";
 
 import { timestampDate } from "@bufbuild/protobuf/wkt";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Code } from "@connectrpc/connect";
+import { useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCanWrite } from "@/components/app-shell";
-import { actorText } from "@/components/audit-table";
 import { OperationLog } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
 import {
@@ -18,19 +18,26 @@ import {
   PromoteDialog,
   RollbackDialog,
 } from "@/components/service-actions";
+import { ServiceSettings } from "@/components/service-settings";
 import { Addr, Button, Icon, NameLink, TextLink } from "@/components/ui/button";
+import { Cli } from "@/components/ui/cli";
 import { Crumbs, ErrorNote, Facts, Loading, PageHeader, Panel, Section, TableFrame, td, th, tr } from "@/components/ui/layout";
 import { EnvTag, Life, StatusBadge } from "@/components/ui/status";
-import { Deployment_Health } from "@/gen/forge/v1/deploy_pb";
+import { Tabs } from "@/components/ui/tabs";
+import type { AuditEvent } from "@/gen/forge/v1/audit_pb";
+import type { Service } from "@/gen/forge/v1/catalog_pb";
+import { type Deployment, Deployment_Health } from "@/gen/forge/v1/deploy_pb";
 import type { Environment } from "@/gen/forge/v1/environment_pb";
-import { environmentId, serviceId } from "@/lib/api";
-import { exact, shortCommit, timeUntil, when } from "@/lib/format";
+import { environmentId, isCode, listAllServices, serviceId } from "@/lib/api";
+import { actorText, exact, shortCommit, timeUntil, when } from "@/lib/format";
 import { auditStatus, deploymentStatus, environmentStatus } from "@/lib/status";
 
 type Open =
   | { kind: "deploy" | "promote" | "preview" | "delete" }
   | { kind: "rollback"; env: "staging" | "production" }
   | { kind: "extend" | "destroy"; environment: Environment };
+
+type Tab = "overview" | "deploys" | "deps" | "settings";
 
 const row = "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-t border-line px-4 py-[11px] first:border-t-0";
 
@@ -52,6 +59,12 @@ function ServiceView({ id }: { id: string }) {
   const canWrite = useCanWrite();
   const router = useRouter();
   const [open, setOpen] = useState<Open | null>(null);
+  const [tab, setTab] = useState<Tab>("overview");
+  // A link to "#settings" (from the Ownership page) opens the settings of a writer.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (canWrite && window.location.hash === "#settings") setTab("settings");
+  }, [canWrite]);
   const [started, setStarted] = useState<string[]>([]);
   // The delete of this service: its operation while it runs, "gone" once the service is no more.
   const [deleting, setDeleting] = useState<string | "gone" | null>(null);
@@ -193,6 +206,15 @@ function ServiceView({ id }: { id: string }) {
       >
         {canWrite ? (
           <>
+            <Button
+              onClick={() => setTab(tab === "settings" ? "overview" : "settings")}
+              aria-label="Service settings"
+              aria-pressed={tab === "settings"}
+              title="Settings"
+              className="!px-[9px] aria-pressed:border-fg-3 aria-pressed:bg-surface-2"
+            >
+              <Icon name="gear" />
+            </Button>
             <Button onClick={() => setOpen({ kind: "preview" })}>
               <Icon name="plus" />
               Preview env
@@ -229,6 +251,112 @@ function ServiceView({ id }: { id: string }) {
         </Section>
       ) : null}
 
+      <Tabs
+        label={`Parts of ${id}`}
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { value: "overview", label: "Overview" },
+          { value: "deploys", label: "Deployments" },
+          {
+            value: "deps",
+            label: (
+              <>
+                Dependencies <span className="font-normal text-fg-3 tabular-nums">{s.dependencies.length}</span>
+              </>
+            ),
+          },
+          ...(canWrite ? [{ value: "settings" as const, label: "Settings" }] : []),
+        ]}
+      >
+        {tab === "deploys" ? <DeployHistory id={id} /> : null}
+        {tab === "deps" ? <Dependencies service={s} /> : null}
+        {tab === "settings" && canWrite ? (
+          <div className="flex max-w-[720px] flex-col gap-6">
+            <ServiceSettings service={s} />
+            <Panel className="border-bad-dot/45">
+              <section aria-label="Danger zone" className="contents">
+                <div className="px-4 pb-3 pt-4">
+                  <h2 className="type-heading text-bad-fg">Danger zone</h2>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-4 pb-4">
+                  <div className="min-w-0 flex-[1_1_280px]">
+                    <b className="font-semibold">Delete service</b>
+                    <p className="mt-0.5 text-[13.5px] text-fg-2">
+                      Takes down staging, production and any previews, and removes {id} from the catalog. The repository is kept.
+                    </p>
+                  </div>
+                  <Button kind="danger" onClick={() => setOpen({ kind: "delete" })}>
+                    Delete service
+                  </Button>
+                </div>
+              </section>
+            </Panel>
+          </div>
+        ) : null}
+        {tab === "overview" ? (
+          <OverviewTab
+            id={id}
+            service={s}
+            deployments={deployments}
+            previews={previews}
+            events={events}
+            canWrite={canWrite}
+            ahead={ahead}
+            deployment={deployment}
+            deployed={deployed}
+            onOpen={setOpen}
+          />
+        ) : null}
+      </Tabs>
+
+      {open?.kind === "delete" ? (
+        <DeleteServiceDialog
+          id={id}
+          previews={(previews.data ?? []).map((e) => environmentId(e.name))}
+          deployed={(["staging", "production"] as const).filter((env) => deployed(env))}
+          onClose={close}
+          onStarted={onDeleteStarted}
+        />
+      ) : null}
+      {open?.kind === "deploy" ? <DeployDialog id={id} onClose={close} onStarted={onStarted} /> : null}
+      {open?.kind === "promote" ? (
+        <PromoteDialog id={id} staging={deployment("staging")} onClose={close} onStarted={onStarted} />
+      ) : null}
+      {open?.kind === "rollback" ? <RollbackDialog id={id} env={open.env} onClose={close} onStarted={onStarted} /> : null}
+      {open?.kind === "preview" ? <PreviewDialog id={id} onClose={close} onStarted={onStarted} /> : null}
+      {open?.kind === "extend" ? <ExtendDialog environment={open.environment} onClose={close} onStarted={onStarted} /> : null}
+      {open?.kind === "destroy" ? <DestroyDialog environment={open.environment} onClose={close} onStarted={onStarted} /> : null}
+    </>
+  );
+}
+
+// OverviewTab is what runs where, the previews, the recent history and who owns the service.
+function OverviewTab({
+  id,
+  service: s,
+  deployments,
+  previews,
+  events,
+  canWrite,
+  ahead,
+  deployment,
+  deployed,
+  onOpen: setOpen,
+}: {
+  id: string;
+  service: Service;
+  deployments: UseQueryResult<Deployment[]>;
+  previews: UseQueryResult<Environment[]>;
+  events: UseQueryResult<AuditEvent[]>;
+  canWrite: boolean;
+  ahead: boolean;
+  deployment: (env: string) => Deployment | undefined;
+  deployed: (env: string) => boolean;
+  onOpen: (open: Open) => void;
+}) {
+  return (
+    <>
       <Section
         title="Staging and production"
         note={
@@ -413,35 +541,118 @@ function ServiceView({ id }: { id: string }) {
                 ]}
               />
             </div>
-            {canWrite ? (
-              <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-3">
-                <span className="text-[12.5px] text-fg-3">Removes everything it runs. The repo is kept.</span>
-                <Button kind="danger" size="sm" onClick={() => setOpen({ kind: "delete" })}>
-                  Delete service
-                </Button>
-              </div>
-            ) : null}
           </Panel>
         </div>
       </div>
+    </>
+  );
+}
 
-      {open?.kind === "delete" ? (
-        <DeleteServiceDialog
-          id={id}
-          previews={(previews.data ?? []).map((e) => environmentId(e.name))}
-          deployed={(["staging", "production"] as const).filter((env) => deployed(env))}
-          onClose={close}
-          onStarted={onDeleteStarted}
-        />
-      ) : null}
-      {open?.kind === "deploy" ? <DeployDialog id={id} onClose={close} onStarted={onStarted} /> : null}
-      {open?.kind === "promote" ? (
-        <PromoteDialog id={id} staging={deployment("staging")} onClose={close} onStarted={onStarted} />
-      ) : null}
-      {open?.kind === "rollback" ? <RollbackDialog id={id} env={open.env} onClose={close} onStarted={onStarted} /> : null}
-      {open?.kind === "preview" ? <PreviewDialog id={id} onClose={close} onStarted={onStarted} /> : null}
-      {open?.kind === "extend" ? <ExtendDialog environment={open.environment} onClose={close} onStarted={onStarted} /> : null}
-      {open?.kind === "destroy" ? <DestroyDialog environment={open.environment} onClose={close} onStarted={onStarted} /> : null}
+const kindWord: Record<string, string> = { deploy: "Deploy", promote: "Promotion", rollback: "Rollback" };
+
+// DeployHistory lists what was deployed to staging and production, newest
+// first, as the deploy repo records it.
+function DeployHistory({ id }: { id: string }) {
+  return (
+    <>
+      {(["staging", "production"] as const).map((env) => (
+        <EnvHistory key={env} id={id} env={env} />
+      ))}
+    </>
+  );
+}
+
+function EnvHistory({ id, env }: { id: string; env: "staging" | "production" }) {
+  const api = useApi();
+  const history = useQuery({
+    queryKey: ["history", id, env, "tab"],
+    queryFn: () =>
+      api.deploys.listDeployHistory({ name: `deployments/${id}/${env}`, limit: 20 }).then(
+        (r) => r.records,
+        // Never deployed there: nothing to list.
+        (err: unknown) => {
+          if (isCode(err, Code.NotFound)) return [];
+          throw err;
+        },
+      ),
+  });
+  return (
+    <Section title={env === "staging" ? "Staging" : "Production"} note={history.data ? history.data.length : undefined}>
+      <Cli command={`forge deploy history ${id} --env ${env}`} />
+      {history.isPending ? (
+        <Loading what={`the history of ${env}`} />
+      ) : history.error ? (
+        <ErrorNote error={history.error} />
+      ) : history.data.length === 0 ? (
+        <Panel className="p-6 text-center text-[13.5px] text-fg-2">Nothing was deployed to {env} yet.</Panel>
+      ) : (
+        <TableFrame label={`History of ${env}`}>
+          <thead>
+            <tr>
+              <th className={th}>What</th>
+              <th className={th}>Version</th>
+              <th className={th}>Commit</th>
+              <th className={th}>By</th>
+              <th className={th}>When</th>
+            </tr>
+          </thead>
+          <tbody>
+            {history.data.map((r, i) => (
+              <tr key={r.deployCommit} className={tr}>
+                <td className={td}>
+                  {kindWord[r.kind] ?? r.kind}
+                  {i === 0 ? <span className="ml-2 text-[12.5px] text-fg-3">runs now</span> : null}
+                </td>
+                <td className={`${td} font-mono text-[13px]`}>{r.version || "–"}</td>
+                <td className={`${td} font-mono text-[13px] text-fg-2`}>{r.commit ? shortCommit(r.commit) : "–"}</td>
+                <td className={`${td} font-mono text-[12.5px]`}>{r.actor || "–"}</td>
+                <td className={`${td} text-fg-3`} title={exact(r.time)}>
+                  {when(r.time)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </TableFrame>
+      )}
+    </Section>
+  );
+}
+
+// Dependencies: what the service calls, and what in the catalog calls it.
+function Dependencies({ service: s }: { service: Service }) {
+  const api = useApi();
+  const id = serviceId(s.name);
+  const services = useQuery({ queryKey: ["services"], queryFn: () => listAllServices(api) });
+  const usedBy = (services.data ?? []).filter((o) => o.dependencies.includes(s.name)).map((o) => serviceId(o.name));
+  const chips = (names: string[]) => (
+    <ul className="flex flex-wrap gap-2">
+      {names.map((n) => (
+        <li key={n}>
+          <NameLink href={`/services/${n}`} className="inline-flex items-center gap-[7px] rounded-md border border-line bg-surface px-2.5 py-[5px] !text-[12.5px]">
+            <span className="font-sans text-[11px] font-normal text-fg-3">service</span>
+            {n}
+          </NameLink>
+        </li>
+      ))}
+    </ul>
+  );
+  return (
+    <>
+      <Cli command={`forge service deps ${id}`} />
+      <Section title="Depends on">
+        {s.dependencies.length ? chips(s.dependencies.map(serviceId)) : <p className="text-fg-3">{id} depends on no other service in the catalog.</p>}
+      </Section>
+      <Section title="Used by">
+        {services.isPending ? (
+          <Loading what="the catalog" />
+        ) : services.error ? (
+          <ErrorNote error={services.error} />
+        ) : usedBy.length ? (
+          chips(usedBy)
+        ) : (
+          <p className="text-fg-3">Nothing in the catalog depends on {id}.</p>
+        )}
+      </Section>
     </>
   );
 }
