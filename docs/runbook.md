@@ -37,6 +37,43 @@ The Content-Security-Policy refuses a script without the request's nonce. The
 browser console names the blocked script. An inline `<script>` must get the
 nonce from the layout; never add `'unsafe-inline'`.
 
+## Buttons are missing
+
+A reader sees no Create, Deploy, Promote or Settings: those are for writers,
+the team `platform-engineering`. The rail's foot says **Reader** or
+**Writer**. A change of team takes effect within the hour, when Forge checks
+the session against GitHub again.
+
+## A deploy or promote is stuck
+
+1. Open it on `/operations` (or `forge op watch <id>`) and read its last step.
+2. A promote waits for Argo CD to call the new version healthy. If it does not,
+   the step says why; cancel it with **Cancel** or `forge op cancel <id>`.
+3. A staging deploy runs only after CI pushed the image. Check the repo's
+   GitHub Actions run.
+
+## Docs do not show, or show old text
+
+- A change shows within a minute of reaching the default branch. Reload after
+  that.
+- "has no docs": the repo has no `docs/index.md`.
+- A page missing from the side menu: with a `docs:` list in `forge.yaml`, only
+  the listed pages are in it.
+- An image does not show: images are png, jpeg, gif or webp up to 5 MiB, in
+  `docs/`. SVG is never shown.
+- From the terminal: `forge docs get forge-web --pages` reads what Forge sees.
+
+## Going back
+
+Every deploy of forge-web is a version. Roll production back to the one
+before with:
+
+```sh
+forge deploy rollback forge-web --env production
+```
+
+and fix forward in a pull request.
+
 ## Who to ask
 
 platform-engineering, the owning team.
