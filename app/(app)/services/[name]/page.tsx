@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useCanWrite } from "@/components/app-shell";
+import { DocReader, DocsLink, useHasDocs } from "@/components/doc-reader";
 import { OperationLog } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
 import {
@@ -29,6 +30,7 @@ import type { Service } from "@/gen/forge/v1/catalog_pb";
 import { type Deployment, Deployment_Health } from "@/gen/forge/v1/deploy_pb";
 import type { Environment } from "@/gen/forge/v1/environment_pb";
 import { environmentId, isCode, listAllServices, serviceId } from "@/lib/api";
+import { START } from "@/lib/docs";
 import { actorText, exact, shortCommit, timeUntil, when } from "@/lib/format";
 import { auditStatus, deploymentStatus, environmentStatus } from "@/lib/status";
 
@@ -37,7 +39,7 @@ type Open =
   | { kind: "rollback"; env: "staging" | "production" }
   | { kind: "extend" | "destroy"; environment: Environment };
 
-type Tab = "overview" | "deploys" | "deps" | "settings";
+type Tab = "overview" | "deploys" | "deps" | "docs" | "settings";
 
 const row = "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-t border-line px-4 py-[11px] first:border-t-0";
 
@@ -60,6 +62,8 @@ function ServiceView({ id }: { id: string }) {
   const router = useRouter();
   const [open, setOpen] = useState<Open | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
+  const [docPath, setDocPath] = useState(START);
+  const hasDocs = useHasDocs(id);
   // A link to "#settings" (from the Ownership page) opens the settings of a writer.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -266,11 +270,20 @@ function ServiceView({ id }: { id: string }) {
               </>
             ),
           },
+          ...(hasDocs ? [{ value: "docs" as const, label: "Docs" }] : []),
           ...(canWrite ? [{ value: "settings" as const, label: "Settings" }] : []),
         ]}
       >
         {tab === "deploys" ? <DeployHistory id={id} /> : null}
         {tab === "deps" ? <Dependencies service={s} /> : null}
+        {tab === "docs" && hasDocs ? (
+          <>
+            <DocsLink id={id} path={docPath}>
+              Open in Docs
+            </DocsLink>
+            <DocReader id={id} path={docPath} onOpen={(p) => setDocPath(p)} />
+          </>
+        ) : null}
         {tab === "settings" && canWrite ? (
           <div className="flex max-w-[720px] flex-col gap-6">
             <ServiceSettings service={s} />

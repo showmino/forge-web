@@ -5,6 +5,7 @@ import { type AuditEvent, AuditService } from "@/gen/forge/v1/audit_pb";
 import { AuthService } from "@/gen/forge/v1/auth_pb";
 import { ServiceCatalogService } from "@/gen/forge/v1/catalog_pb";
 import { DeployService } from "@/gen/forge/v1/deploy_pb";
+import { DocsService } from "@/gen/forge/v1/docs_pb";
 import { EnvironmentService } from "@/gen/forge/v1/environment_pb";
 import { OperationService } from "@/gen/forge/v1/operation_pb";
 import { TeamService } from "@/gen/forge/v1/team_pb";
@@ -24,6 +25,7 @@ export type Api = {
   teams: Client<typeof TeamService>;
   audit: Client<typeof AuditService>;
   operations: Client<typeof OperationService>;
+  docs: Client<typeof DocsService>;
 };
 
 const bearer: Interceptor = (next) => async (req) => {
@@ -65,6 +67,7 @@ export function makeApi(transport: Transport): Api {
     teams: createClient(TeamService, transport),
     audit: createClient(AuditService, transport),
     operations: createClient(OperationService, transport),
+    docs: createClient(DocsService, transport),
   };
 }
 

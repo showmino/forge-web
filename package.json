@@ -20,9 +20,14 @@
     "@connectrpc/connect-web": "2.2.0",
     "@noble/hashes": "2.4.0",
     "@tanstack/react-query": "5.104.1",
+    "github-slugger": "2.0.0",
     "next": "16.4.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "react-markdown": "10.1.0",
+    "rehype-highlight": "7.0.2",
+    "rehype-slug": "6.0.0",
+    "remark-gfm": "4.0.1"
   },
   "devDependencies": {
     "@bufbuild/buf": "1.73.0",

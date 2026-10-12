@@ -8,6 +8,7 @@ import { Lifecycle, ServiceCatalogService } from "@/gen/forge/v1/catalog_pb";
 import { Deployment_Health, Deployment_SyncStatus, DeployService } from "@/gen/forge/v1/deploy_pb";
 import { Environment_State, EnvironmentService } from "@/gen/forge/v1/environment_pb";
 import { OperationService } from "@/gen/forge/v1/operation_pb";
+import { DocsService } from "@/gen/forge/v1/docs_pb";
 import { TeamService } from "@/gen/forge/v1/team_pb";
 import { TemplateParameter_Type, TemplateService } from "@/gen/forge/v1/template_pb";
 import { idToken, renderWithApi, signIn } from "@/test/helpers";
@@ -134,6 +135,15 @@ function forge(router: ConnectRouter) {
   });
   router.service(TeamService, {
     listTeams: () => ({ teams: [{ name: "teams/platform-engineering", displayName: "Platform Engineering" }, { name: "teams/design" }] }),
+  });
+  router.service(DocsService, {
+    getDocSet: (req) => {
+      if (req.service !== "services/payments") throw new ConnectError(`${req.service} has no docs`, Code.NotFound);
+      return { docSet: { service: req.service, branch: "main", pages: [{ path: "index.md", title: "Payments" }, { path: "runbook.md", title: "Runbook" }] } };
+    },
+    getDocPage: (req) => ({
+      page: { service: req.service, path: req.path, title: req.path === "runbook.md" ? "Runbook" : "Payments", markdown: req.path === "runbook.md" ? "# Runbook\n" : "# Payments\n\nSee the [runbook](runbook.md).\n" },
+    }),
   });
   router.service(EnvironmentService, {
     listEnvironments: () => ({
@@ -299,6 +309,30 @@ describe("a service", () => {
     expect(screen.getByRole("tab", { name: /^Dependencies/ }).getAttribute("aria-selected")).toBe("true");
     expect(await screen.findByText("payments depends on no other service in the catalog.")).toBeTruthy();
     expect((await screen.findByRole("link", { name: /ledger/ })).getAttribute("href")).toBe("/services/ledger");
+  });
+
+  it("reads its docs in a tab, page by page", async () => {
+    nav.params = { name: "payments" };
+    renderWithApi(<ServicePage />, forge);
+    fireEvent.click(await screen.findByRole("tab", { name: "Docs" }));
+    const start = within(await screen.findByRole("article", { name: "Payments" }));
+    fireEvent.click(start.getByRole("link", { name: "runbook" }));
+    expect(await screen.findByRole("article", { name: "Runbook" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Open in Docs" }).getAttribute("href")).toBe("/docs/payments/runbook.md");
+  });
+
+  it("has no Docs tab when the service has no docs", async () => {
+    nav.params = { name: "payments" };
+    renderWithApi(<ServicePage />, (router) => {
+      forge(router);
+      router.service(DocsService, {
+        getDocSet: () => {
+          throw new ConnectError("no docs", Code.NotFound);
+        },
+      });
+    });
+    await screen.findByRole("tab", { name: "Overview" });
+    await waitFor(() => expect(screen.queryByRole("tab", { name: "Docs" })).toBeNull());
   });
 });
 
