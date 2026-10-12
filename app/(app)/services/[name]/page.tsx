@@ -63,7 +63,13 @@ function ServiceView({ id }: { id: string }) {
   const [open, setOpen] = useState<Open | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
   const [docPath, setDocPath] = useState(START);
+  const [docHash, setDocHash] = useState("");
   const hasDocs = useHasDocs(id);
+  // The docs went away (or turned out not to exist) while their tab was open.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (tab === "docs" && !hasDocs) setTab("overview");
+  }, [tab, hasDocs]);
   // A link to "#settings" (from the Ownership page) opens the settings of a writer.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -281,7 +287,16 @@ function ServiceView({ id }: { id: string }) {
             <DocsLink id={id} path={docPath}>
               Open in Docs
             </DocsLink>
-            <DocReader id={id} path={docPath} onOpen={(p) => setDocPath(p)} />
+            <DocReader
+              id={id}
+              path={docPath}
+              hash={docHash}
+              nested
+              onOpen={(p, h = "") => {
+                setDocPath(p);
+                setDocHash(h);
+              }}
+            />
           </>
         ) : null}
         {tab === "settings" && canWrite ? (

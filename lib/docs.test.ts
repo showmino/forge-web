@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { docHref, docPathOf, headings, resolve } from "./docs";
+import { docHref, docPathOf, type HastNode, headingsOf, resolve } from "./docs";
 
 describe("addresses of pages", () => {
   it("puts the start page at the service and others below it", () => {
@@ -24,13 +24,22 @@ describe("links in a page", () => {
 });
 
 describe("headings of a page", () => {
-  it("gives the ids the page gets, outside code", () => {
-    const md = "# Payments\n\n## Run `it` locally\n\n```sh\n## not a heading\n```go\n## still code\n```\n\n    ## indented code\n### [Errors](errors.md)\n## Run it locally\n";
-    expect(headings(md)).toEqual([
+  it("reads them from the rendered tree, with the ids it has", () => {
+    const h = (tagName: string, id: string | undefined, ...children: HastNode[]): HastNode => ({ type: "element", tagName, properties: id ? { id } : {}, children });
+    const t = (value: string): HastNode => ({ type: "text", value });
+    const tree: HastNode = {
+      type: "root",
+      children: [
+        h("h1", "doc-payments", t("Payments")),
+        h("blockquote", undefined, h("h2", "doc-run-it", t("Run "), h("code", undefined, t("it")))),
+        h("pre", undefined, t("## not a heading")),
+        h("h3", "doc-errors", h("a", undefined, t("Errors"))),
+      ],
+    };
+    expect(headingsOf(tree)).toEqual([
       { depth: 1, text: "Payments", id: "doc-payments" },
-      { depth: 2, text: "Run it locally", id: "doc-run-it-locally" },
+      { depth: 2, text: "Run it", id: "doc-run-it" },
       { depth: 3, text: "Errors", id: "doc-errors" },
-      { depth: 2, text: "Run it locally", id: "doc-run-it-locally-1" },
     ]);
   });
 });

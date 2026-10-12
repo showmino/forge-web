@@ -1,4 +1,3 @@
-import GithubSlugger from "github-slugger";
 import { serviceId } from "@/lib/api";
 
 // The rules of the docs reader that need no React: where a page lives in the
@@ -68,38 +67,29 @@ export type Heading = { depth: number; text: string; id: string };
 // The ids of a page's headings start with this, so a page never takes an id the dashboard uses.
 export const ID_PREFIX = "doc-";
 
-// headings lists a page's headings with the ids rehype-slug gives them, in
-// order, outside code. Only ## and ### go into "On this page".
-export function headings(markdown: string): Heading[] {
-  const slugger = new GithubSlugger();
-  const out: Heading[] = [];
-  let fence = "";
-  for (const raw of markdown.split("\n")) {
-    const line = raw.trim();
-    if (fence) {
-      if (line.startsWith(fence) && line.replaceAll(fence[0], "") === "") fence = "";
-      continue;
-    }
-    const opens = /^(`{3,}|~{3,})/.exec(line);
-    if (opens) {
-      fence = opens[1];
-      continue;
-    }
-    if (/^( {4}|\t)/.test(raw)) continue;
-    const m = /^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/.exec(raw);
-    if (!m) continue;
-    const text = plain(m[2]);
-    const id = ID_PREFIX + slugger.slug(text);
-    out.push({ depth: m[1].length, text, id });
-  }
-  return out;
+// HastNode is the little of an HTML syntax tree headingsOf reads.
+export type HastNode = { type: string; tagName?: string; value?: string; properties?: Record<string, unknown>; children?: HastNode[] };
+
+const DEPTHS: Record<string, number> = { h1: 1, h2: 2, h3: 3, h4: 4, h5: 5, h6: 6 };
+
+function textOf(n: HastNode): string {
+  if (n.type === "text") return n.value ?? "";
+  return (n.children ?? []).map(textOf).join("");
 }
 
-// plain is a heading's text without its Markdown: links, code, emphasis.
-function plain(s: string): string {
-  return s
-    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/`([^`]*)`/g, "$1")
-    .replace(/(\*\*|__|\*|_|~~)(.+?)\1/g, "$2")
-    .trim();
+// headingsOf lists the headings of a rendered page with the ids it has, in
+// order: the same tree the reader shows, so the ids always match.
+export function headingsOf(tree: HastNode): Heading[] {
+  const out: Heading[] = [];
+  const walk = (n: HastNode) => {
+    const depth = n.type === "element" && n.tagName ? DEPTHS[n.tagName] : undefined;
+    const id = n.properties?.id;
+    if (depth && typeof id === "string") {
+      out.push({ depth, text: textOf(n).trim(), id });
+      return;
+    }
+    n.children?.forEach(walk);
+  };
+  walk(tree);
+  return out;
 }

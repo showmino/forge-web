@@ -22,7 +22,7 @@ const COMMIT = "707e4ddeb5a5c0ffee00000000000000000000aa";
 const pages: Record<string, string> = {
   "index.md":
     "# Forge dashboard\n\nSee [the runbook](runbook.md#sign-in-fails), [this part](#pages) and [GitHub](https://github.com).\n\n" +
-    "<script>alert('owned')</script>\n\n<img src=x onerror=alert(1)>\n\n[bad](javascript:alert(1))\n\n" +
+    "<script>alert('owned')</script>\n\n<img src=x onerror=alert(1)>\n\n[bad](javascript:alert(1)) [home](/settings) [up](../../forge.yaml)\n\nA claim.[^1]\n\n[^1]: The source.\n\n" +
     "## Pages\n\n| Page | What |\n| --- | --- |\n| runbook | fixes |\n\n- [x] done\n\n![flow](img/flow.png)\n\n![remote](https://example.com/a.png)\n\n```go\nfunc main() {}\n```\n",
   "runbook.md": "# Runbook\n\n## Sign-in fails\n\nCheck the login.\n",
 };
@@ -114,6 +114,14 @@ describe("the reader", () => {
     expect(document.querySelector("article [onerror]")).toBeNull();
     expect(document.querySelector("article")!.textContent).toContain("<script>alert('owned')</script>");
     expect(article.getByText("bad").closest("a")?.getAttribute("href") ?? "").not.toContain("javascript");
+    // A path outside docs/ is no link at all.
+    expect(article.getByText("home").closest("a")).toBeNull();
+    expect(article.getByText("up").closest("a")).toBeNull();
+    // A footnote keeps its wiring, so its back link finds it.
+    const ref = document.querySelector("article a[data-footnote-ref]")!;
+    expect(ref.getAttribute("href")).toBe("#user-content-fn-1");
+    expect(ref.id).toBe("user-content-fnref-1");
+    expect(document.querySelector("article a[data-footnote-backref]")?.getAttribute("href")).toBe("#user-content-fnref-1");
 
     // Tables, task lists and highlighted code.
     expect(article.getByRole("table")).toBeTruthy();
