@@ -257,7 +257,12 @@ function ServiceView({ id }: { id: string }) {
       {inProgress.length > 0 ? (
         <Section title="In progress">
           {inProgress.map((op) => (
-            <OperationLog key={op} name={op} onDone={refresh} />
+            <OperationLog
+              key={op}
+              name={op}
+              onDone={refresh}
+              argoFor={(target) => deployments.data?.find((d) => d.name === target)?.argoUrl}
+            />
           ))}
         </Section>
       ) : null}
