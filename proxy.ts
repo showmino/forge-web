@@ -49,4 +49,4 @@ export async function proxy(request: NextRequest) {
 }
 
 // Pages only: static files and the health check need no policy and must not wait for one.
-export const config = { matcher: ["/((?!_next/|api/healthz|favicon.ico|robots.txt).*)"] };
+export const config = { matcher: ["/((?!_next/|api/healthz|favicon.ico|icon.svg|robots.txt).*)"] };
