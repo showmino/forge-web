@@ -124,8 +124,9 @@ function forge(w: World) {
             image: "ghcr.io/showmino/payments:18b1232",
             deployTime: ago(12),
             version: w.versions ? "v0.3.1-rc.2" : "",
+            argoUrl: "https://argocd.example.com/applications/argocd/payments-staging",
           },
-          { name: "deployments/payments/production", service: "services/payments", env: "production", health: w.production, commit: w.production === Deployment_Health.MISSING ? "" : COMMIT },
+          { name: "deployments/payments/production", service: "services/payments", env: "production", health: w.production, commit: w.production === Deployment_Health.MISSING ? "" : COMMIT, argoUrl: "javascript:alert(1)" },
         ],
       }),
       startDeploy: (req) => {
@@ -496,7 +497,18 @@ describe("delete a service", () => {
   });
 });
 
+describe("argo cd links", () => {
+  it("links each deployment to Argo CD, and never to anything but a web address", async () => {
+    await openService(world());
+    const link = await screen.findByRole("link", { name: "staging in Argo CD" });
+    expect(link.getAttribute("href")).toBe("https://argocd.example.com/applications/argocd/payments-staging");
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(screen.queryByRole("link", { name: "production in Argo CD" })).toBeNull();
+  });
+});
+
 describe("change the address", () => {
+
   it("plans first, makes the writer type each address in use and the name, then sets it", async () => {
     const w = world();
     await openService(w);
