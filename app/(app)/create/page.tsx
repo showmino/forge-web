@@ -6,6 +6,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { useCanWrite } from "@/components/app-shell";
 import { StepLog, type Step } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
+import { emptyRunForm, RunOptionsFields, runOptions, type RunForm } from "@/components/run-options";
 import { Addr, Button, TextLink } from "@/components/ui/button";
 import { CommandBlock } from "@/components/ui/cli";
 import { Field, inputClass } from "@/components/ui/field";
@@ -135,6 +136,8 @@ export default function CreateService() {
   });
   const [team, setTeam] = useState("");
   const [params, setParams] = useState<Record<string, string>>({});
+  // The run options as typed, per template: switching templates keeps each one's.
+  const [runs, setRuns] = useState<Record<string, RunForm>>({});
   const [checked, setChecked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [steps, setSteps] = useState<Step[]>([]);
@@ -146,6 +149,8 @@ export default function CreateService() {
 
   const template = templates.data?.find((t) => t.name === picked) ?? templates.data?.[0];
   const own = (p: TemplateParameter) => params[`${template?.name}/${p.name}`];
+  const run = (template && runs[template.name]) || emptyRunForm;
+  const runAsked = runOptions(run, template?.options ?? []);
   const badName = checked && !SERVICE_NAME.test(name);
   const badTeam = checked && !team.trim();
   // The command that does the same, flag by flag, as the form is filled in.
@@ -156,6 +161,7 @@ export default function CreateService() {
       const value = sent(p, own(p));
       return value === undefined ? [] : [["--set", `${p.name}=${value}`]];
     }),
+    ...runAsked.flags,
   ];
 
   async function create() {
@@ -173,6 +179,7 @@ export default function CreateService() {
       template: template.name,
       ownerTeam: team.trim(),
       parameters,
+      runOptions: runAsked.options,
     };
     const signature = JSON.stringify(request);
     if (attempt.current?.request !== signature) attempt.current = { key: randomString(), request: signature };
@@ -366,6 +373,16 @@ export default function CreateService() {
                   />
                 ))}
               </div>
+            </Section>
+          ) : null}
+
+          {template && template.options.length > 0 ? (
+            <Section title="How it runs" note="optional; change it later in forge.yaml">
+              <RunOptionsFields
+                offered={template.options}
+                form={run}
+                onChange={(f) => setRuns((all) => ({ ...all, [template.name]: f }))}
+              />
             </Section>
           ) : null}
 

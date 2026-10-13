@@ -218,6 +218,7 @@ function forge(w: World) {
               { name: "module", type: TemplateParameter_Type.STRING, defaultValue: "github.com/{% .Repo.Owner %}/{% .Repo.Name %}", pattern: "^[a-z0-9./-]+$" },
               { name: "metrics", type: TemplateParameter_Type.BOOL, defaultValue: "false", description: "Expose /metrics" },
             ],
+            options: ["replicas", "env", "jobs"],
           },
           { name: "templates/go-grpc", version: "v1.3.1", description: "ConnectRPC service in Go" },
         ],
@@ -768,6 +769,34 @@ describe("create a service", () => {
     click(screen.getByRole("button", { name: "Create service" }));
     await screen.findByRole("heading", { name: "ledger was created" });
     expect((w.calls.create[0] as { parameters: object }).parameters).toEqual({ region: "eu" });
+    expect((w.calls.create[0] as { runOptions?: object }).runOptions).toBeUndefined();
+  });
+
+  it("sends the run options the template offers, and shows them as flags", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    await fillCreate("ledger");
+    // Only what nextjs offers is there.
+    expect(screen.queryByText("1Password secrets")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Pods in production"), { target: { value: "3" } });
+    click(screen.getByRole("button", { name: "Add variable" }));
+    fireEvent.change(screen.getByLabelText("Variable 1 name"), { target: { value: "LOG_LEVEL" } });
+    fireEvent.change(screen.getByLabelText("Variable 1 value"), { target: { value: "info" } });
+    click(screen.getByRole("button", { name: "Add job" }));
+    fireEvent.change(screen.getByLabelText("Job 1 name"), { target: { value: "cleanup" } });
+    fireEvent.change(screen.getByLabelText("Job 1 schedule"), { target: { value: "0 3 * * *" } });
+    fireEvent.change(screen.getByLabelText("Job 1 command"), { target: { value: "node cleanup.js" } });
+    const command = screen.getByLabelText("The same from the terminal").textContent!;
+    for (const flag of ["--replicas 3", "--env LOG_LEVEL=info", "--job 'cleanup=0 3 * * *:node cleanup.js'"]) {
+      expect(command).toContain(flag);
+    }
+    click(screen.getByRole("button", { name: "Create service" }));
+    await screen.findByRole("heading", { name: "ledger was created" });
+    expect((w.calls.create[0] as { runOptions: object }).runOptions).toMatchObject({
+      replicas: 3,
+      env: { LOG_LEVEL: "info" },
+      jobs: [{ name: "cleanup", schedule: "0 3 * * *", command: ["node", "cleanup.js"] }],
+    });
   });
 
   it("asks again with the same key when the connection drops, so there is one create", async () => {
