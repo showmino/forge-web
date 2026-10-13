@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file forge/v1/catalog.proto.
  */
 export const file_forge_v1_catalog: GenFile = /*@__PURE__*/
-  fileDesc("ChZmb3JnZS92MS9jYXRhbG9nLnByb3RvEghmb3JnZS52MSKaAwoHU2VydmljZRIMCgRuYW1lGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRISCgpvd25lcl90ZWFtGAMgASgJEg4KBm93bmVycxgEIAMoCRImCglsaWZlY3ljbGUYBSABKA4yEy5mb3JnZS52MS5MaWZlY3ljbGUSEAoIcmVwb191cmwYBiABKAkSFAoMZGVwZW5kZW5jaWVzGAcgAygJEi0KBmxhYmVscxgIIAMoCzIdLmZvcmdlLnYxLlNlcnZpY2UuTGFiZWxzRW50cnkSLwoLY3JlYXRlX3RpbWUYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC3VwZGF0ZV90aW1lGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIMCgRldGFnGAsgASgJEikKB2FkZHJlc3MYDCABKAsyGC5mb3JnZS52MS5TZXJ2aWNlQWRkcmVzcxotCgtMYWJlbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIj8KDlNlcnZpY2VBZGRyZXNzEgwKBGhvc3QYASABKAkSDgoGZG9tYWluGAIgASgJEg8KB2NsYWltZWQYAyADKAkiUAoTTGlzdFNlcnZpY2VzUmVxdWVzdBIRCglwYWdlX3NpemUYASABKAUSEgoKcGFnZV90b2tlbhgCIAEoCRISCgpvd25lcl90ZWFtGAMgASgJIlQKFExpc3RTZXJ2aWNlc1Jlc3BvbnNlEiMKCHNlcnZpY2VzGAEgAygLMhEuZm9yZ2UudjEuU2VydmljZRIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiIQoRR2V0U2VydmljZVJlcXVlc3QSDAoEbmFtZRgBIAEoCSI4ChJHZXRTZXJ2aWNlUmVzcG9uc2USIgoHc2VydmljZRgBIAEoCzIRLmZvcmdlLnYxLlNlcnZpY2UiewoWUmVnaXN0ZXJTZXJ2aWNlUmVxdWVzdBISCgpzZXJ2aWNlX2lkGAEgASgJEiIKB3NlcnZpY2UYAiABKAsyES5mb3JnZS52MS5TZXJ2aWNlEhIKCnJlcXVlc3RfaWQYAyABKAkSFQoNdmFsaWRhdGVfb25seRgEIAEoCCI9ChdSZWdpc3RlclNlcnZpY2VSZXNwb25zZRIiCgdzZXJ2aWNlGAEgASgLMhEuZm9yZ2UudjEuU2VydmljZSKWAQoUVXBkYXRlU2VydmljZVJlcXVlc3QSIgoHc2VydmljZRgBIAEoCzIRLmZvcmdlLnYxLlNlcnZpY2USLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrEhIKCnJlcXVlc3RfaWQYAyABKAkSFQoNdmFsaWRhdGVfb25seRgEIAEoCCI7ChVVcGRhdGVTZXJ2aWNlUmVzcG9uc2USIgoHc2VydmljZRgBIAEoCzIRLmZvcmdlLnYxLlNlcnZpY2UiSQoURGVsZXRlU2VydmljZVJlcXVlc3QSDAoEbmFtZRgBIAEoCRIMCgRldGFnGAIgASgJEhUKDXZhbGlkYXRlX29ubHkYAyABKAgiUAoVRGVsZXRlU2VydmljZVJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIPCgdyZW1vdmVzGAIgAygJIpwCChRDcmVhdGVTZXJ2aWNlUmVxdWVzdBISCgpzZXJ2aWNlX2lkGAEgASgJEhAKCHRlbXBsYXRlGAIgASgJEhgKEHRlbXBsYXRlX3ZlcnNpb24YAyABKAkSQgoKcGFyYW1ldGVycxgEIAMoCzIuLmZvcmdlLnYxLkNyZWF0ZVNlcnZpY2VSZXF1ZXN0LlBhcmFtZXRlcnNFbnRyeRISCgpvd25lcl90ZWFtGAUgASgJEg4KBm93bmVycxgGIAMoCRISCgpyZXF1ZXN0X2lkGAcgASgJEhUKDXZhbGlkYXRlX29ubHkYCCABKAgaMQoPUGFyYW1ldGVyc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEivgEKFUNyZWF0ZVNlcnZpY2VSZXNwb25zZRIkCgRzdGVwGAEgASgLMhQuZm9yZ2UudjEuQ3JlYXRlU3RlcEgAEiQKB3NlcnZpY2UYAiABKAsyES5mb3JnZS52MS5TZXJ2aWNlSAASKgoHZmFpbHVyZRgDIAEoCzIXLmZvcmdlLnYxLkNyZWF0ZUZhaWx1cmVIABIkCgRwbGFuGAQgASgLMhQuZm9yZ2UudjEuQ3JlYXRlUGxhbkgAQgcKBWV2ZW50IpgBCgpDcmVhdGVTdGVwEgwKBG5hbWUYASABKAkSKQoFc3RhdGUYAiABKA4yGi5mb3JnZS52MS5DcmVhdGVTdGVwLlN0YXRlEg4KBmRldGFpbBgDIAEoCSJBCgVTdGF0ZRIVChFTVEFURV9VTlNQRUNJRklFRBAAEhEKDVNUQVRFX1NUQVJURUQQARIOCgpTVEFURV9ET05FEAIiQwoNQ3JlYXRlRmFpbHVyZRIMCgRzdGVwGAEgASgJEg8KB21lc3NhZ2UYAiABKAkSEwoLcm9sbGVkX2JhY2sYAyABKAgiRwoKQ3JlYXRlUGxhbhIYChB0ZW1wbGF0ZV92ZXJzaW9uGAEgASgJEhAKCHJlcG9fdXJsGAIgASgJEg0KBWZpbGVzGAMgAygJKnYKCUxpZmVjeWNsZRIZChVMSUZFQ1lDTEVfVU5TUEVDSUZJRUQQABIaChZMSUZFQ1lDTEVfRVhQRVJJTUVOVEFMEAESGAoUTElGRUNZQ0xFX1BST0RVQ1RJT04QAhIYChRMSUZFQ1lDTEVfREVQUkVDQVRFRBADMpcEChVTZXJ2aWNlQ2F0YWxvZ1NlcnZpY2USUgoMTGlzdFNlcnZpY2VzEh0uZm9yZ2UudjEuTGlzdFNlcnZpY2VzUmVxdWVzdBoeLmZvcmdlLnYxLkxpc3RTZXJ2aWNlc1Jlc3BvbnNlIgOQAgESTAoKR2V0U2VydmljZRIbLmZvcmdlLnYxLkdldFNlcnZpY2VSZXF1ZXN0GhwuZm9yZ2UudjEuR2V0U2VydmljZVJlc3BvbnNlIgOQAgESWwoPUmVnaXN0ZXJTZXJ2aWNlEiAuZm9yZ2UudjEuUmVnaXN0ZXJTZXJ2aWNlUmVxdWVzdBohLmZvcmdlLnYxLlJlZ2lzdGVyU2VydmljZVJlc3BvbnNlIgOQAgISUgoNVXBkYXRlU2VydmljZRIeLmZvcmdlLnYxLlVwZGF0ZVNlcnZpY2VSZXF1ZXN0Gh8uZm9yZ2UudjEuVXBkYXRlU2VydmljZVJlc3BvbnNlIgASVQoNRGVsZXRlU2VydmljZRIeLmZvcmdlLnYxLkRlbGV0ZVNlcnZpY2VSZXF1ZXN0Gh8uZm9yZ2UudjEuRGVsZXRlU2VydmljZVJlc3BvbnNlIgOQAgISVAoNQ3JlYXRlU2VydmljZRIeLmZvcmdlLnYxLkNyZWF0ZVNlcnZpY2VSZXF1ZXN0Gh8uZm9yZ2UudjEuQ3JlYXRlU2VydmljZVJlc3BvbnNlIgAwAWIGcHJvdG8z", [file_forge_v1_operation, file_google_protobuf_field_mask, file_google_protobuf_timestamp]);
+  fileDesc("ChZmb3JnZS92MS9jYXRhbG9nLnByb3RvEghmb3JnZS52MSKaAwoHU2VydmljZRIMCgRuYW1lGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRISCgpvd25lcl90ZWFtGAMgASgJEg4KBm93bmVycxgEIAMoCRImCglsaWZlY3ljbGUYBSABKA4yEy5mb3JnZS52MS5MaWZlY3ljbGUSEAoIcmVwb191cmwYBiABKAkSFAoMZGVwZW5kZW5jaWVzGAcgAygJEi0KBmxhYmVscxgIIAMoCzIdLmZvcmdlLnYxLlNlcnZpY2UuTGFiZWxzRW50cnkSLwoLY3JlYXRlX3RpbWUYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC3VwZGF0ZV90aW1lGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIMCgRldGFnGAsgASgJEikKB2FkZHJlc3MYDCABKAsyGC5mb3JnZS52MS5TZXJ2aWNlQWRkcmVzcxotCgtMYWJlbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIj8KDlNlcnZpY2VBZGRyZXNzEgwKBGhvc3QYASABKAkSDgoGZG9tYWluGAIgASgJEg8KB2NsYWltZWQYAyADKAkiUAoTTGlzdFNlcnZpY2VzUmVxdWVzdBIRCglwYWdlX3NpemUYASABKAUSEgoKcGFnZV90b2tlbhgCIAEoCRISCgpvd25lcl90ZWFtGAMgASgJIlQKFExpc3RTZXJ2aWNlc1Jlc3BvbnNlEiMKCHNlcnZpY2VzGAEgAygLMhEuZm9yZ2UudjEuU2VydmljZRIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiIQoRR2V0U2VydmljZVJlcXVlc3QSDAoEbmFtZRgBIAEoCSI4ChJHZXRTZXJ2aWNlUmVzcG9uc2USIgoHc2VydmljZRgBIAEoCzIRLmZvcmdlLnYxLlNlcnZpY2UiewoWUmVnaXN0ZXJTZXJ2aWNlUmVxdWVzdBISCgpzZXJ2aWNlX2lkGAEgASgJEiIKB3NlcnZpY2UYAiABKAsyES5mb3JnZS52MS5TZXJ2aWNlEhIKCnJlcXVlc3RfaWQYAyABKAkSFQoNdmFsaWRhdGVfb25seRgEIAEoCCI9ChdSZWdpc3RlclNlcnZpY2VSZXNwb25zZRIiCgdzZXJ2aWNlGAEgASgLMhEuZm9yZ2UudjEuU2VydmljZSKWAQoUVXBkYXRlU2VydmljZVJlcXVlc3QSIgoHc2VydmljZRgBIAEoCzIRLmZvcmdlLnYxLlNlcnZpY2USLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrEhIKCnJlcXVlc3RfaWQYAyABKAkSFQoNdmFsaWRhdGVfb25seRgEIAEoCCI7ChVVcGRhdGVTZXJ2aWNlUmVzcG9uc2USIgoHc2VydmljZRgBIAEoCzIRLmZvcmdlLnYxLlNlcnZpY2UiSQoURGVsZXRlU2VydmljZVJlcXVlc3QSDAoEbmFtZRgBIAEoCRIMCgRldGFnGAIgASgJEhUKDXZhbGlkYXRlX29ubHkYAyABKAgiUAoVRGVsZXRlU2VydmljZVJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIPCgdyZW1vdmVzGAIgAygJIscCChRDcmVhdGVTZXJ2aWNlUmVxdWVzdBISCgpzZXJ2aWNlX2lkGAEgASgJEhAKCHRlbXBsYXRlGAIgASgJEhgKEHRlbXBsYXRlX3ZlcnNpb24YAyABKAkSQgoKcGFyYW1ldGVycxgEIAMoCzIuLmZvcmdlLnYxLkNyZWF0ZVNlcnZpY2VSZXF1ZXN0LlBhcmFtZXRlcnNFbnRyeRISCgpvd25lcl90ZWFtGAUgASgJEg4KBm93bmVycxgGIAMoCRISCgpyZXF1ZXN0X2lkGAcgASgJEhUKDXZhbGlkYXRlX29ubHkYCCABKAgSKQoLcnVuX29wdGlvbnMYCSABKAsyFC5mb3JnZS52MS5SdW5PcHRpb25zGjEKD1BhcmFtZXRlcnNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIoACCgpSdW5PcHRpb25zEhAKCHJlcGxpY2FzGAEgASgFEikKCXJlc291cmNlcxgCIAEoCzIWLmZvcmdlLnYxLlJ1blJlc291cmNlcxIqCgNlbnYYAyADKAsyHS5mb3JnZS52MS5SdW5PcHRpb25zLkVudkVudHJ5EiQKB3NlY3JldHMYBCADKAsyEy5mb3JnZS52MS5SdW5TZWNyZXQSHgoEam9icxgFIAMoCzIQLmZvcmdlLnYxLlJ1bkpvYhIXCg9hdXRvc2NhbGluZ19tYXgYBiABKAUaKgoIRW52RW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJoCgxSdW5SZXNvdXJjZXMSFAoMcmVxdWVzdHNfY3B1GAEgASgJEhcKD3JlcXVlc3RzX21lbW9yeRgCIAEoCRISCgpsaW1pdHNfY3B1GAMgASgJEhUKDWxpbWl0c19tZW1vcnkYBCABKAkifgoJUnVuU2VjcmV0EgwKBG5hbWUYASABKAkSDAoEaXRlbRgCIAEoCRIpCgNlbnYYAyADKAsyHC5mb3JnZS52MS5SdW5TZWNyZXQuRW52RW50cnkaKgoIRW52RW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASI5CgZSdW5Kb2ISDAoEbmFtZRgBIAEoCRIQCghzY2hlZHVsZRgCIAEoCRIPCgdjb21tYW5kGAMgAygJIr4BChVDcmVhdGVTZXJ2aWNlUmVzcG9uc2USJAoEc3RlcBgBIAEoCzIULmZvcmdlLnYxLkNyZWF0ZVN0ZXBIABIkCgdzZXJ2aWNlGAIgASgLMhEuZm9yZ2UudjEuU2VydmljZUgAEioKB2ZhaWx1cmUYAyABKAsyFy5mb3JnZS52MS5DcmVhdGVGYWlsdXJlSAASJAoEcGxhbhgEIAEoCzIULmZvcmdlLnYxLkNyZWF0ZVBsYW5IAEIHCgVldmVudCKYAQoKQ3JlYXRlU3RlcBIMCgRuYW1lGAEgASgJEikKBXN0YXRlGAIgASgOMhouZm9yZ2UudjEuQ3JlYXRlU3RlcC5TdGF0ZRIOCgZkZXRhaWwYAyABKAkiQQoFU3RhdGUSFQoRU1RBVEVfVU5TUEVDSUZJRUQQABIRCg1TVEFURV9TVEFSVEVEEAESDgoKU1RBVEVfRE9ORRACIkMKDUNyZWF0ZUZhaWx1cmUSDAoEc3RlcBgBIAEoCRIPCgdtZXNzYWdlGAIgASgJEhMKC3JvbGxlZF9iYWNrGAMgASgIIkcKCkNyZWF0ZVBsYW4SGAoQdGVtcGxhdGVfdmVyc2lvbhgBIAEoCRIQCghyZXBvX3VybBgCIAEoCRINCgVmaWxlcxgDIAMoCSp2CglMaWZlY3ljbGUSGQoVTElGRUNZQ0xFX1VOU1BFQ0lGSUVEEAASGgoWTElGRUNZQ0xFX0VYUEVSSU1FTlRBTBABEhgKFExJRkVDWUNMRV9QUk9EVUNUSU9OEAISGAoUTElGRUNZQ0xFX0RFUFJFQ0FURUQQAzKXBAoVU2VydmljZUNhdGFsb2dTZXJ2aWNlElIKDExpc3RTZXJ2aWNlcxIdLmZvcmdlLnYxLkxpc3RTZXJ2aWNlc1JlcXVlc3QaHi5mb3JnZS52MS5MaXN0U2VydmljZXNSZXNwb25zZSIDkAIBEkwKCkdldFNlcnZpY2USGy5mb3JnZS52MS5HZXRTZXJ2aWNlUmVxdWVzdBocLmZvcmdlLnYxLkdldFNlcnZpY2VSZXNwb25zZSIDkAIBElsKD1JlZ2lzdGVyU2VydmljZRIgLmZvcmdlLnYxLlJlZ2lzdGVyU2VydmljZVJlcXVlc3QaIS5mb3JnZS52MS5SZWdpc3RlclNlcnZpY2VSZXNwb25zZSIDkAICElIKDVVwZGF0ZVNlcnZpY2USHi5mb3JnZS52MS5VcGRhdGVTZXJ2aWNlUmVxdWVzdBofLmZvcmdlLnYxLlVwZGF0ZVNlcnZpY2VSZXNwb25zZSIAElUKDURlbGV0ZVNlcnZpY2USHi5mb3JnZS52MS5EZWxldGVTZXJ2aWNlUmVxdWVzdBofLmZvcmdlLnYxLkRlbGV0ZVNlcnZpY2VSZXNwb25zZSIDkAICElQKDUNyZWF0ZVNlcnZpY2USHi5mb3JnZS52MS5DcmVhdGVTZXJ2aWNlUmVxdWVzdBofLmZvcmdlLnYxLkNyZWF0ZVNlcnZpY2VSZXNwb25zZSIAMAFiBnByb3RvMw", [file_forge_v1_operation, file_google_protobuf_field_mask, file_google_protobuf_timestamp]);
 
 /**
  * Service is one entry in the catalog.
@@ -456,6 +456,14 @@ export type CreateServiceRequest = Message<"forge.v1.CreateServiceRequest"> & {
    * @generated from field: bool validate_only = 8;
    */
   validateOnly: boolean;
+
+  /**
+   * forge.yaml's run options, written into the new repo's forge.yaml over
+   * the template's. Only the options the template offers may be set.
+   *
+   * @generated from field: forge.v1.RunOptions run_options = 9;
+   */
+  runOptions?: RunOptions | undefined;
 };
 
 /**
@@ -464,6 +472,152 @@ export type CreateServiceRequest = Message<"forge.v1.CreateServiceRequest"> & {
  */
 export const CreateServiceRequestSchema: GenMessage<CreateServiceRequest> = /*@__PURE__*/
   messageDesc(file_forge_v1_catalog, 12);
+
+/**
+ * RunOptions are forge.yaml's run options (see the README, "Run options").
+ * Unset fields leave the template's value.
+ *
+ * @generated from message forge.v1.RunOptions
+ */
+export type RunOptions = Message<"forge.v1.RunOptions"> & {
+  /**
+   * Production's pod count; staging runs one.
+   *
+   * @generated from field: int32 replicas = 1;
+   */
+  replicas: number;
+
+  /**
+   * @generated from field: forge.v1.RunResources resources = 2;
+   */
+  resources?: RunResources | undefined;
+
+  /**
+   * @generated from field: map<string, string> env = 3;
+   */
+  env: { [key: string]: string };
+
+  /**
+   * @generated from field: repeated forge.v1.RunSecret secrets = 4;
+   */
+  secrets: RunSecret[];
+
+  /**
+   * @generated from field: repeated forge.v1.RunJob jobs = 5;
+   */
+  jobs: RunJob[];
+
+  /**
+   * Production grows from replicas up to this on CPU; 0 is no autoscaling.
+   *
+   * @generated from field: int32 autoscaling_max = 6;
+   */
+  autoscalingMax: number;
+};
+
+/**
+ * Describes the message forge.v1.RunOptions.
+ * Use `create(RunOptionsSchema)` to create a new message.
+ */
+export const RunOptionsSchema: GenMessage<RunOptions> = /*@__PURE__*/
+  messageDesc(file_forge_v1_catalog, 13);
+
+/**
+ * RunResources are the app container's requests and limits, as Kubernetes
+ * quantities ("100m", "128Mi").
+ *
+ * @generated from message forge.v1.RunResources
+ */
+export type RunResources = Message<"forge.v1.RunResources"> & {
+  /**
+   * @generated from field: string requests_cpu = 1;
+   */
+  requestsCpu: string;
+
+  /**
+   * @generated from field: string requests_memory = 2;
+   */
+  requestsMemory: string;
+
+  /**
+   * @generated from field: string limits_cpu = 3;
+   */
+  limitsCpu: string;
+
+  /**
+   * @generated from field: string limits_memory = 4;
+   */
+  limitsMemory: string;
+};
+
+/**
+ * Describes the message forge.v1.RunResources.
+ * Use `create(RunResourcesSchema)` to create a new message.
+ */
+export const RunResourcesSchema: GenMessage<RunResources> = /*@__PURE__*/
+  messageDesc(file_forge_v1_catalog, 14);
+
+/**
+ * RunSecret is a 1Password item given to the app as environment variables.
+ *
+ * @generated from message forge.v1.RunSecret
+ */
+export type RunSecret = Message<"forge.v1.RunSecret"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * "vaults/<vault>/items/<item>".
+   *
+   * @generated from field: string item = 2;
+   */
+  item: string;
+
+  /**
+   * Environment variable to the item's field.
+   *
+   * @generated from field: map<string, string> env = 3;
+   */
+  env: { [key: string]: string };
+};
+
+/**
+ * Describes the message forge.v1.RunSecret.
+ * Use `create(RunSecretSchema)` to create a new message.
+ */
+export const RunSecretSchema: GenMessage<RunSecret> = /*@__PURE__*/
+  messageDesc(file_forge_v1_catalog, 15);
+
+/**
+ * RunJob is a cron job running the service's image.
+ *
+ * @generated from message forge.v1.RunJob
+ */
+export type RunJob = Message<"forge.v1.RunJob"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string schedule = 2;
+   */
+  schedule: string;
+
+  /**
+   * @generated from field: repeated string command = 3;
+   */
+  command: string[];
+};
+
+/**
+ * Describes the message forge.v1.RunJob.
+ * Use `create(RunJobSchema)` to create a new message.
+ */
+export const RunJobSchema: GenMessage<RunJob> = /*@__PURE__*/
+  messageDesc(file_forge_v1_catalog, 16);
 
 /**
  * CreateServiceResponse is one message of the CreateService stream.
@@ -512,7 +666,7 @@ export type CreateServiceResponse = Message<"forge.v1.CreateServiceResponse"> & 
  * Use `create(CreateServiceResponseSchema)` to create a new message.
  */
 export const CreateServiceResponseSchema: GenMessage<CreateServiceResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 13);
+  messageDesc(file_forge_v1_catalog, 17);
 
 /**
  * CreateStep reports progress of one step: fetch, render, create_repo, push, register.
@@ -543,7 +697,7 @@ export type CreateStep = Message<"forge.v1.CreateStep"> & {
  * Use `create(CreateStepSchema)` to create a new message.
  */
 export const CreateStepSchema: GenMessage<CreateStep> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 14);
+  messageDesc(file_forge_v1_catalog, 18);
 
 /**
  * State is where the step is.
@@ -571,7 +725,7 @@ export enum CreateStep_State {
  * Describes the enum forge.v1.CreateStep.State.
  */
 export const CreateStep_StateSchema: GenEnum<CreateStep_State> = /*@__PURE__*/
-  enumDesc(file_forge_v1_catalog, 14, 0);
+  enumDesc(file_forge_v1_catalog, 18, 0);
 
 /**
  * CreateFailure ends a create that failed after the repo was created.
@@ -602,7 +756,7 @@ export type CreateFailure = Message<"forge.v1.CreateFailure"> & {
  * Use `create(CreateFailureSchema)` to create a new message.
  */
 export const CreateFailureSchema: GenMessage<CreateFailure> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 15);
+  messageDesc(file_forge_v1_catalog, 19);
 
 /**
  * CreatePlan is what a validate_only create would do.
@@ -631,7 +785,7 @@ export type CreatePlan = Message<"forge.v1.CreatePlan"> & {
  * Use `create(CreatePlanSchema)` to create a new message.
  */
 export const CreatePlanSchema: GenMessage<CreatePlan> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 16);
+  messageDesc(file_forge_v1_catalog, 20);
 
 /**
  * Lifecycle is where a service is in its life.
