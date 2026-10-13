@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file forge/v1/catalog.proto.
  */
 export const file_forge_v1_catalog: GenFile = /*@__PURE__*/
-  fileDesc("ChZmb3JnZS92MS9jYXRhbG9nLnByb3RvEghmb3JnZS52MSLvAgoHU2VydmljZRIMCgRuYW1lGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRISCgpvd25lcl90ZWFtGAMgASgJEg4KBm93bmVycxgEIAMoCRImCglsaWZlY3ljbGUYBSABKA4yEy5mb3JnZS52MS5MaWZlY3ljbGUSEAoIcmVwb191cmwYBiABKAkSFAoMZGVwZW5kZW5jaWVzGAcgAygJEi0KBmxhYmVscxgIIAMoCzIdLmZvcmdlLnYxLlNlcnZpY2UuTGFiZWxzRW50cnkSLwoLY3JlYXRlX3RpbWUYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC3VwZGF0ZV90aW1lGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIMCgRldGFnGAsgASgJGi0KC0xhYmVsc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiUAoTTGlzdFNlcnZpY2VzUmVxdWVzdBIRCglwYWdlX3NpemUYASABKAUSEgoKcGFnZV90b2tlbhgCIAEoCRISCgpvd25lcl90ZWFtGAMgASgJIlQKFExpc3RTZXJ2aWNlc1Jlc3BvbnNlEiMKCHNlcnZpY2VzGAEgAygLMhEuZm9yZ2UudjEuU2VydmljZRIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiIQoRR2V0U2VydmljZVJlcXVlc3QSDAoEbmFtZRgBIAEoCSI4ChJHZXRTZXJ2aWNlUmVzcG9uc2USIgoHc2VydmljZRgBIAEoCzIRLmZvcmdlLnYxLlNlcnZpY2UiewoWUmVnaXN0ZXJTZXJ2aWNlUmVxdWVzdBISCgpzZXJ2aWNlX2lkGAEgASgJEiIKB3NlcnZpY2UYAiABKAsyES5mb3JnZS52MS5TZXJ2aWNlEhIKCnJlcXVlc3RfaWQYAyABKAkSFQoNdmFsaWRhdGVfb25seRgEIAEoCCI9ChdSZWdpc3RlclNlcnZpY2VSZXNwb25zZRIiCgdzZXJ2aWNlGAEgASgLMhEuZm9yZ2UudjEuU2VydmljZSKWAQoUVXBkYXRlU2VydmljZVJlcXVlc3QSIgoHc2VydmljZRgBIAEoCzIRLmZvcmdlLnYxLlNlcnZpY2USLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrEhIKCnJlcXVlc3RfaWQYAyABKAkSFQoNdmFsaWRhdGVfb25seRgEIAEoCCI7ChVVcGRhdGVTZXJ2aWNlUmVzcG9uc2USIgoHc2VydmljZRgBIAEoCzIRLmZvcmdlLnYxLlNlcnZpY2UiSQoURGVsZXRlU2VydmljZVJlcXVlc3QSDAoEbmFtZRgBIAEoCRIMCgRldGFnGAIgASgJEhUKDXZhbGlkYXRlX29ubHkYAyABKAgiUAoVRGVsZXRlU2VydmljZVJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIPCgdyZW1vdmVzGAIgAygJIpwCChRDcmVhdGVTZXJ2aWNlUmVxdWVzdBISCgpzZXJ2aWNlX2lkGAEgASgJEhAKCHRlbXBsYXRlGAIgASgJEhgKEHRlbXBsYXRlX3ZlcnNpb24YAyABKAkSQgoKcGFyYW1ldGVycxgEIAMoCzIuLmZvcmdlLnYxLkNyZWF0ZVNlcnZpY2VSZXF1ZXN0LlBhcmFtZXRlcnNFbnRyeRISCgpvd25lcl90ZWFtGAUgASgJEg4KBm93bmVycxgGIAMoCRISCgpyZXF1ZXN0X2lkGAcgASgJEhUKDXZhbGlkYXRlX29ubHkYCCABKAgaMQoPUGFyYW1ldGVyc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEivgEKFUNyZWF0ZVNlcnZpY2VSZXNwb25zZRIkCgRzdGVwGAEgASgLMhQuZm9yZ2UudjEuQ3JlYXRlU3RlcEgAEiQKB3NlcnZpY2UYAiABKAsyES5mb3JnZS52MS5TZXJ2aWNlSAASKgoHZmFpbHVyZRgDIAEoCzIXLmZvcmdlLnYxLkNyZWF0ZUZhaWx1cmVIABIkCgRwbGFuGAQgASgLMhQuZm9yZ2UudjEuQ3JlYXRlUGxhbkgAQgcKBWV2ZW50IpgBCgpDcmVhdGVTdGVwEgwKBG5hbWUYASABKAkSKQoFc3RhdGUYAiABKA4yGi5mb3JnZS52MS5DcmVhdGVTdGVwLlN0YXRlEg4KBmRldGFpbBgDIAEoCSJBCgVTdGF0ZRIVChFTVEFURV9VTlNQRUNJRklFRBAAEhEKDVNUQVRFX1NUQVJURUQQARIOCgpTVEFURV9ET05FEAIiQwoNQ3JlYXRlRmFpbHVyZRIMCgRzdGVwGAEgASgJEg8KB21lc3NhZ2UYAiABKAkSEwoLcm9sbGVkX2JhY2sYAyABKAgiRwoKQ3JlYXRlUGxhbhIYChB0ZW1wbGF0ZV92ZXJzaW9uGAEgASgJEhAKCHJlcG9fdXJsGAIgASgJEg0KBWZpbGVzGAMgAygJKnYKCUxpZmVjeWNsZRIZChVMSUZFQ1lDTEVfVU5TUEVDSUZJRUQQABIaChZMSUZFQ1lDTEVfRVhQRVJJTUVOVEFMEAESGAoUTElGRUNZQ0xFX1BST0RVQ1RJT04QAhIYChRMSUZFQ1lDTEVfREVQUkVDQVRFRBADMpcEChVTZXJ2aWNlQ2F0YWxvZ1NlcnZpY2USUgoMTGlzdFNlcnZpY2VzEh0uZm9yZ2UudjEuTGlzdFNlcnZpY2VzUmVxdWVzdBoeLmZvcmdlLnYxLkxpc3RTZXJ2aWNlc1Jlc3BvbnNlIgOQAgESTAoKR2V0U2VydmljZRIbLmZvcmdlLnYxLkdldFNlcnZpY2VSZXF1ZXN0GhwuZm9yZ2UudjEuR2V0U2VydmljZVJlc3BvbnNlIgOQAgESWwoPUmVnaXN0ZXJTZXJ2aWNlEiAuZm9yZ2UudjEuUmVnaXN0ZXJTZXJ2aWNlUmVxdWVzdBohLmZvcmdlLnYxLlJlZ2lzdGVyU2VydmljZVJlc3BvbnNlIgOQAgISUgoNVXBkYXRlU2VydmljZRIeLmZvcmdlLnYxLlVwZGF0ZVNlcnZpY2VSZXF1ZXN0Gh8uZm9yZ2UudjEuVXBkYXRlU2VydmljZVJlc3BvbnNlIgASVQoNRGVsZXRlU2VydmljZRIeLmZvcmdlLnYxLkRlbGV0ZVNlcnZpY2VSZXF1ZXN0Gh8uZm9yZ2UudjEuRGVsZXRlU2VydmljZVJlc3BvbnNlIgOQAgISVAoNQ3JlYXRlU2VydmljZRIeLmZvcmdlLnYxLkNyZWF0ZVNlcnZpY2VSZXF1ZXN0Gh8uZm9yZ2UudjEuQ3JlYXRlU2VydmljZVJlc3BvbnNlIgAwAWIGcHJvdG8z", [file_forge_v1_operation, file_google_protobuf_field_mask, file_google_protobuf_timestamp]);
+  fileDesc("ChZmb3JnZS92MS9jYXRhbG9nLnByb3RvEghmb3JnZS52MSKaAwoHU2VydmljZRIMCgRuYW1lGAEgASgJEhQKDGRpc3BsYXlfbmFtZRgCIAEoCRISCgpvd25lcl90ZWFtGAMgASgJEg4KBm93bmVycxgEIAMoCRImCglsaWZlY3ljbGUYBSABKA4yEy5mb3JnZS52MS5MaWZlY3ljbGUSEAoIcmVwb191cmwYBiABKAkSFAoMZGVwZW5kZW5jaWVzGAcgAygJEi0KBmxhYmVscxgIIAMoCzIdLmZvcmdlLnYxLlNlcnZpY2UuTGFiZWxzRW50cnkSLwoLY3JlYXRlX3RpbWUYCSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC3VwZGF0ZV90aW1lGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIMCgRldGFnGAsgASgJEikKB2FkZHJlc3MYDCABKAsyGC5mb3JnZS52MS5TZXJ2aWNlQWRkcmVzcxotCgtMYWJlbHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIj8KDlNlcnZpY2VBZGRyZXNzEgwKBGhvc3QYASABKAkSDgoGZG9tYWluGAIgASgJEg8KB2NsYWltZWQYAyADKAkiUAoTTGlzdFNlcnZpY2VzUmVxdWVzdBIRCglwYWdlX3NpemUYASABKAUSEgoKcGFnZV90b2tlbhgCIAEoCRISCgpvd25lcl90ZWFtGAMgASgJIlQKFExpc3RTZXJ2aWNlc1Jlc3BvbnNlEiMKCHNlcnZpY2VzGAEgAygLMhEuZm9yZ2UudjEuU2VydmljZRIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiIQoRR2V0U2VydmljZVJlcXVlc3QSDAoEbmFtZRgBIAEoCSI4ChJHZXRTZXJ2aWNlUmVzcG9uc2USIgoHc2VydmljZRgBIAEoCzIRLmZvcmdlLnYxLlNlcnZpY2UiewoWUmVnaXN0ZXJTZXJ2aWNlUmVxdWVzdBISCgpzZXJ2aWNlX2lkGAEgASgJEiIKB3NlcnZpY2UYAiABKAsyES5mb3JnZS52MS5TZXJ2aWNlEhIKCnJlcXVlc3RfaWQYAyABKAkSFQoNdmFsaWRhdGVfb25seRgEIAEoCCI9ChdSZWdpc3RlclNlcnZpY2VSZXNwb25zZRIiCgdzZXJ2aWNlGAEgASgLMhEuZm9yZ2UudjEuU2VydmljZSKWAQoUVXBkYXRlU2VydmljZVJlcXVlc3QSIgoHc2VydmljZRgBIAEoCzIRLmZvcmdlLnYxLlNlcnZpY2USLwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmllbGRNYXNrEhIKCnJlcXVlc3RfaWQYAyABKAkSFQoNdmFsaWRhdGVfb25seRgEIAEoCCI7ChVVcGRhdGVTZXJ2aWNlUmVzcG9uc2USIgoHc2VydmljZRgBIAEoCzIRLmZvcmdlLnYxLlNlcnZpY2UiSQoURGVsZXRlU2VydmljZVJlcXVlc3QSDAoEbmFtZRgBIAEoCRIMCgRldGFnGAIgASgJEhUKDXZhbGlkYXRlX29ubHkYAyABKAgiUAoVRGVsZXRlU2VydmljZVJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIPCgdyZW1vdmVzGAIgAygJIpwCChRDcmVhdGVTZXJ2aWNlUmVxdWVzdBISCgpzZXJ2aWNlX2lkGAEgASgJEhAKCHRlbXBsYXRlGAIgASgJEhgKEHRlbXBsYXRlX3ZlcnNpb24YAyABKAkSQgoKcGFyYW1ldGVycxgEIAMoCzIuLmZvcmdlLnYxLkNyZWF0ZVNlcnZpY2VSZXF1ZXN0LlBhcmFtZXRlcnNFbnRyeRISCgpvd25lcl90ZWFtGAUgASgJEg4KBm93bmVycxgGIAMoCRISCgpyZXF1ZXN0X2lkGAcgASgJEhUKDXZhbGlkYXRlX29ubHkYCCABKAgaMQoPUGFyYW1ldGVyc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEivgEKFUNyZWF0ZVNlcnZpY2VSZXNwb25zZRIkCgRzdGVwGAEgASgLMhQuZm9yZ2UudjEuQ3JlYXRlU3RlcEgAEiQKB3NlcnZpY2UYAiABKAsyES5mb3JnZS52MS5TZXJ2aWNlSAASKgoHZmFpbHVyZRgDIAEoCzIXLmZvcmdlLnYxLkNyZWF0ZUZhaWx1cmVIABIkCgRwbGFuGAQgASgLMhQuZm9yZ2UudjEuQ3JlYXRlUGxhbkgAQgcKBWV2ZW50IpgBCgpDcmVhdGVTdGVwEgwKBG5hbWUYASABKAkSKQoFc3RhdGUYAiABKA4yGi5mb3JnZS52MS5DcmVhdGVTdGVwLlN0YXRlEg4KBmRldGFpbBgDIAEoCSJBCgVTdGF0ZRIVChFTVEFURV9VTlNQRUNJRklFRBAAEhEKDVNUQVRFX1NUQVJURUQQARIOCgpTVEFURV9ET05FEAIiQwoNQ3JlYXRlRmFpbHVyZRIMCgRzdGVwGAEgASgJEg8KB21lc3NhZ2UYAiABKAkSEwoLcm9sbGVkX2JhY2sYAyABKAgiRwoKQ3JlYXRlUGxhbhIYChB0ZW1wbGF0ZV92ZXJzaW9uGAEgASgJEhAKCHJlcG9fdXJsGAIgASgJEg0KBWZpbGVzGAMgAygJKnYKCUxpZmVjeWNsZRIZChVMSUZFQ1lDTEVfVU5TUEVDSUZJRUQQABIaChZMSUZFQ1lDTEVfRVhQRVJJTUVOVEFMEAESGAoUTElGRUNZQ0xFX1BST0RVQ1RJT04QAhIYChRMSUZFQ1lDTEVfREVQUkVDQVRFRBADMpcEChVTZXJ2aWNlQ2F0YWxvZ1NlcnZpY2USUgoMTGlzdFNlcnZpY2VzEh0uZm9yZ2UudjEuTGlzdFNlcnZpY2VzUmVxdWVzdBoeLmZvcmdlLnYxLkxpc3RTZXJ2aWNlc1Jlc3BvbnNlIgOQAgESTAoKR2V0U2VydmljZRIbLmZvcmdlLnYxLkdldFNlcnZpY2VSZXF1ZXN0GhwuZm9yZ2UudjEuR2V0U2VydmljZVJlc3BvbnNlIgOQAgESWwoPUmVnaXN0ZXJTZXJ2aWNlEiAuZm9yZ2UudjEuUmVnaXN0ZXJTZXJ2aWNlUmVxdWVzdBohLmZvcmdlLnYxLlJlZ2lzdGVyU2VydmljZVJlc3BvbnNlIgOQAgISUgoNVXBkYXRlU2VydmljZRIeLmZvcmdlLnYxLlVwZGF0ZVNlcnZpY2VSZXF1ZXN0Gh8uZm9yZ2UudjEuVXBkYXRlU2VydmljZVJlc3BvbnNlIgASVQoNRGVsZXRlU2VydmljZRIeLmZvcmdlLnYxLkRlbGV0ZVNlcnZpY2VSZXF1ZXN0Gh8uZm9yZ2UudjEuRGVsZXRlU2VydmljZVJlc3BvbnNlIgOQAgISVAoNQ3JlYXRlU2VydmljZRIeLmZvcmdlLnYxLkNyZWF0ZVNlcnZpY2VSZXF1ZXN0Gh8uZm9yZ2UudjEuQ3JlYXRlU2VydmljZVJlc3BvbnNlIgAwAWIGcHJvdG8z", [file_forge_v1_operation, file_google_protobuf_field_mask, file_google_protobuf_timestamp]);
 
 /**
  * Service is one entry in the catalog.
@@ -96,6 +96,14 @@ export type Service = Message<"forge.v1.Service"> & {
    * @generated from field: string etag = 11;
    */
   etag: string;
+
+  /**
+   * Where the service is reached, when set in Forge (DeployService.SetAddress)
+   * rather than by forge.yaml. Output only.
+   *
+   * @generated from field: forge.v1.ServiceAddress address = 12;
+   */
+  address?: ServiceAddress | undefined;
 };
 
 /**
@@ -104,6 +112,41 @@ export type Service = Message<"forge.v1.Service"> & {
  */
 export const ServiceSchema: GenMessage<Service> = /*@__PURE__*/
   messageDesc(file_forge_v1_catalog, 0);
+
+/**
+ * ServiceAddress overrides forge.yaml's run.host and run.domain.
+ *
+ * @generated from message forge.v1.ServiceAddress
+ */
+export type ServiceAddress = Message<"forge.v1.ServiceAddress"> & {
+  /**
+   * "" for the service's name, "@" for the domain itself.
+   *
+   * @generated from field: string host = 1;
+   */
+  host: string;
+
+  /**
+   * A public domain of the platform, "" for the default, or "none".
+   *
+   * @generated from field: string domain = 2;
+   */
+  domain: string;
+
+  /**
+   * Addresses the service took over although they were in use.
+   *
+   * @generated from field: repeated string claimed = 3;
+   */
+  claimed: string[];
+};
+
+/**
+ * Describes the message forge.v1.ServiceAddress.
+ * Use `create(ServiceAddressSchema)` to create a new message.
+ */
+export const ServiceAddressSchema: GenMessage<ServiceAddress> = /*@__PURE__*/
+  messageDesc(file_forge_v1_catalog, 1);
 
 /**
  * @generated from message forge.v1.ListServicesRequest
@@ -134,7 +177,7 @@ export type ListServicesRequest = Message<"forge.v1.ListServicesRequest"> & {
  * Use `create(ListServicesRequestSchema)` to create a new message.
  */
 export const ListServicesRequestSchema: GenMessage<ListServicesRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 1);
+  messageDesc(file_forge_v1_catalog, 2);
 
 /**
  * @generated from message forge.v1.ListServicesResponse
@@ -156,7 +199,7 @@ export type ListServicesResponse = Message<"forge.v1.ListServicesResponse"> & {
  * Use `create(ListServicesResponseSchema)` to create a new message.
  */
 export const ListServicesResponseSchema: GenMessage<ListServicesResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 2);
+  messageDesc(file_forge_v1_catalog, 3);
 
 /**
  * @generated from message forge.v1.GetServiceRequest
@@ -175,7 +218,7 @@ export type GetServiceRequest = Message<"forge.v1.GetServiceRequest"> & {
  * Use `create(GetServiceRequestSchema)` to create a new message.
  */
 export const GetServiceRequestSchema: GenMessage<GetServiceRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 3);
+  messageDesc(file_forge_v1_catalog, 4);
 
 /**
  * @generated from message forge.v1.GetServiceResponse
@@ -192,7 +235,7 @@ export type GetServiceResponse = Message<"forge.v1.GetServiceResponse"> & {
  * Use `create(GetServiceResponseSchema)` to create a new message.
  */
 export const GetServiceResponseSchema: GenMessage<GetServiceResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 4);
+  messageDesc(file_forge_v1_catalog, 5);
 
 /**
  * @generated from message forge.v1.RegisterServiceRequest
@@ -230,7 +273,7 @@ export type RegisterServiceRequest = Message<"forge.v1.RegisterServiceRequest"> 
  * Use `create(RegisterServiceRequestSchema)` to create a new message.
  */
 export const RegisterServiceRequestSchema: GenMessage<RegisterServiceRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 5);
+  messageDesc(file_forge_v1_catalog, 6);
 
 /**
  * @generated from message forge.v1.RegisterServiceResponse
@@ -247,7 +290,7 @@ export type RegisterServiceResponse = Message<"forge.v1.RegisterServiceResponse"
  * Use `create(RegisterServiceResponseSchema)` to create a new message.
  */
 export const RegisterServiceResponseSchema: GenMessage<RegisterServiceResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 6);
+  messageDesc(file_forge_v1_catalog, 7);
 
 /**
  * @generated from message forge.v1.UpdateServiceRequest
@@ -281,7 +324,7 @@ export type UpdateServiceRequest = Message<"forge.v1.UpdateServiceRequest"> & {
  * Use `create(UpdateServiceRequestSchema)` to create a new message.
  */
 export const UpdateServiceRequestSchema: GenMessage<UpdateServiceRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 7);
+  messageDesc(file_forge_v1_catalog, 8);
 
 /**
  * @generated from message forge.v1.UpdateServiceResponse
@@ -298,7 +341,7 @@ export type UpdateServiceResponse = Message<"forge.v1.UpdateServiceResponse"> & 
  * Use `create(UpdateServiceResponseSchema)` to create a new message.
  */
 export const UpdateServiceResponseSchema: GenMessage<UpdateServiceResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 8);
+  messageDesc(file_forge_v1_catalog, 9);
 
 /**
  * @generated from message forge.v1.DeleteServiceRequest
@@ -327,7 +370,7 @@ export type DeleteServiceRequest = Message<"forge.v1.DeleteServiceRequest"> & {
  * Use `create(DeleteServiceRequestSchema)` to create a new message.
  */
 export const DeleteServiceRequestSchema: GenMessage<DeleteServiceRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 9);
+  messageDesc(file_forge_v1_catalog, 10);
 
 /**
  * @generated from message forge.v1.DeleteServiceResponse
@@ -356,7 +399,7 @@ export type DeleteServiceResponse = Message<"forge.v1.DeleteServiceResponse"> & 
  * Use `create(DeleteServiceResponseSchema)` to create a new message.
  */
 export const DeleteServiceResponseSchema: GenMessage<DeleteServiceResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 10);
+  messageDesc(file_forge_v1_catalog, 11);
 
 /**
  * @generated from message forge.v1.CreateServiceRequest
@@ -420,7 +463,7 @@ export type CreateServiceRequest = Message<"forge.v1.CreateServiceRequest"> & {
  * Use `create(CreateServiceRequestSchema)` to create a new message.
  */
 export const CreateServiceRequestSchema: GenMessage<CreateServiceRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 11);
+  messageDesc(file_forge_v1_catalog, 12);
 
 /**
  * CreateServiceResponse is one message of the CreateService stream.
@@ -469,7 +512,7 @@ export type CreateServiceResponse = Message<"forge.v1.CreateServiceResponse"> & 
  * Use `create(CreateServiceResponseSchema)` to create a new message.
  */
 export const CreateServiceResponseSchema: GenMessage<CreateServiceResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 12);
+  messageDesc(file_forge_v1_catalog, 13);
 
 /**
  * CreateStep reports progress of one step: fetch, render, create_repo, push, register.
@@ -500,7 +543,7 @@ export type CreateStep = Message<"forge.v1.CreateStep"> & {
  * Use `create(CreateStepSchema)` to create a new message.
  */
 export const CreateStepSchema: GenMessage<CreateStep> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 13);
+  messageDesc(file_forge_v1_catalog, 14);
 
 /**
  * State is where the step is.
@@ -528,7 +571,7 @@ export enum CreateStep_State {
  * Describes the enum forge.v1.CreateStep.State.
  */
 export const CreateStep_StateSchema: GenEnum<CreateStep_State> = /*@__PURE__*/
-  enumDesc(file_forge_v1_catalog, 13, 0);
+  enumDesc(file_forge_v1_catalog, 14, 0);
 
 /**
  * CreateFailure ends a create that failed after the repo was created.
@@ -559,7 +602,7 @@ export type CreateFailure = Message<"forge.v1.CreateFailure"> & {
  * Use `create(CreateFailureSchema)` to create a new message.
  */
 export const CreateFailureSchema: GenMessage<CreateFailure> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 14);
+  messageDesc(file_forge_v1_catalog, 15);
 
 /**
  * CreatePlan is what a validate_only create would do.
@@ -588,7 +631,7 @@ export type CreatePlan = Message<"forge.v1.CreatePlan"> & {
  * Use `create(CreatePlanSchema)` to create a new message.
  */
 export const CreatePlanSchema: GenMessage<CreatePlan> = /*@__PURE__*/
-  messageDesc(file_forge_v1_catalog, 15);
+  messageDesc(file_forge_v1_catalog, 16);
 
 /**
  * Lifecycle is where a service is in its life.

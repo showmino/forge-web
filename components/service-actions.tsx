@@ -8,6 +8,7 @@ import { Dialog, DialogActions } from "@/components/ui/dialog";
 import { Field, inputClass } from "@/components/ui/field";
 import { ErrorNote, Loading } from "@/components/ui/layout";
 import { useToast } from "@/components/ui/toast";
+import type { Service } from "@/gen/forge/v1/catalog_pb";
 import { Bump, type Deployment } from "@/gen/forge/v1/deploy_pb";
 import type { Environment } from "@/gen/forge/v1/environment_pb";
 import { environmentId } from "@/lib/api";
@@ -506,6 +507,192 @@ export function DeleteServiceDialog({
           <Button kind="danger" type="submit" disabled={action.busy || !matches}>
             Delete service
           </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
+  );
+}
+
+type HostKind = "own" | "root" | "other";
+
+// ChangeAddressDialog moves where a service is reached. It is meant for the
+// rare case (a service that takes over a domain of its own), so it asks
+// a lot: the API plans the move first, every address in use elsewhere is
+// typed to claim it, and the service's name is typed to confirm.
+export function ChangeAddressDialog({
+  service,
+  onClose,
+  onChanged,
+}: {
+  service: Service;
+  onClose: () => void;
+  onChanged: () => void;
+}) {
+  const api = useApi();
+  const toast = useToast();
+  const id = service.name.replace(/^services\//, "");
+  const now = service.address;
+  const [clear, setClear] = useState(false);
+  const [kind, setKind] = useState<HostKind>(now?.host === "@" ? "root" : now?.host && now.host !== id ? "other" : "own");
+  const [other, setOther] = useState(now?.host && now.host !== "@" && now.host !== id ? now.host : "");
+  const [domain, setDomain] = useState(now?.domain ?? "");
+  const [claims, setClaims] = useState<Record<string, string>>({});
+  const [typed, setTyped] = useState("");
+  const host = kind === "root" ? "@" : kind === "other" ? other.trim() : "";
+  const request = clear ? { clear: true } : { host, domain: domain.trim() };
+  // The plan is asked for once the reader has said what they want, and again
+  // whenever that changes; nothing is stored by it.
+  const [asked, setAsked] = useState<string | null>(null);
+  const key = JSON.stringify(request);
+  const plan = useQuery({
+    queryKey: ["address-plan", id, asked],
+    queryFn: () => api.deploys.setAddress({ service: service.name, ...request, validateOnly: true }),
+    enabled: asked === key,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  });
+  const planned = asked === key ? plan.data?.addresses : undefined;
+  const inUse = (planned ?? []).filter((p) => p.inUse).map((p) => p.host);
+  const claimed = inUse.every((h) => claims[h]?.trim() === h);
+  const matches = typed.trim() === id;
+  const action = useAction(
+    () => api.deploys.setAddress({ service: service.name, ...request, claim: inUse, etag: service.etag }),
+    () => {
+      const flags = clear
+        ? "--clear"
+        : `--host ${host || id} --domain ${domain.trim() || "<default>"}${inUse.map((h) => ` --claim ${h}`).join("")}`;
+      toast(`${id}'s address is changed; each environment moves at its next deploy`, `forge service address ${id} ${flags} --yes`);
+      onChanged();
+    },
+  );
+  const radio = (value: HostKind, label: ReactNode) => (
+    <label className="flex items-center gap-2 text-[13.5px]">
+      <input type="radio" name="address-host" className="size-3.5 accent-ember" checked={kind === value} onChange={() => setKind(value)} />
+      {label}
+    </label>
+  );
+  return (
+    <Dialog title={`Change the address of ${id}?`} onClose={onClose}>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (planned && claimed && matches) action.run();
+          else setAsked(key);
+        }}
+        className="flex flex-col gap-4"
+      >
+        <p>
+          This moves where people reach {id}. The address it has now stops working, and links and bookmarks to it break.
+          Most services never need this: their address comes from <span className="type-code">run.host</span> and{" "}
+          <span className="type-code">run.domain</span> in forge.yaml.
+        </p>
+        <FactList
+          items={[
+            [
+              "Now",
+              now ? (
+                <>
+                  Set in Forge: host {code(now.host || id)}, domain {code(now.domain || "the default")}
+                </>
+              ) : (
+                "From forge.yaml"
+              ),
+            ],
+          ]}
+        />
+        {now ? (
+          <label className="flex items-center gap-2 text-[13.5px]">
+            <input type="checkbox" className="size-3.5 accent-ember" checked={clear} onChange={(e) => setClear(e.target.checked)} />
+            Go back to forge.yaml&apos;s address
+          </label>
+        ) : null}
+        {clear ? null : (
+          <>
+            <fieldset className="flex flex-col gap-1.5">
+              <legend className="mb-1.5 text-[13px] font-medium">Name before the domain</legend>
+              {radio("own", <>Its own name ({code(id)})</>)}
+              {radio("root", "The domain itself (production at the domain, staging at staging.<domain>)")}
+              {radio("other", "Another name")}
+              {kind === "other" ? (
+                <input
+                  aria-label="Another name"
+                  className={`${inputClass} type-code`}
+                  value={other}
+                  onChange={(e) => setOther(e.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              ) : null}
+            </fieldset>
+            <Field id="address-domain" label="Domain" hint="One of the platform's public domains. Empty is the default one.">
+              <input
+                id="address-domain"
+                className={`${inputClass} type-code`}
+                value={domain}
+                onChange={(e) => setDomain(e.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+                placeholder="example.com"
+              />
+            </Field>
+          </>
+        )}
+        {asked === key && plan.isFetching ? <Loading what="where it would go" /> : null}
+        {asked === key && plan.error ? <ErrorNote error={plan.error} /> : null}
+        {planned ? (
+          <>
+            <FactList
+              items={planned.map((p) => [
+                p.env,
+                <>
+                  {code(p.url)}
+                  {p.currentUrl && p.currentUrl !== p.url ? <span className="text-fg-3"> (now {p.currentUrl}, which stops working)</span> : null}
+                </>,
+              ])}
+            />
+            <p className="text-fg-2">Nothing moves yet: staging moves at its next deploy, production at its next promote.</p>
+            {inUse.map((h) => (
+              <Field
+                key={h}
+                id={`claim-${h}`}
+                label={`${h} is in use already. Type it to take it over`}
+                hint={`Whatever answers at ${h} now stops getting its visitors: they reach ${id}.`}
+              >
+                <input
+                  id={`claim-${h}`}
+                  className={`${inputClass} font-mono`}
+                  value={claims[h] ?? ""}
+                  onChange={(e) => setClaims((c) => ({ ...c, [h]: e.target.value }))}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </Field>
+            ))}
+            <Field id="address-name" label={`Type ${id} to confirm`}>
+              <input
+                id="address-name"
+                className={`${inputClass} font-mono`}
+                value={typed}
+                onChange={(e) => setTyped(e.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+              />
+            </Field>
+          </>
+        ) : null}
+        {action.error ? <ErrorNote error={action.error} /> : null}
+        <DialogActions>
+          <Button onClick={onClose}>Cancel</Button>
+          {planned ? (
+            <Button kind="danger" type="submit" disabled={action.busy || !claimed || !matches}>
+              Change address
+            </Button>
+          ) : (
+            <Button type="submit" disabled={plan.isFetching || (!clear && kind === "other" && !other.trim())}>
+              Show where it goes
+            </Button>
+          )}
         </DialogActions>
       </form>
     </Dialog>
