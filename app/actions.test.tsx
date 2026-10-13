@@ -157,6 +157,19 @@ function forge(w: World) {
         record("rollback", req);
         return { operation: op("op_cccccccccccc", "rollback", "deployments/payments/production") };
       },
+      setAddress: (req) => {
+        // As the API: the root of pay.example is in use; a dry run changes nothing.
+        record(req.validateOnly ? "addressCheck" : "address", req);
+        const root = req.host === "@";
+        const domain = req.domain || "example.com";
+        return {
+          service: payments,
+          addresses: [
+            { env: "staging", url: `https://${root ? `staging.${domain}` : `payments-staging.${domain}`}`, public: true, currentUrl: "https://payments-staging.example.com", host: root ? `staging.${domain}` : `payments-staging.${domain}` },
+            { env: "production", url: `https://${root ? domain : `payments.${domain}`}`, public: true, inUse: root, host: root ? domain : `payments.${domain}` },
+          ],
+        };
+      },
     });
     router.service(EnvironmentService, {
       listEnvironments: () => ({
@@ -480,6 +493,50 @@ describe("delete a service", () => {
     fireEvent.change(dialog().getByLabelText("Type payments to confirm"), { target: { value: "payments" } });
     click(dialog().getByRole("button", { name: "Delete service" }));
     expect((await dialog().findByRole("alert")).textContent).toContain("is a dependency of services/checkout");
+  });
+});
+
+describe("change the address", () => {
+  it("plans first, makes the writer type each address in use and the name, then sets it", async () => {
+    const w = world();
+    await openService(w);
+    click(await screen.findByRole("button", { name: "Service settings" }));
+    expect(screen.getByRole("region", { name: "Danger zone" }).textContent).toContain("Comes from forge.yaml.");
+    click(screen.getByRole("button", { name: "Change address" }));
+    expect(dialog().getByRole("heading", { name: "Change the address of payments?" })).toBeTruthy();
+    // Nothing can be changed before the plan is shown.
+    expect(dialog().queryByRole("button", { name: "Change address" })).toBeNull();
+
+    click(dialog().getByLabelText(/The domain itself/));
+    fireEvent.change(dialog().getByLabelText("Domain"), { target: { value: "pay.example" } });
+    click(dialog().getByRole("button", { name: "Show where it goes" }));
+    await waitFor(() => expect(w.calls.addressCheck).toMatchObject([{ service: "services/payments", host: "@", domain: "pay.example", validateOnly: true }]));
+    expect(await dialog().findByText("https://pay.example")).toBeTruthy();
+    expect(dialog().getByText(/now https:\/\/payments-staging.example.com, which stops working/)).toBeTruthy();
+
+    const confirm = dialog().getByRole("button", { name: "Change address" }) as HTMLButtonElement;
+    fireEvent.change(dialog().getByLabelText("Type payments to confirm"), { target: { value: "payments" } });
+    expect(confirm.disabled).toBe(true); // pay.example is in use: it must be typed too
+    fireEvent.change(dialog().getByLabelText(/pay.example is in use already/), { target: { value: "pay.example" } });
+    expect(confirm.disabled).toBe(false);
+    click(confirm);
+    await waitFor(() =>
+      expect(w.calls.address).toMatchObject([{ service: "services/payments", host: "@", domain: "pay.example", claim: ["pay.example"], etag: 'W/"3"' }]),
+    );
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+
+  it("asks for a new plan when the choice changes", async () => {
+    const w = world();
+    await openService(w);
+    click(await screen.findByRole("button", { name: "Service settings" }));
+    click(screen.getByRole("button", { name: "Change address" }));
+    click(dialog().getByRole("button", { name: "Show where it goes" }));
+    expect(await dialog().findByText("https://payments.example.com")).toBeTruthy();
+    fireEvent.change(dialog().getByLabelText("Domain"), { target: { value: "other.io" } });
+    expect(dialog().queryByRole("button", { name: "Change address" })).toBeNull();
+    expect(dialog().getByRole("button", { name: "Show where it goes" })).toBeTruthy();
+    expect(w.calls.address).toBeUndefined();
   });
 });
 

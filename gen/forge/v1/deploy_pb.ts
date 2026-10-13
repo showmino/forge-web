@@ -4,6 +4,8 @@
 
 import type { GenEnum, GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { enumDesc, fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { Service } from "./catalog_pb";
+import { file_forge_v1_catalog } from "./catalog_pb";
 import type { Operation } from "./operation_pb";
 import { file_forge_v1_operation } from "./operation_pb";
 import type { Timestamp } from "@bufbuild/protobuf/wkt";
@@ -14,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file forge/v1/deploy.proto.
  */
 export const file_forge_v1_deploy: GenFile = /*@__PURE__*/
-  fileDesc("ChVmb3JnZS92MS9kZXBsb3kucHJvdG8SCGZvcmdlLnYxIvoECgpEZXBsb3ltZW50EgwKBG5hbWUYASABKAkSDwoHc2VydmljZRgCIAEoCRILCgNlbnYYAyABKAkSDQoFaW1hZ2UYBCABKAkSCwoDcmVmGAUgASgJEg4KBmNvbW1pdBgGIAEoCRILCgN1cmwYByABKAkSLQoEc3luYxgIIAEoDjIfLmZvcmdlLnYxLkRlcGxveW1lbnQuU3luY1N0YXR1cxIrCgZoZWFsdGgYCSABKA4yGy5mb3JnZS52MS5EZXBsb3ltZW50LkhlYWx0aBIPCgdtZXNzYWdlGAogASgJEhUKDWRlcGxveV9jb21taXQYCyABKAkSEwoLZGVwbG95ZWRfYnkYDCABKAkSLwoLZGVwbG95X3RpbWUYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCW9wZXJhdGlvbhgOIAEoCRIPCgd2ZXJzaW9uGA8gASgJIncKClN5bmNTdGF0dXMSGwoXU1lOQ19TVEFUVVNfVU5TUEVDSUZJRUQQABIWChJTWU5DX1NUQVRVU19TWU5DRUQQARIbChdTWU5DX1NUQVRVU19PVVRfT0ZfU1lOQxACEhcKE1NZTkNfU1RBVFVTX1VOS05PV04QAyKfAQoGSGVhbHRoEhYKEkhFQUxUSF9VTlNQRUNJRklFRBAAEhIKDkhFQUxUSF9IRUFMVEhZEAESFgoSSEVBTFRIX1BST0dSRVNTSU5HEAISEwoPSEVBTFRIX0RFR1JBREVEEAMSEgoOSEVBTFRIX01JU1NJTkcQBBIUChBIRUFMVEhfU1VTUEVOREVEEAUSEgoOSEVBTFRIX1VOS05PV04QBiK8AQoMRGVwbG95UmVjb3JkEhUKDWRlcGxveV9jb21taXQYASABKAkSDAoEa2luZBgCIAEoCRINCgVpbWFnZRgDIAEoCRILCgNyZWYYBCABKAkSDgoGY29tbWl0GAUgASgJEg0KBWFjdG9yGAYgASgJEigKBHRpbWUYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCW9wZXJhdGlvbhgIIAEoCRIPCgd2ZXJzaW9uGAkgASgJIogBChJTdGFydERlcGxveVJlcXVlc3QSDwoHc2VydmljZRgBIAEoCRILCgNlbnYYAiABKAkSCwoDcmVmGAMgASgJEhIKCnJlcXVlc3RfaWQYBCABKAkSFQoNdmFsaWRhdGVfb25seRgFIAEoCBIcCgRidW1wGAYgASgOMg4uZm9yZ2UudjEuQnVtcCJnChNTdGFydERlcGxveVJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIoCgpkZXBsb3ltZW50GAIgASgLMhQuZm9yZ2UudjEuRGVwbG95bWVudCIkChRHZXREZXBsb3ltZW50UmVxdWVzdBIMCgRuYW1lGAEgASgJIkEKFUdldERlcGxveW1lbnRSZXNwb25zZRIoCgpkZXBsb3ltZW50GAEgASgLMhQuZm9yZ2UudjEuRGVwbG95bWVudCI2ChZMaXN0RGVwbG95bWVudHNSZXF1ZXN0Eg8KB3NlcnZpY2UYASABKAkSCwoDZW52GAIgASgJIkQKF0xpc3REZXBsb3ltZW50c1Jlc3BvbnNlEikKC2RlcGxveW1lbnRzGAEgAygLMhQuZm9yZ2UudjEuRGVwbG95bWVudCI3ChhMaXN0RGVwbG95SGlzdG9yeVJlcXVlc3QSDAoEbmFtZRgBIAEoCRINCgVsaW1pdBgCIAEoBSJEChlMaXN0RGVwbG95SGlzdG9yeVJlc3BvbnNlEicKB3JlY29yZHMYASADKAsyFi5mb3JnZS52MS5EZXBsb3lSZWNvcmQiSAoVUm9sbGJhY2tEZXBsb3lSZXF1ZXN0EgwKBG5hbWUYASABKAkSCgoCdG8YAiABKAkSFQoNdmFsaWRhdGVfb25seRgDIAEoCCJqChZSb2xsYmFja0RlcGxveVJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIoCgpkZXBsb3ltZW50GAIgASgLMhQuZm9yZ2UudjEuRGVwbG95bWVudCJ2ChRQcm9tb3RlRGVwbG95UmVxdWVzdBIPCgdzZXJ2aWNlGAEgASgJEgwKBGZyb20YAiABKAkSCgoCdG8YAyABKAkSFQoNdmFsaWRhdGVfb25seRgEIAEoCBIcCgRidW1wGAUgASgOMg4uZm9yZ2UudjEuQnVtcCJpChVQcm9tb3RlRGVwbG95UmVzcG9uc2USJgoJb3BlcmF0aW9uGAEgASgLMhMuZm9yZ2UudjEuT3BlcmF0aW9uEigKCmRlcGxveW1lbnQYAiABKAsyFC5mb3JnZS52MS5EZXBsb3ltZW50KkwKBEJ1bXASFAoQQlVNUF9VTlNQRUNJRklFRBAAEg4KCkJVTVBfUEFUQ0gQARIOCgpCVU1QX01JTk9SEAISDgoKQlVNUF9NQUpPUhADMp8ECg1EZXBsb3lTZXJ2aWNlEkwKC1N0YXJ0RGVwbG95EhwuZm9yZ2UudjEuU3RhcnREZXBsb3lSZXF1ZXN0Gh0uZm9yZ2UudjEuU3RhcnREZXBsb3lSZXNwb25zZSIAElUKDUdldERlcGxveW1lbnQSHi5mb3JnZS52MS5HZXREZXBsb3ltZW50UmVxdWVzdBofLmZvcmdlLnYxLkdldERlcGxveW1lbnRSZXNwb25zZSIDkAIBElsKD0xpc3REZXBsb3ltZW50cxIgLmZvcmdlLnYxLkxpc3REZXBsb3ltZW50c1JlcXVlc3QaIS5mb3JnZS52MS5MaXN0RGVwbG95bWVudHNSZXNwb25zZSIDkAIBEmEKEUxpc3REZXBsb3lIaXN0b3J5EiIuZm9yZ2UudjEuTGlzdERlcGxveUhpc3RvcnlSZXF1ZXN0GiMuZm9yZ2UudjEuTGlzdERlcGxveUhpc3RvcnlSZXNwb25zZSIDkAIBElUKDlJvbGxiYWNrRGVwbG95Eh8uZm9yZ2UudjEuUm9sbGJhY2tEZXBsb3lSZXF1ZXN0GiAuZm9yZ2UudjEuUm9sbGJhY2tEZXBsb3lSZXNwb25zZSIAElIKDVByb21vdGVEZXBsb3kSHi5mb3JnZS52MS5Qcm9tb3RlRGVwbG95UmVxdWVzdBofLmZvcmdlLnYxLlByb21vdGVEZXBsb3lSZXNwb25zZSIAYgZwcm90bzM", [file_forge_v1_operation, file_google_protobuf_timestamp]);
+  fileDesc("ChVmb3JnZS92MS9kZXBsb3kucHJvdG8SCGZvcmdlLnYxIvoECgpEZXBsb3ltZW50EgwKBG5hbWUYASABKAkSDwoHc2VydmljZRgCIAEoCRILCgNlbnYYAyABKAkSDQoFaW1hZ2UYBCABKAkSCwoDcmVmGAUgASgJEg4KBmNvbW1pdBgGIAEoCRILCgN1cmwYByABKAkSLQoEc3luYxgIIAEoDjIfLmZvcmdlLnYxLkRlcGxveW1lbnQuU3luY1N0YXR1cxIrCgZoZWFsdGgYCSABKA4yGy5mb3JnZS52MS5EZXBsb3ltZW50LkhlYWx0aBIPCgdtZXNzYWdlGAogASgJEhUKDWRlcGxveV9jb21taXQYCyABKAkSEwoLZGVwbG95ZWRfYnkYDCABKAkSLwoLZGVwbG95X3RpbWUYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCW9wZXJhdGlvbhgOIAEoCRIPCgd2ZXJzaW9uGA8gASgJIncKClN5bmNTdGF0dXMSGwoXU1lOQ19TVEFUVVNfVU5TUEVDSUZJRUQQABIWChJTWU5DX1NUQVRVU19TWU5DRUQQARIbChdTWU5DX1NUQVRVU19PVVRfT0ZfU1lOQxACEhcKE1NZTkNfU1RBVFVTX1VOS05PV04QAyKfAQoGSGVhbHRoEhYKEkhFQUxUSF9VTlNQRUNJRklFRBAAEhIKDkhFQUxUSF9IRUFMVEhZEAESFgoSSEVBTFRIX1BST0dSRVNTSU5HEAISEwoPSEVBTFRIX0RFR1JBREVEEAMSEgoOSEVBTFRIX01JU1NJTkcQBBIUChBIRUFMVEhfU1VTUEVOREVEEAUSEgoOSEVBTFRIX1VOS05PV04QBiK8AQoMRGVwbG95UmVjb3JkEhUKDWRlcGxveV9jb21taXQYASABKAkSDAoEa2luZBgCIAEoCRINCgVpbWFnZRgDIAEoCRILCgNyZWYYBCABKAkSDgoGY29tbWl0GAUgASgJEg0KBWFjdG9yGAYgASgJEigKBHRpbWUYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCW9wZXJhdGlvbhgIIAEoCRIPCgd2ZXJzaW9uGAkgASgJIogBChJTdGFydERlcGxveVJlcXVlc3QSDwoHc2VydmljZRgBIAEoCRILCgNlbnYYAiABKAkSCwoDcmVmGAMgASgJEhIKCnJlcXVlc3RfaWQYBCABKAkSFQoNdmFsaWRhdGVfb25seRgFIAEoCBIcCgRidW1wGAYgASgOMg4uZm9yZ2UudjEuQnVtcCJnChNTdGFydERlcGxveVJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIoCgpkZXBsb3ltZW50GAIgASgLMhQuZm9yZ2UudjEuRGVwbG95bWVudCIkChRHZXREZXBsb3ltZW50UmVxdWVzdBIMCgRuYW1lGAEgASgJIkEKFUdldERlcGxveW1lbnRSZXNwb25zZRIoCgpkZXBsb3ltZW50GAEgASgLMhQuZm9yZ2UudjEuRGVwbG95bWVudCI2ChZMaXN0RGVwbG95bWVudHNSZXF1ZXN0Eg8KB3NlcnZpY2UYASABKAkSCwoDZW52GAIgASgJIkQKF0xpc3REZXBsb3ltZW50c1Jlc3BvbnNlEikKC2RlcGxveW1lbnRzGAEgAygLMhQuZm9yZ2UudjEuRGVwbG95bWVudCI3ChhMaXN0RGVwbG95SGlzdG9yeVJlcXVlc3QSDAoEbmFtZRgBIAEoCRINCgVsaW1pdBgCIAEoBSJEChlMaXN0RGVwbG95SGlzdG9yeVJlc3BvbnNlEicKB3JlY29yZHMYASADKAsyFi5mb3JnZS52MS5EZXBsb3lSZWNvcmQiSAoVUm9sbGJhY2tEZXBsb3lSZXF1ZXN0EgwKBG5hbWUYASABKAkSCgoCdG8YAiABKAkSFQoNdmFsaWRhdGVfb25seRgDIAEoCCJqChZSb2xsYmFja0RlcGxveVJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIoCgpkZXBsb3ltZW50GAIgASgLMhQuZm9yZ2UudjEuRGVwbG95bWVudCJ2ChRQcm9tb3RlRGVwbG95UmVxdWVzdBIPCgdzZXJ2aWNlGAEgASgJEgwKBGZyb20YAiABKAkSCgoCdG8YAyABKAkSFQoNdmFsaWRhdGVfb25seRgEIAEoCBIcCgRidW1wGAUgASgOMg4uZm9yZ2UudjEuQnVtcCJpChVQcm9tb3RlRGVwbG95UmVzcG9uc2USJgoJb3BlcmF0aW9uGAEgASgLMhMuZm9yZ2UudjEuT3BlcmF0aW9uEigKCmRlcGxveW1lbnQYAiABKAsyFC5mb3JnZS52MS5EZXBsb3ltZW50IoUBChFTZXRBZGRyZXNzUmVxdWVzdBIPCgdzZXJ2aWNlGAEgASgJEgwKBGhvc3QYAiABKAkSDgoGZG9tYWluGAMgASgJEg0KBWNsZWFyGAQgASgIEg0KBWNsYWltGAUgAygJEhUKDXZhbGlkYXRlX29ubHkYBiABKAgSDAoEZXRhZxgHIAEoCSJlChJTZXRBZGRyZXNzUmVzcG9uc2USIgoHc2VydmljZRgBIAEoCzIRLmZvcmdlLnYxLlNlcnZpY2USKwoJYWRkcmVzc2VzGAIgAygLMhguZm9yZ2UudjEuUGxhbm5lZEFkZHJlc3MibQoOUGxhbm5lZEFkZHJlc3MSCwoDZW52GAEgASgJEgsKA3VybBgCIAEoCRIOCgZwdWJsaWMYAyABKAgSDgoGaW5fdXNlGAQgASgIEhMKC2N1cnJlbnRfdXJsGAUgASgJEgwKBGhvc3QYBiABKAkqTAoEQnVtcBIUChBCVU1QX1VOU1BFQ0lGSUVEEAASDgoKQlVNUF9QQVRDSBABEg4KCkJVTVBfTUlOT1IQAhIOCgpCVU1QX01BSk9SEAMy6gQKDURlcGxveVNlcnZpY2USTAoLU3RhcnREZXBsb3kSHC5mb3JnZS52MS5TdGFydERlcGxveVJlcXVlc3QaHS5mb3JnZS52MS5TdGFydERlcGxveVJlc3BvbnNlIgASVQoNR2V0RGVwbG95bWVudBIeLmZvcmdlLnYxLkdldERlcGxveW1lbnRSZXF1ZXN0Gh8uZm9yZ2UudjEuR2V0RGVwbG95bWVudFJlc3BvbnNlIgOQAgESWwoPTGlzdERlcGxveW1lbnRzEiAuZm9yZ2UudjEuTGlzdERlcGxveW1lbnRzUmVxdWVzdBohLmZvcmdlLnYxLkxpc3REZXBsb3ltZW50c1Jlc3BvbnNlIgOQAgESYQoRTGlzdERlcGxveUhpc3RvcnkSIi5mb3JnZS52MS5MaXN0RGVwbG95SGlzdG9yeVJlcXVlc3QaIy5mb3JnZS52MS5MaXN0RGVwbG95SGlzdG9yeVJlc3BvbnNlIgOQAgESVQoOUm9sbGJhY2tEZXBsb3kSHy5mb3JnZS52MS5Sb2xsYmFja0RlcGxveVJlcXVlc3QaIC5mb3JnZS52MS5Sb2xsYmFja0RlcGxveVJlc3BvbnNlIgASUgoNUHJvbW90ZURlcGxveRIeLmZvcmdlLnYxLlByb21vdGVEZXBsb3lSZXF1ZXN0Gh8uZm9yZ2UudjEuUHJvbW90ZURlcGxveVJlc3BvbnNlIgASSQoKU2V0QWRkcmVzcxIbLmZvcmdlLnYxLlNldEFkZHJlc3NSZXF1ZXN0GhwuZm9yZ2UudjEuU2V0QWRkcmVzc1Jlc3BvbnNlIgBiBnByb3RvMw", [file_forge_v1_catalog, file_forge_v1_operation, file_google_protobuf_timestamp]);
 
 /**
  * Deployment is what runs for one service in one environment.
@@ -596,6 +598,147 @@ export const PromoteDeployResponseSchema: GenMessage<PromoteDeployResponse> = /*
   messageDesc(file_forge_v1_deploy, 13);
 
 /**
+ * @generated from message forge.v1.SetAddressRequest
+ */
+export type SetAddressRequest = Message<"forge.v1.SetAddressRequest"> & {
+  /**
+   * "services/{service}".
+   *
+   * @generated from field: string service = 1;
+   */
+  service: string;
+
+  /**
+   * The name before the domain: "" for the service's own, "@" for the
+   * domain itself.
+   *
+   * @generated from field: string host = 2;
+   */
+  host: string;
+
+  /**
+   * One of the platform's public domains, "" for the default, or "none".
+   *
+   * @generated from field: string domain = 3;
+   */
+  domain: string;
+
+  /**
+   * Clear the setting: forge.yaml's run.host and run.domain apply again.
+   *
+   * @generated from field: bool clear = 4;
+   */
+  clear: boolean;
+
+  /**
+   * Addresses in use (they resolve in DNS) that the service may take over.
+   * Each one in use must be named here.
+   *
+   * @generated from field: repeated string claim = 5;
+   */
+  claim: string[];
+
+  /**
+   * @generated from field: bool validate_only = 6;
+   */
+  validateOnly: boolean;
+
+  /**
+   * The service's etag as it was read; the change is refused when the
+   * service has changed since. "" skips the check.
+   *
+   * @generated from field: string etag = 7;
+   */
+  etag: string;
+};
+
+/**
+ * Describes the message forge.v1.SetAddressRequest.
+ * Use `create(SetAddressRequestSchema)` to create a new message.
+ */
+export const SetAddressRequestSchema: GenMessage<SetAddressRequest> = /*@__PURE__*/
+  messageDesc(file_forge_v1_deploy, 14);
+
+/**
+ * @generated from message forge.v1.SetAddressResponse
+ */
+export type SetAddressResponse = Message<"forge.v1.SetAddressResponse"> & {
+  /**
+   * The service with its new address setting.
+   *
+   * @generated from field: forge.v1.Service service = 1;
+   */
+  service?: Service | undefined;
+
+  /**
+   * Where each environment will be reached after its next deploy.
+   *
+   * @generated from field: repeated forge.v1.PlannedAddress addresses = 2;
+   */
+  addresses: PlannedAddress[];
+};
+
+/**
+ * Describes the message forge.v1.SetAddressResponse.
+ * Use `create(SetAddressResponseSchema)` to create a new message.
+ */
+export const SetAddressResponseSchema: GenMessage<SetAddressResponse> = /*@__PURE__*/
+  messageDesc(file_forge_v1_deploy, 15);
+
+/**
+ * PlannedAddress is where one environment of a service will be reached.
+ *
+ * @generated from message forge.v1.PlannedAddress
+ */
+export type PlannedAddress = Message<"forge.v1.PlannedAddress"> & {
+  /**
+   * @generated from field: string env = 1;
+   */
+  env: string;
+
+  /**
+   * @generated from field: string url = 2;
+   */
+  url: string;
+
+  /**
+   * Reachable from the internet.
+   *
+   * @generated from field: bool public = 3;
+   */
+  public: boolean;
+
+  /**
+   * The name resolves in DNS and is not this environment's address now:
+   * it must be claimed.
+   *
+   * @generated from field: bool in_use = 4;
+   */
+  inUse: boolean;
+
+  /**
+   * Where the environment is reached now, "" before its first deploy.
+   *
+   * @generated from field: string current_url = 5;
+   */
+  currentUrl: string;
+
+  /**
+   * The host to name in claim when in_use.
+   *
+   * @generated from field: string host = 6;
+   */
+  host: string;
+};
+
+/**
+ * Describes the message forge.v1.PlannedAddress.
+ * Use `create(PlannedAddressSchema)` to create a new message.
+ */
+export const PlannedAddressSchema: GenMessage<PlannedAddress> = /*@__PURE__*/
+  messageDesc(file_forge_v1_deploy, 16);
+
+/**
  * Bump is the part of the version a final release raises.
  *
  * @generated from enum forge.v1.Bump
@@ -696,6 +839,18 @@ export const DeployService: GenService<{
     methodKind: "unary";
     input: typeof PromoteDeployRequestSchema;
     output: typeof PromoteDeployResponseSchema;
+  },
+  /**
+   * SetAddress changes where a service is reached, overriding forge.yaml's
+   * run.host and run.domain. It applies at the next deploy of each
+   * environment.
+   *
+   * @generated from rpc forge.v1.DeployService.SetAddress
+   */
+  setAddress: {
+    methodKind: "unary";
+    input: typeof SetAddressRequestSchema;
+    output: typeof SetAddressResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_forge_v1_deploy, 0);

@@ -11,6 +11,7 @@ import { DocReader, DocsLink, useHasDocs } from "@/components/doc-reader";
 import { OperationLog } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
 import {
+  ChangeAddressDialog,
   DeleteServiceDialog,
   DeployDialog,
   DestroyDialog,
@@ -35,7 +36,7 @@ import { actorText, exact, shortCommit, timeUntil, when } from "@/lib/format";
 import { auditStatus, deploymentStatus, environmentStatus } from "@/lib/status";
 
 type Open =
-  | { kind: "deploy" | "promote" | "preview" | "delete" }
+  | { kind: "deploy" | "promote" | "preview" | "delete" | "address" }
   | { kind: "rollback"; env: "staging" | "production" }
   | { kind: "extend" | "destroy"; environment: Environment };
 
@@ -309,6 +310,20 @@ function ServiceView({ id }: { id: string }) {
                 </div>
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-4 pb-4">
                   <div className="min-w-0 flex-[1_1_280px]">
+                    <b className="font-semibold">Change address</b>
+                    <p className="mt-0.5 text-[13.5px] text-fg-2">
+                      {s.address
+                        ? `Set here, over forge.yaml: ${s.address.host === "@" ? "the domain itself" : s.address.host || id} on ${s.address.domain || "the default domain"}. `
+                        : "Comes from forge.yaml. "}
+                      Moving it breaks the old address. Rarely needed.
+                    </p>
+                  </div>
+                  <Button kind="danger" onClick={() => setOpen({ kind: "address" })}>
+                    Change address
+                  </Button>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-line px-4 py-4">
+                  <div className="min-w-0 flex-[1_1_280px]">
                     <b className="font-semibold">Delete service</b>
                     <p className="mt-0.5 text-[13.5px] text-fg-2">
                       Takes down staging, production and any previews, and removes {id} from the catalog. The repository is kept.
@@ -345,6 +360,17 @@ function ServiceView({ id }: { id: string }) {
           deployed={(["staging", "production"] as const).filter((env) => deployed(env))}
           onClose={close}
           onStarted={onDeleteStarted}
+        />
+      ) : null}
+      {open?.kind === "address" ? (
+        <ChangeAddressDialog
+          service={s}
+          onClose={close}
+          onChanged={() => {
+            setOpen(null);
+            void queries.invalidateQueries({ queryKey: ["service", id] });
+            refresh();
+          }}
         />
       ) : null}
       {open?.kind === "deploy" ? <DeployDialog id={id} onClose={close} onStarted={onStarted} /> : null}
