@@ -461,7 +461,22 @@ function OverviewTab({
                       <div title={exact(d?.deployTime)}>{when(d?.deployTime)}</div>
                       {d?.deployedBy ? <div className="text-[12.5px] text-fg-3">by {d.deployedBy}</div> : null}
                     </td>
-                    <td className={td}>{d?.url ? <Addr href={d.url} /> : "–"}</td>
+                    <td className={td}>
+                      {d?.url ? <Addr href={d.url} /> : "–"}
+                      {d?.argoUrl && /^https?:\/\//i.test(d.argoUrl) ? (
+                        <div>
+                          <a
+                            href={d.argoUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={`${env} in Argo CD`}
+                            className="text-[12.5px] text-fg-3 no-underline hover:text-info-fg hover:underline"
+                          >
+                            Argo CD ↗
+                          </a>
+                        </div>
+                      ) : null}
+                    </td>
                     {canWrite ? (
                       <td className={td}>
                         {deployed(env) ? (
