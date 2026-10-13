@@ -91,11 +91,11 @@ const external = (
 const marks = { plus, ship, gear, external };
 
 // Icon is one of the small marks buttons carry: plus for "new", ship for "send it on", gear for settings.
-export function Icon({ name }: { name: keyof typeof marks }) {
+export function Icon({ name, size = 15 }: { name: keyof typeof marks; size?: number }) {
   return (
     <svg
-      width="15"
-      height="15"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

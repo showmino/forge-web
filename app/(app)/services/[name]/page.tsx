@@ -395,9 +395,14 @@ function argoAppsUrl(id: string, deployments: Deployment[] | undefined): string 
 
 function ArgoLink({ href, id }: { href: string; id: string }) {
   return (
-    <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-info-fg no-underline hover:underline">
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-[5px] whitespace-nowrap text-[13px] text-info-fg no-underline hover:underline"
+    >
       All {id} apps
-      <Icon name="external" />
+      <Icon name="external" size={13} />
     </a>
   );
 }
@@ -611,7 +616,7 @@ function OverviewTab({
                     ["Owners", s.owners.length ? s.owners.join(", ") : "–"],
                     ["Lifecycle", <Life key="l" lifecycle={s.lifecycle} />],
                     ...(argoApps ? ([["Argo CD", <ArgoLink key="a" href={argoApps} id={id} />]] as [string, ReactNode][]) : []),
-                    ["Repository", s.repoUrl ? <Addr key="r" href={s.repoUrl} /> : "–"],
+                    ["Repository", s.repoUrl ? <Addr key="r" href={s.repoUrl} className="!whitespace-nowrap !break-normal" /> : "–"],
                     [
                       "Depends on",
                       s.dependencies.length
