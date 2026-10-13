@@ -176,6 +176,7 @@ h3{font-size:14px;font-weight:600;margin:0}
 .panel-h{display:flex;align-items:center;gap:var(--s3);padding:var(--s4) var(--s4) var(--s3)}
 .panel-h .btn{margin-left:auto}
 .panel-b{padding:0 var(--s4) var(--s4)}
+.panel>.panel-b:first-child{padding-top:var(--s4)}
 .section{display:flex;flex-direction:column;gap:var(--s3);min-width:0}
 .section-h{display:flex;align-items:baseline;gap:var(--s3);flex-wrap:wrap}
 .section-h a{margin-left:auto;font-size:13px;color:var(--fg-2)}
@@ -339,7 +340,7 @@ tbody tr.link{cursor:pointer}
 .life.production::before{background:var(--fg-2);border-color:var(--fg-2)}
 .life.experimental::before{border-style:dashed;border-color:var(--ember)}
 .life.deprecated{text-decoration:line-through;text-decoration-color:var(--fg-3)}
-.addr{font-family:var(--font-mono);font-size:12.5px;color:var(--info-fg);text-decoration:none;overflow-wrap:anywhere}
+.addr{font-family:var(--font-mono);font-size:12.5px;color:var(--info-fg);text-decoration:none;white-space:nowrap}
 @media (hover:hover) and (pointer:fine){.addr:hover{text-decoration:underline}}
 .mono.ahead{color:var(--ember-ink);font-weight:600}
 .cell-name .envchip{align-self:flex-start}
@@ -373,7 +374,13 @@ tr.group td{background:var(--surface-2);font-size:11.5px;letter-spacing:.06em;te
 .danger-row{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s3) var(--s5)}
 .danger-row>div{flex:1 1 280px;min-width:0}
 .danger-row b{font-weight:600}
+.danger-row+.danger-row{border-top:1px solid var(--line);padding-top:var(--s4);margin-top:var(--s4)}
+.dialog{max-height:calc(100% - 32px);overflow-y:auto}
 .danger-row p{margin:2px 0 0;color:var(--fg-2);font-size:13.5px}
+
+.ext{display:inline-flex;align-items:center;gap:5px;color:var(--info-fg);text-decoration:none;font-size:13px;white-space:nowrap}
+.ext .mono{font-size:12.5px}
+@media (hover:hover) and (pointer:fine){.ext:hover{text-decoration:underline}}
 
 /* ---------- TechDocs ---------- */
 .doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:var(--s4)}
@@ -528,6 +535,7 @@ tr.group td{background:var(--surface-2);font-size:11.5px;letter-spacing:.06em;te
 var STAGES=["Build","Test","Plan","Sync","Verify"];
 var D={
   services:[
+    {name:"deogratias",live:true,team:"platform-engineering",owner:"deogratias.saidi@outlook.com",life:"Experimental",tpl:null,lang:"—",tier:null,status:"none",desc:"The deogratias.cloud website.",env:{staging:["—","Not deployed yet","—","none"],production:["—","Not deployed yet","—","none"]},hosts:{production:"deogratias.cloud"},updated:"Today",registered:"today",deps:[],res:[],checks:null,slo:null,repo:"github.com/showmino/deogratias-cloud"},
     {name:"forge-web",live:true,team:"platform-engineering",owner:"deogratias.saidi@outlook.com",life:"Experimental",tpl:null,lang:"Go",tier:null,status:"healthy",desc:"The Forge web console.",env:{staging:["4468dbb","6 h ago","github:showmino/forge-web","healthy"],production:["4468dbb","6 h ago","deogratias.saidi@outlook.com","healthy"]},updated:"6 h ago",registered:"6 h ago",deps:[],res:[],checks:null,slo:null,repo:"github.com/showmino/forge-web"},
     {name:"payments",team:"billing",owner:"Amara Okafor",life:"Production",tpl:"go-grpc",lang:"Go",tier:1,status:"healthy",desc:"Charges, refunds and payouts for every checkout.",env:{staging:["3f0e8b1","2 h ago","github:acme/payments","healthy"],production:["4b7d1c0","Yesterday","amara.okafor","healthy"]},updated:"4 min ago",registered:"3 months ago",deps:["ledger","identity","fraud-scorer"],res:["payments-db","payments-events"],checks:[1,1,1,1,1],slo:"99.95%",repo:"github.com/acme/payments"},
     {name:"checkout-api",team:"commerce",owner:"Jonas Weber",life:"Production",tpl:"go-http",lang:"Go",tier:1,status:"degraded",desc:"Turns carts into orders and applies pricing rules.",env:{staging:["e81a0b3","2 h ago","github:acme/checkout-api","healthy"],production:["5d20c9e","31 min ago","jonas.weber","degraded"]},updated:"31 min ago",registered:"5 months ago",deps:["payments","identity"],res:["checkout-cache"],checks:[1,1,1,0,1],slo:"99.9%",repo:"github.com/acme/checkout-api"},
@@ -607,7 +615,7 @@ var CHECKS=["CI pipeline","SLO defined","Tracing with OpenTelemetry","Runbook li
 /* ---------------- Helpers ---------------- */
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 function svc(n){for(var i=0;i<D.services.length;i++)if(D.services[i].name===n)return D.services[i];return null;}
-var SVC_PILL={healthy:["ok","Healthy"],degraded:["warn","Degraded"],failing:["bad","Failing"],creating:["run","Creating"]};
+var SVC_PILL={none:["neutral","Not deployed"],healthy:["ok","Healthy"],degraded:["warn","Degraded"],failing:["bad","Failing"],creating:["run","Creating"]};
 var DEP_PILL={running:["run","In progress"],queued:["neutral","Queued"],succeeded:["ok","Succeeded"],failed:["bad","Failed"]};
 var RES_PILL={applied:["ok","Applied"],plan:["info","Plan ready"],drift:["warn","Drift"],failed:["bad","Apply failed"]};
 function pill(map,k){var p=map[k];return '<span class="pill '+p[0]+'">'+p[1]+'</span>';}
@@ -671,7 +679,7 @@ V.overview=function(){
     h+='<section class="section"><div class="section-h"><h2>In flight</h2><a href="#deployments">All deployments</a></div><div class="panel flight">'+
       '<div class="flight-top"><span class="flight-title">'+running.svc+' <span class="faint">→</span> '+running.env+'</span>'+pill(DEP_PILL,running.state)+'<span class="tag">'+running.ref+'</span><button class="btn btn-sm" style="margin-left:auto" data-action="toast" data-msg="Watching '+running.op+'" data-code="forge op watch '+running.op+'">Watch</button></div>'+
       line(running)+
-      '<div class="flight-meta"><span>Started by <span class="mono">'+running.by+'</span> '+running.when+'</span><span>Operation <span class="mono">'+running.op+'</span></span><span>Argo CD app <span class="mono">payments-staging</span></span></div>'+
+      '<div class="flight-meta"><span>Started by <span class="mono">'+running.by+'</span> '+running.when+'</span><span>Operation <span class="mono">'+running.op+'</span></span><span>Argo CD app <a class="ext" href="'+argoUrl("payments","staging")+'" target="_blank" rel="noopener"><span class="mono">payments-staging</span>'+ARGO_I+'</a></span></div>'+
       '<div class="flight-log">01:33:02  build    <em>ok</em>   image ghcr.io/acme/payments:9c1e2fa  (sha256:4be1…)\n01:34:10  test     <em>ok</em>   412 passed, 0 failed\n01:35:01  plan     <em>ok</em>   no infra changes\n01:35:20  <b>sync     …    argo cd: 2 of 3 pods ready (rolling)</b></div>'+
       '</div></section>';
   }
@@ -686,7 +694,16 @@ V.overview=function(){
 
 var ENVS=["staging","production"];
 var NIP=".10.150.1.222.nip.io";
-function addr(svcName,envName){return svcName+"."+envName+NIP;}
+/* Argo CD: one Application per service and environment, named <service>-<environment>. Set ARGOCD_URL to your Argo CD address. */
+var ARGOCD_URL="https://argocd.showmino.com";
+function argoApp(svcName,envName){return svcName+"-"+envName;}
+function argoUrl(svcName,envName){return ARGOCD_URL+"/applications/argocd/"+argoApp(svcName,envName);}
+function argoList(svcName){return ARGOCD_URL+"/applications?search="+encodeURIComponent(svcName);}
+var ARGO_I='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>';
+function defaultHost(svcName,envName){return svcName+"."+envName+NIP;}
+function addr(svcName,envName){var o=svc(svcName);return (o&&o.hosts&&o.hosts[envName])||defaultHost(svcName,envName);}
+function hostOwner(host,except){for(var i=0;i<D.services.length;i++){var o=D.services[i];if(o.name===except)continue;for(var j=0;j<ENVS.length;j++)if(addr(o.name,ENVS[j])===host)return o.name;}return null;}
+var HOST_RE=/^(?=.{4,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
 function envchip(n){return '<span class="envchip '+(n==="staging"||n==="production"?n:"preview")+'">'+n+'</span>';}
 function life(l){return '<span class="life '+l.toLowerCase()+'">'+l+'</span>';}
 
@@ -724,10 +741,10 @@ V.service=function(name){
   var tabs=[["overview","Overview"],["deploys","Deployments"],["deps","Dependencies"],["docs","Docs"],["settings","Settings"]];
   h+='<div class="tabs" role="tablist">'+tabs.map(function(t){return '<button class="tab" role="tab" data-action="svctab" data-tab="'+t[0]+'" aria-selected="'+(ui.svcTab===t[0])+'">'+t[1]+(t[0]==="deploys"?' <span class="faint num">'+deps.length+'</span>':'')+'</button>';}).join("")+'</div>';
   if(ui.svcTab==="overview"){
-    h+='<section class="section"><div class="section-h"><h2>Staging and production</h2>'+(ahead?'<span class="faint" style="font-size:13px">Staging is ahead of production</span>':'<span class="faint" style="font-size:13px">Both run the same commit</span>')+'</div>';
-    h+='<div class="table-wrap"><table><thead><tr><th>Environment</th><th>Status</th><th>Commit</th><th>Deployed</th><th class="hide-sm">By</th><th>Address</th></tr></thead><tbody>';
+    h+='<section class="section"><div class="section-h"><h2>Staging and production</h2>'+(ahead?'<span class="faint" style="font-size:13px">Staging is ahead of production</span>':'<span class="faint" style="font-size:13px">'+(st[0]==="—"?"Not deployed yet":"Both run the same commit")+'</span>')+'</div>';
+    h+='<div class="table-wrap"><table><thead><tr><th>Environment</th><th>Status</th><th>Commit</th><th>Deployed</th><th class="hide-sm">By</th><th>Address</th><th>Argo CD</th></tr></thead><tbody>';
     ENVS.forEach(function(n){var e=s.env[n];
-      h+='<tr><td>'+envchip(n)+'</td><td>'+pill(SVC_PILL,e[3])+'</td><td><span class="mono'+(n==="staging"&&ahead?' ahead':'')+'">'+e[0]+'</span></td><td class="faint" style="white-space:nowrap">'+e[1]+'</td><td class="hide-sm" style="font-size:13px">'+esc(e[2])+'</td><td><a class="addr" href="http://'+addr(s.name,n)+'" target="_blank" rel="noopener">'+addr(s.name,n)+'</a></td></tr>';});
+      h+='<tr><td>'+envchip(n)+'</td><td>'+pill(SVC_PILL,e[3])+'</td><td><span class="mono'+(n==="staging"&&ahead?' ahead':'')+'">'+e[0]+'</span></td><td class="faint" style="white-space:nowrap">'+e[1]+'</td><td class="hide-sm" style="font-size:13px">'+esc(e[2])+'</td><td><a class="addr" href="https://'+addr(s.name,n)+'" target="_blank" rel="noopener">'+addr(s.name,n)+'</a>'+(s.hosts&&s.hosts[n]?' <span class="tag" title="Set in Settings, Danger zone">custom</span>':'')+'</td><td>'+(e[0]==="—"?'<span class="faint">Not synced yet</span>':'<a class="ext" href="'+argoUrl(s.name,n)+'" target="_blank" rel="noopener" aria-label="Open '+argoApp(s.name,n)+' in Argo CD"><span class="mono">'+argoApp(s.name,n)+'</span>'+ARGO_I+'</a>')+'</td></tr>';});
     h+='</tbody></table></div></section>';
     h+='<div class="grid-2"><div class="side">';
     if(running)h+='<section class="section"><h2>Deploying now</h2><div class="panel flight"><div class="flight-top"><span class="flight-title">'+running.ref+' → '+running.env+'</span>'+pill(DEP_PILL,"running")+'</div>'+line(running)+'</div></section>';
@@ -739,9 +756,9 @@ V.service=function(name){
     deps.slice(0,4).forEach(function(d){h+='<div class="row">'+mini(d)+'<div style="min-width:0"><div class="row-t"><span class="mono">'+d.ref+'</span> <span class="faint">→ '+d.env+'</span></div><div class="row-s">'+(d.note?esc(d.note)+' · ':'')+esc(d.by)+' · '+d.when+'</div></div>'+pill(DEP_PILL,d.state)+'</div>';});
     if(!deps.length)h+='<div class="row"><span></span><span class="faint">No deploys yet. Deploy sends main to staging.</span><span></span></div>';
     h+='</div></section></div><div class="side">';
-    h+='<section class="panel"><div class="panel-h"><h2>About</h2></div><div class="panel-b"><dl class="kv"><dt>Team</dt><dd>'+s.team+'</dd><dt>Owners</dt><dd>'+esc(s.owner)+'</dd><dt>Lifecycle</dt><dd>'+s.life+'</dd><dt>Repository</dt><dd><a class="addr" href="https://'+s.repo+'" target="_blank" rel="noopener">'+s.repo+'</a></dd><dt>Depends on</dt><dd>'+(s.deps.length?s.deps.map(function(d){return '<a class="mono" href="#service-'+d+'">'+d+'</a>';}).join(", "):'–')+'</dd><dt>Tier</dt><dd>'+(s.tier||'–')+'</dd><dt>SLO</dt><dd class="num">'+(s.slo?s.slo+' availability':'–')+'</dd><dt>Template</dt><dd>'+(s.tpl?'<span class="tag">'+s.tpl+'</span>':'–')+'</dd><dt>Registered</dt><dd>'+s.registered+'</dd></dl></div></section>';
-    if(s.checks)h+='<section class="panel"><div class="panel-h"><h2>Golden path</h2><span class="faint num" style="margin-left:auto">'+sum(s.checks)+' of 5</span></div><div class="panel-b"><ul class="checks">'+CHECKS.map(function(c,i){return '<li><span class="tick '+(s.checks[i]?"y":"n")+'">'+(s.checks[i]?I.ok:I.no)+'</span>'+c+(s.checks[i]?'':' <span class="faint">· missing</span>')+'</li>';}).join("")+'</ul></div></section>';
-    else h+='<section class="panel"><div class="panel-h"><h2>Golden path</h2></div><div class="panel-b"><p class="muted" style="margin:0">No checks recorded yet for this service.</p></div></section>';
+    h+='<section class="section"><div class="section-h"><h2>About</h2></div><div class="panel"><div class="panel-b"><dl class="kv"><dt>Team</dt><dd>'+s.team+'</dd><dt>Owners</dt><dd>'+esc(s.owner)+'</dd><dt>Lifecycle</dt><dd>'+s.life+'</dd><dt>Argo CD</dt><dd><a class="ext" href="'+argoList(s.name)+'" target="_blank" rel="noopener">All '+s.name+' apps'+ARGO_I+'</a></dd><dt>Repository</dt><dd><a class="addr" href="https://'+s.repo+'" target="_blank" rel="noopener">'+s.repo+'</a></dd><dt>Depends on</dt><dd>'+(s.deps.length?s.deps.map(function(d){return '<a class="mono" href="#service-'+d+'">'+d+'</a>';}).join(", "):'–')+'</dd><dt>Tier</dt><dd>'+(s.tier||'–')+'</dd><dt>SLO</dt><dd class="num">'+(s.slo?s.slo+' availability':'–')+'</dd><dt>Template</dt><dd>'+(s.tpl?'<span class="tag">'+s.tpl+'</span>':'–')+'</dd><dt>Registered</dt><dd>'+s.registered+'</dd></dl></div></div></section>';
+    if(s.checks)h+='<section class="section"><div class="section-h"><h2>Golden path</h2><span class="faint num">'+sum(s.checks)+' of 5</span></div><div class="panel"><div class="panel-b"><ul class="checks">'+CHECKS.map(function(c,i){return '<li><span class="tick '+(s.checks[i]?"y":"n")+'">'+(s.checks[i]?I.ok:I.no)+'</span>'+c+(s.checks[i]?'':' <span class="faint">· missing</span>')+'</li>';}).join("")+'</ul></div></div></section>';
+    else h+='<section class="section"><div class="section-h"><h2>Golden path</h2></div><div class="panel"><div class="panel-b"><p class="muted" style="margin:0">No checks recorded yet for this service.</p></div></div></section>';
     h+='</div></div>';
   }else if(ui.svcTab==="deploys"){
     h+=deployTable(deps);
@@ -759,6 +776,7 @@ V.service=function(name){
       '<div class="field"><label for="set-repo">Repository</label><input class="input mono" id="set-repo" value="'+s.repo+'" readonly><span class="hint">Change this in the repo\'s forge.yaml.</span></div>'+
       '<div><button class="btn btn-primary" data-action="save-settings">Save changes</button></div></form></section>';
     h+='<section class="panel danger"><div class="panel-h"><h2>Danger zone</h2></div><div class="panel-b list">'+
+      '<div class="danger-row"><div><b>Change host</b><p>Serves '+s.name+' from a different domain. Links, bookmarks and API clients using the old address can break. Most services should keep the default.</p><p class="mono" style="font-size:12.5px;margin-top:6px">'+ENVS.map(function(n){return n+': '+addr(s.name,n);}).join('<br>')+'</p></div><button class="btn" data-action="host-svc" data-svc="'+s.name+'">Change host</button></div>'+
       '<div class="danger-row"><div><b>Delete service</b><p>Destroys staging, production and any previews, and removes '+s.name+' from the catalog. The repository is kept.</p></div><button class="btn btn-danger" data-action="delete-svc" data-svc="'+s.name+'">Delete service</button></div></div></section>';
     h+='</div>';
   }else{
@@ -790,7 +808,7 @@ V.environments=function(){
   h+='<section class="section"><h2>Staging and production</h2><div class="grid-cards env-pair">';
   ENVS.forEach(function(n){
     var e=D.envs.filter(function(x){return x.name===n;})[0];
-    var bad=D.services.filter(function(s){return s.env[n][3]!=="healthy";});
+    var bad=D.services.filter(function(s){return s.env[n][3]!=="healthy"&&s.env[n][3]!=="none";});
     var dr=D.deploys.filter(function(d){return d.env===n&&d.today;}).length;
     h+='<div class="panel env-card"><div class="env-top">'+envchip(n)+pill(SVC_PILL,bad.length?(bad.some(function(s){return s.env[n][3]==="failing";})?"failing":"degraded"):"healthy")+'</div><p class="muted" style="margin:0;font-size:13.5px">'+e.desc+'</p><div class="env-facts"><span><b>'+D.services.length+'</b>services</span><span><b>'+(D.services.length-bad.length)+'</b>healthy</span><span><b>'+dr+'</b>deploys today</span></div>'+
       (bad.length?'<div style="font-size:12.5px;color:var(--fg-2)">Needs a look: '+bad.map(function(s){return '<a class="mono" href="#service-'+s.name+'">'+s.name+'</a>';}).join(", ")+'</div>':'')+
@@ -1078,6 +1096,40 @@ function updateCreate(){
 function destroyDialog(env){
   openLayer('<div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="ds-h"><h2 id="ds-h">Destroy '+esc(env)+'?</h2><p>This deletes the namespace and every resource in it. Type the environment name to confirm.</p><div class="field"><label for="ds-in">Environment name</label><input class="input mono" id="ds-in" autocomplete="off" spellcheck="false" placeholder="'+esc(env)+'"></div><div class="dialog-f"><button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-danger" id="ds-go" data-action="do-destroy" data-env="'+esc(env)+'" disabled>Destroy environment</button></div></div>',"#ds-in");
 }
+function hostDialog(name){
+  var o=svc(name);
+  openLayer('<div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="ho-h" style="width:min(520px,calc(100% - 32px))"><h2 id="ho-h">Change the host for '+esc(name)+'</h2>'+
+    '<p>Forge will issue a certificate for the new host and route traffic to it. Anything using the old address stops working unless you keep a redirect.</p>'+
+    '<div class="field"><label for="ho-env">Environment</label><select class="select" id="ho-env">'+ENVS.map(function(n){return '<option value="'+n+'"'+(n==="production"?" selected":"")+'>'+n+'</option>';}).join("")+'</select></div>'+
+    '<div class="field"><span style="font-size:13px;font-weight:500">Current host</span><span class="mono" id="ho-cur" style="font-size:13px"></span></div>'+
+    '<div class="field"><label for="ho-new">New host</label><input class="input mono" id="ho-new" autocomplete="off" spellcheck="false" placeholder="example.com"><span class="hint" id="ho-err" role="status"></span></div>'+
+    '<div class="admon note" id="ho-dns" hidden></div>'+
+    '<label class="check"><input type="checkbox" id="ho-redirect" checked><span>Redirect the old host to the new one for 30 days</span></label>'+
+    '<label class="check"><input type="checkbox" id="ho-dnsok"><span>I have created the DNS record above. Until it resolves, the service is unreachable at the new host.</span></label>'+
+    '<div class="field"><label for="ho-confirm">Type <span class="mono">'+esc(name)+'</span> to confirm</label><input class="input mono" id="ho-confirm" autocomplete="off" spellcheck="false"></div>'+
+    '<div class="dialog-f"><button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-danger" id="ho-go" data-action="do-host" data-svc="'+esc(name)+'" disabled>Change host</button></div></div>',"#ho-new");
+  hostCheck();
+}
+function hostCheck(){
+  var go=document.getElementById("ho-go");if(!go)return;
+  var name=go.dataset.svc,env=document.getElementById("ho-env").value,cur=addr(name,env);
+  document.getElementById("ho-cur").textContent=cur;
+  var v=document.getElementById("ho-new").value.trim().toLowerCase(),err="",ok=false;
+  if(v){
+    var taken=hostOwner(v,name);
+    if(!HOST_RE.test(v))err="Enter a hostname such as example.com or app.example.com, without https://.";
+    else if(v===cur)err="That is already the current host.";
+    else if(taken)err="Already used by "+taken+".";
+    else if(ENVS.some(function(n){return n!==env&&addr(name,n)===v;}))err="Already used by "+name+" in another environment.";
+    else ok=true;
+  }
+  var e=document.getElementById("ho-err");e.textContent=err;e.style.color=err?"var(--bad-fg)":"";
+  var dns=document.getElementById("ho-dns");
+  if(ok){var apex=v.split(".").length===2;dns.hidden=false;
+    dns.innerHTML=NOTE_I+'<p><b>Create this DNS record first.</b> '+(apex?'<span class="mono">'+esc(v)+'</span> is a root domain, so use an A record: <span class="mono">@ A 10.150.1.222</span>':'<span class="mono">'+esc(v.split(".")[0])+' A 10.150.1.222</span> in the <span class="mono">'+esc(v.split(".").slice(1).join("."))+'</span> zone')+'.</p>';}
+  else dns.hidden=true;
+  go.disabled=!(ok&&document.getElementById("ho-dnsok").checked&&document.getElementById("ho-confirm").value===name);
+}
 function deleteSvcDialog(name){
   openLayer('<div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="dsv-h"><h2 id="dsv-h">Delete '+esc(name)+'?</h2><p>This destroys staging, production and any previews, and removes the service from the catalog. The repository is kept. Type the service name to confirm.</p><div class="field"><label for="dsv-in">Service name</label><input class="input mono" id="dsv-in" autocomplete="off" spellcheck="false" placeholder="'+esc(name)+'"></div><div class="dialog-f"><button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-danger" id="dsv-go" data-action="do-delete-svc" data-svc="'+esc(name)+'" disabled>Delete service</button></div></div>',"#dsv-in");
 }
@@ -1153,6 +1205,11 @@ document.addEventListener("click",function(e){
     case "assign":assignDialog(el.dataset.res);break;
     case "save-settings":e.preventDefault();var fs=svc(document.getElementById("svc-settings").dataset.svc);fs.team=document.getElementById("set-team").value;fs.owner=document.getElementById("set-contacts").value.trim()||fs.owner;fs.life=document.getElementById("set-life").value;render();toast("Settings saved for "+fs.name,"forge service update "+fs.name+" --team "+fs.team+" --lifecycle "+fs.life.toLowerCase());break;
     case "delete-svc":deleteSvcDialog(el.dataset.svc);break;
+    case "host-svc":hostDialog(el.dataset.svc);break;
+    case "do-host":var hs2=svc(el.dataset.svc),henv=document.getElementById("ho-env").value,old=addr(hs2.name,henv),nh=document.getElementById("ho-new").value.trim().toLowerCase(),redir=document.getElementById("ho-redirect").checked;
+      hs2.hosts=hs2.hosts||{};hs2.hosts[henv]=nh;
+      D.audit.unshift({t:"Now",actor:"deogratias-saidi",verb:"service update",res:"services/"+hs2.name+" host "+henv,ctx:henv,ok:true});
+      closeLayer();render();toast(hs2.name+" "+henv+" now serves at "+nh+(redir?". "+old+" redirects for 30 days.":"."),"forge service update "+hs2.name+" --env "+henv+" --host "+nh+(redir?" --redirect-old 30d":""));break;
     case "do-delete-svc":var dn=el.dataset.svc;D.services=D.services.filter(function(x){return x.name!==dn;});closeLayer();document.getElementById("nav-svc").textContent=D.services.length;ui.svcTab="overview";location.hash="#catalog";render();toast(dn+" deleted. Its environments are being destroyed.","forge service delete "+dn+" --yes");break;
     case "do-assign":var rs=D.resources.filter(function(x){return x.name===el.dataset.res;})[0];rs.svc=document.getElementById("as-svc").value;closeLayer();render();toast(rs.name+" now belongs to "+rs.svc,"forge resource update "+rs.name+" --service "+rs.svc);break;
     case "goteam":ui.catTeam=el.dataset.team;location.hash="#catalog";render();break;
@@ -1169,11 +1226,12 @@ document.addEventListener("input",function(e){
   else if(id==="doc-q"){ui.docQuery=e.target.value;render();var dq=document.getElementById("doc-q");dq.focus();dq.setSelectionRange(dq.value.length,dq.value.length);}
   else if(id==="audit-q"){ui.auditQuery=e.target.value;render();var q=document.getElementById("audit-q");q.focus();q.setSelectionRange(q.value.length,q.value.length);}
   else if(id==="pal-in")palFilter(e.target.value);
+  else if(id==="ho-new"||id==="ho-confirm"){hostCheck();}
   else if(id==="dsv-in"){document.getElementById("dsv-go").disabled=e.target.value!==document.getElementById("dsv-go").dataset.svc;}
   else if(id==="ds-in"){document.getElementById("ds-go").disabled=e.target.value!==document.getElementById("ds-go").dataset.env;}
   else if(id&&id.indexOf("cr-")===0){e.target.removeAttribute("aria-invalid");updateCreate();}
 });
-document.addEventListener("change",function(e){if(e.target.id==="doc-sel"){ui.docPage=+e.target.value;render();window.scrollTo(0,0);return;}if(e.target.id&&e.target.id.indexOf("cr-")===0)updateCreate();});
+document.addEventListener("change",function(e){if(e.target.id==="ho-env"||e.target.id==="ho-dnsok"){hostCheck();return;}if(e.target.id==="doc-sel"){ui.docPage=+e.target.value;render();window.scrollTo(0,0);return;}if(e.target.id&&e.target.id.indexOf("cr-")===0)updateCreate();});
 document.addEventListener("submit",function(e){e.preventDefault();});
 document.addEventListener("keydown",function(e){
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();if(document.getElementById("pal-in"))closeLayer();else openPalette();return;}
