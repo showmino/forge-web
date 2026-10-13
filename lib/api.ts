@@ -90,6 +90,8 @@ export function errorText(err: unknown): string {
       return "The Forge API cannot be reached. Try again in a moment.";
     case Code.Aborted:
       return "Someone changed this since the page loaded. Reload the page and try again.";
+    case Code.Unimplemented:
+      return "The Forge API does not have this yet: it is older than the dashboard. Try again after forge-api is updated.";
     default:
       return e.rawMessage || "Something went wrong. Try again.";
   }
