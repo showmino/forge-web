@@ -257,7 +257,12 @@ function ServiceView({ id }: { id: string }) {
       {inProgress.length > 0 ? (
         <Section title="In progress">
           {inProgress.map((op) => (
-            <OperationLog key={op} name={op} onDone={refresh} />
+            <OperationLog
+              key={op}
+              name={op}
+              onDone={refresh}
+              argoFor={(target) => deployments.data?.find((d) => d.name === target)?.argoUrl}
+            />
           ))}
         </Section>
       ) : null}
@@ -395,9 +400,14 @@ function argoAppsUrl(id: string, deployments: Deployment[] | undefined): string 
 
 function ArgoLink({ href, id }: { href: string; id: string }) {
   return (
-    <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-info-fg no-underline hover:underline">
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="inline-flex items-center gap-[5px] whitespace-nowrap text-[13px] text-info-fg no-underline hover:underline"
+    >
       All {id} apps
-      <Icon name="external" />
+      <Icon name="external" size={13} />
     </a>
   );
 }
@@ -602,38 +612,37 @@ function OverviewTab({
         </div>
 
         <div className="flex min-w-0 flex-col gap-6">
-          <Panel>
-            <div className="px-4 pb-3 pt-4">
-              <h2 className="type-heading">About</h2>
-            </div>
-            <div className="px-4 pb-4">
-              <Facts
-                items={[
-                  ["Team", s.ownerTeam || "–"],
-                  ["Owners", s.owners.length ? s.owners.join(", ") : "–"],
-                  ["Lifecycle", <Life key="l" lifecycle={s.lifecycle} />],
-                  ...(argoApps ? ([["Argo CD", <ArgoLink key="a" href={argoApps} id={id} />]] as [string, ReactNode][]) : []),
-                  ["Repository", s.repoUrl ? <Addr key="r" href={s.repoUrl} /> : "–"],
-                  [
-                    "Depends on",
-                    s.dependencies.length
-                      ? s.dependencies.map((d, i) => (
-                          <span key={d}>
-                            {i > 0 ? ", " : null}
-                            <NameLink href={`/services/${serviceId(d)}`}>{serviceId(d)}</NameLink>
-                          </span>
-                        ))
-                      : "–",
-                  ],
-                  // Not catalog fields: read from the service's labels when it has them.
-                  ["Tier", s.labels.tier || "–"],
-                  ["SLO", s.labels.slo || "–"],
-                  ["Template", s.labels.template || "–"],
-                  ["Registered", when(s.createTime)],
-                ]}
-              />
-            </div>
-          </Panel>
+          <Section title="About">
+            <Panel>
+              <div className="p-4">
+                <Facts
+                  items={[
+                    ["Team", s.ownerTeam || "–"],
+                    ["Owners", s.owners.length ? s.owners.join(", ") : "–"],
+                    ["Lifecycle", <Life key="l" lifecycle={s.lifecycle} />],
+                    ...(argoApps ? ([["Argo CD", <ArgoLink key="a" href={argoApps} id={id} />]] as [string, ReactNode][]) : []),
+                    ["Repository", s.repoUrl ? <Addr key="r" href={s.repoUrl} className="!whitespace-nowrap !break-normal" /> : "–"],
+                    [
+                      "Depends on",
+                      s.dependencies.length
+                        ? s.dependencies.map((d, i) => (
+                            <span key={d}>
+                              {i > 0 ? ", " : null}
+                              <NameLink href={`/services/${serviceId(d)}`}>{serviceId(d)}</NameLink>
+                            </span>
+                          ))
+                        : "–",
+                    ],
+                    // Not catalog fields: read from the service's labels when it has them.
+                    ["Tier", s.labels.tier || "–"],
+                    ["SLO", s.labels.slo || "–"],
+                    ["Template", s.labels.template || "–"],
+                    ["Registered", when(s.createTime)],
+                  ]}
+                />
+              </div>
+            </Panel>
+          </Section>
         </div>
       </div>
     </>

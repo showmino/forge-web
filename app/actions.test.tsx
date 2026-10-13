@@ -259,6 +259,12 @@ function forge(w: World) {
         setTimeout(() => w.finish(), 0);
         return { operation: op(req.name.replace("operations/", ""), "deploy", "deployments/payments/production") };
       },
+      getOperation: (req) => {
+        const id = req.name.replace("operations/", "");
+        if (ended.has(req.name)) return { operation: ended.get(req.name) };
+        const target = id === "op_111111111111" ? "services/payments" : id === "op_aaaaaaaaaaaa" ? "deployments/payments/staging" : "deployments/payments/production";
+        return { operation: op(id, "deploy", target) };
+      },
     });
   };
 }
@@ -510,6 +516,16 @@ describe("argo cd links", () => {
     await openService(world());
     const link = await screen.findByRole("link", { name: "All payments apps" });
     expect(link.getAttribute("href")).toBe("https://argocd.example.com/applications?search=payments");
+  });
+
+  it("links a running deploy to its Application", async () => {
+    const w = world();
+    await openService(w);
+    click(await screen.findByRole("button", { name: "Deploy to staging" }));
+    click(dialog().getByRole("button", { name: "Deploy to staging" }));
+    const log = within(await screen.findByRole("region", { name: "Operation op_aaaaaaaaaaaa" }));
+    const link = await log.findByRole("link", { name: /payments-staging/ });
+    expect(link.getAttribute("href")).toBe("https://argocd.example.com/applications/argocd/payments-staging");
   });
 });
 

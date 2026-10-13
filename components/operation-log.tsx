@@ -2,9 +2,10 @@
 
 import { timestampDate, type Timestamp } from "@bufbuild/protobuf/wkt";
 import { Code } from "@connectrpc/connect";
+import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useApi } from "@/components/providers";
-import { Button, TextLink } from "@/components/ui/button";
+import { Button, Icon, TextLink } from "@/components/ui/button";
 import { Dialog, DialogActions } from "@/components/ui/dialog";
 import { ErrorNote, Panel } from "@/components/ui/layout";
 import { Glyph, StatusBadge } from "@/components/ui/status";
@@ -124,7 +125,18 @@ export function useOperation(name: string): Watch {
 }
 
 // OperationLog shows one operation live. onDone runs once, when it has ended.
-export function OperationLog({ name, onDone, link = true }: { name: string; onDone?: (op: Operation) => void; link?: boolean }) {
+// argoFor, when given, gives the Argo CD Application link of an operation's target.
+export function OperationLog({
+  name,
+  onDone,
+  link = true,
+  argoFor,
+}: {
+  name: string;
+  onDone?: (op: Operation) => void;
+  link?: boolean;
+  argoFor?: (target: string) => string | undefined;
+}) {
   const api = useApi();
   const { events, operation, error, reconnecting } = useOperation(name);
   const [cancelError, setCancelError] = useState<unknown>(null);
@@ -148,6 +160,15 @@ export function OperationLog({ name, onDone, link = true }: { name: string; onDo
   const failed = !!operation?.error;
   const cancelled = operation?.error?.code === "cancelled";
   const status = operationStatus(operation);
+  // The watch stream says the target only at the end; read it once up front.
+  const started = useQuery({
+    queryKey: ["operation", name],
+    queryFn: () => api.operations.getOperation({ name }).then((r) => r.operation),
+    enabled: !!argoFor,
+    staleTime: Infinity,
+  });
+  const target = operation?.target || started.data?.target;
+  const argoUrl = target ? argoFor?.(target) : undefined;
   const steps: Step[] = events.map((e, i) => {
     const last = i === events.length - 1;
     // The last step is where the work is, or where it stopped.
@@ -199,6 +220,20 @@ export function OperationLog({ name, onDone, link = true }: { name: string; onDo
             ) : null}
           </div>
         </div>
+        {argoUrl && /^https?:\/\//i.test(argoUrl) ? (
+          <div className="border-b border-line px-4 py-2 text-[13px] text-fg-3">
+            Argo CD app{" "}
+            <a
+              href={argoUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-[5px] whitespace-nowrap text-info-fg no-underline hover:underline"
+            >
+              <span className="font-mono text-[12.5px]">{argoUrl.split("/").pop()}</span>
+              <Icon name="external" size={13} />
+            </a>
+          </div>
+        ) : null}
         <StepLog steps={steps} />
         {steps.length === 0 && running && !error ? <p className="px-4 py-3 text-fg-2">Waiting for the first step.</p> : null}
         {reconnecting && running && !error ? (
