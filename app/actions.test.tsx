@@ -505,6 +505,12 @@ describe("argo cd links", () => {
     expect(link.getAttribute("target")).toBe("_blank");
     expect(screen.queryByRole("link", { name: "production in Argo CD" })).toBeNull();
   });
+
+  it("links the About panel to all the service's Applications", async () => {
+    await openService(world());
+    const link = await screen.findByRole("link", { name: "All payments apps" });
+    expect(link.getAttribute("href")).toBe("https://argocd.example.com/applications?search=payments");
+  });
 });
 
 describe("change the address", () => {

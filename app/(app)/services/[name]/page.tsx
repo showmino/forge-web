@@ -5,7 +5,7 @@ import { Code } from "@connectrpc/connect";
 import { useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useCanWrite } from "@/components/app-shell";
 import { DocReader, DocsLink, useHasDocs } from "@/components/doc-reader";
 import { OperationLog } from "@/components/operation-log";
@@ -385,6 +385,23 @@ function ServiceView({ id }: { id: string }) {
   );
 }
 
+// argoAppsUrl is Argo CD's list of the service's Applications, on the Argo CD
+// the API links deployments to; "" when it links none.
+function argoAppsUrl(id: string, deployments: Deployment[] | undefined): string {
+  const link = deployments?.find((d) => /^https?:\/\//i.test(d.argoUrl))?.argoUrl;
+  if (!link) return "";
+  return `${new URL(link).origin}/applications?search=${encodeURIComponent(id)}`;
+}
+
+function ArgoLink({ href, id }: { href: string; id: string }) {
+  return (
+    <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-info-fg no-underline hover:underline">
+      All {id} apps
+      <Icon name="external" />
+    </a>
+  );
+}
+
 // OverviewTab is what runs where, the previews, the recent history and who owns the service.
 function OverviewTab({
   id,
@@ -409,6 +426,7 @@ function OverviewTab({
   deployed: (env: string) => boolean;
   onOpen: (open: Open) => void;
 }) {
+  const argoApps = argoAppsUrl(id, deployments.data);
   return (
     <>
       <Section
@@ -591,9 +609,10 @@ function OverviewTab({
             <div className="px-4 pb-4">
               <Facts
                 items={[
-                  ["Owner", s.ownerTeam ? <span key="o" className="font-mono text-[13px]">{s.ownerTeam}</span> : "–"],
-                  ...(s.owners.length ? ([["Contacts", s.owners.join(", ")]] as [string, string][]) : []),
+                  ["Team", s.ownerTeam || "–"],
+                  ["Owners", s.owners.length ? s.owners.join(", ") : "–"],
                   ["Lifecycle", <Life key="l" lifecycle={s.lifecycle} />],
+                  ...(argoApps ? ([["Argo CD", <ArgoLink key="a" href={argoApps} id={id} />]] as [string, ReactNode][]) : []),
                   ["Repository", s.repoUrl ? <Addr key="r" href={s.repoUrl} /> : "–"],
                   [
                     "Depends on",
@@ -606,6 +625,10 @@ function OverviewTab({
                         ))
                       : "–",
                   ],
+                  // Not catalog fields: read from the service's labels when it has them.
+                  ["Tier", s.labels.tier || "–"],
+                  ["SLO", s.labels.slo || "–"],
+                  ["Template", s.labels.template || "–"],
                   ["Registered", when(s.createTime)],
                 ]}
               />
