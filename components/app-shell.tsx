@@ -12,6 +12,9 @@ import { clearSession, loadSession, SESSION_KEY, type Session } from "@/lib/auth
 // The shell of the Forge design language: a dark iron rail beside a light work
 // surface. On a narrow screen the rail slides in over the page.
 
+// Where this browser keeps whether the wide rail is open ("full") or icons only.
+const RAIL_KEY = "forge.rail";
+
 const icon = {
   services: (
     <>
@@ -110,6 +113,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/";
   const [session, setSession] = useState<Session | null>(null);
   const [navOpen, setNavOpen] = useState(false);
+  // On a wide screen the rail is icons only unless the reader opened it; the
+  // choice is kept in this browser.
+  const [mini, setMini] = useState(true);
   const [jumping, setJumping] = useState(false);
   // Counts the changes other tabs made to the session, to look at it again.
   const [tabs, setTabs] = useState(0);
@@ -132,6 +138,26 @@ export function AppShell({ children }: { children: ReactNode }) {
     // Going to another page closes the rail on a narrow screen.
     setNavOpen(false);
   }, [router, pathname, tabs]);
+
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is only there after mount
+      setMini(localStorage.getItem(RAIL_KEY) !== "full");
+    } catch {
+      // Not stored: icons only.
+    }
+  }, []);
+
+  function toggleRail() {
+    setMini((m) => {
+      try {
+        localStorage.setItem(RAIL_KEY, m ? "full" : "min");
+      } catch {
+        // The choice then lasts for this page only.
+      }
+      return !m;
+    });
+  }
 
   // The session is shared by every tab: signing out in one signs out here.
   useEffect(() => {
@@ -175,9 +201,13 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (!session) return null;
   return (
-    <div className="grid min-h-screen grid-cols-[minmax(0,1fr)] rail:grid-cols-[232px_minmax(0,1fr)]">
+    <div
+      className={`grid min-h-screen grid-cols-[minmax(0,1fr)] rail:transition-[grid-template-columns] rail:duration-200 motion-reduce:transition-none ${
+        mini ? "rail:grid-cols-[64px_minmax(0,1fr)]" : "rail:grid-cols-[232px_minmax(0,1fr)]"
+      }`}
+    >
       {navOpen ? <div className="fixed inset-0 z-[35] bg-scrim rail:hidden" onClick={closeNav} /> : null}
-      <Rail pathname={pathname} session={session} open={navOpen} railRef={rail} />
+      <Rail pathname={pathname} session={session} open={navOpen} mini={mini} onToggle={toggleRail} railRef={rail} />
       <div className="flex min-w-0 flex-col">
         <TopBar onMenu={() => setNavOpen(true)} onJump={() => setJumping(true)} open={navOpen} menuRef={menu} />
         <main className="flex w-full max-w-[1320px] flex-col gap-8 px-4 pb-12 pt-6 rail:px-8 rail:pt-8">{children}</main>
@@ -191,11 +221,15 @@ function Rail({
   pathname,
   session,
   open,
+  mini,
+  onToggle,
   railRef,
 }: {
   pathname: string;
   session: Session;
   open: boolean;
+  mini: boolean;
+  onToggle: () => void;
   railRef: RefObject<HTMLElement | null>;
 }) {
   const api = useApi();
@@ -205,6 +239,8 @@ function Rail({
   const services = useQuery({ queryKey: ["services"], queryFn: () => listAllServices(api) });
   const who = session.email || session.subject;
   const short = who.split("@")[0];
+  // Icons only applies on a wide screen; the narrow rail slides in at full width.
+  const m = (cls: string) => (mini ? cls : "");
 
   return (
     <aside
@@ -212,22 +248,23 @@ function Rail({
       ref={railRef}
       aria-label="Primary"
       // Closed on a narrow screen it is hidden, not just moved away: nothing in it can take the focus.
-      className={`fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col gap-4 bg-rail-bg px-3 py-4 text-rail-fg transition-transform duration-200 motion-reduce:transition-none rail:visible rail:sticky rail:top-0 rail:h-screen rail:w-auto rail:translate-x-0 ${open ? "visible translate-x-0" : "invisible -translate-x-full"}`}
+      className={`fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col gap-4 bg-rail-bg px-3 py-4 text-rail-fg transition-transform duration-200 motion-reduce:transition-none rail:visible rail:sticky rail:top-0 rail:h-screen rail:w-auto rail:translate-x-0 ${m("rail:items-center rail:px-2.5")} ${open ? "visible translate-x-0" : "invisible -translate-x-full"}`}
     >
-      <Link href="/" aria-label="Forge home" className="flex items-center gap-2.5 px-2 pb-1.5 pt-0.5 no-underline">
+      <Link href="/" aria-label="Forge home" className={`flex items-center gap-2.5 px-2 pb-1.5 pt-0.5 no-underline ${m("rail:px-0")}`}>
         <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
           <rect x="3" y="3" width="20" height="5" rx="1" fill="currentColor" />
           <rect x="3" y="10.5" width="13" height="5" rx="1" fill="currentColor" />
           <rect x="3" y="18" width="7" height="5" rx="1" fill="var(--ember)" />
         </svg>
-        <span className="font-display text-[19px] font-[750] tracking-[0.01em] [font-stretch:118%]">forge</span>
+        <span className={`font-display text-[19px] font-[750] tracking-[0.01em] [font-stretch:118%] ${m("rail:hidden")}`}>forge</span>
       </Link>
-      <nav aria-label="Main" className="flex flex-col gap-0.5">
+      <nav aria-label="Main" className={`flex flex-col gap-0.5 ${m("rail:w-full rail:items-center")}`}>
         {groups.map((group) => (
-          <div key={group.label || "home"} className="flex flex-col gap-0.5">
+          <div key={group.label || "home"} className={`flex flex-col gap-0.5 ${m("rail:w-full rail:items-center")}`}>
             {group.label ? (
-              <div className="px-2.5 pb-1.5 pt-3 text-[11px] uppercase tracking-[0.08em] text-rail-fg-2">{group.label}</div>
+              <div className={`px-2.5 pb-1.5 pt-3 text-[11px] uppercase tracking-[0.08em] text-rail-fg-2 ${m("rail:hidden")}`}>{group.label}</div>
             ) : null}
+            {group.label && mini ? <div aria-hidden="true" className="my-2 hidden h-px w-6 bg-rail-line rail:block" /> : null}
             {group.items.map((item) => {
               const active = item.match(pathname);
               return (
@@ -235,9 +272,10 @@ function Rail({
                   key={item.href}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  className={`relative flex items-center gap-2.5 rounded-md px-2.5 py-[7px] font-medium no-underline ${
+                  title={mini ? item.label : undefined}
+                  className={`relative flex items-center gap-2.5 rounded-md px-2.5 py-[7px] font-medium no-underline ${m("rail:h-9 rail:w-10 rail:justify-center rail:p-0")} ${
                     active
-                      ? "bg-rail-active text-rail-fg before:absolute before:inset-y-2 before:-left-3 before:w-[3px] before:rounded-r-[3px] before:bg-ember before:content-['']"
+                      ? `bg-rail-active text-rail-fg before:absolute before:inset-y-2 before:-left-3 before:w-[3px] before:rounded-r-[3px] before:bg-ember before:content-[''] ${m("rail:before:-left-2.5")}`
                       : "text-rail-fg-2 hover:bg-rail-active/60 hover:text-rail-fg"
                   }`}
                 >
@@ -255,11 +293,11 @@ function Rail({
                   >
                     {icon[item.icon]}
                   </svg>
-                  {item.label}
+                  <span className={m("rail:sr-only")}>{item.label}</span>
                   {item.icon === "services" && services.data ? (
                     <>
                       {/* A space, so the link reads "Services 2" and not "Services2". */}{" "}
-                      <span className="ml-auto font-mono text-[11px] text-rail-fg-2">{services.data.length}</span>
+                      <span className={`ml-auto font-mono text-[11px] text-rail-fg-2 ${m("rail:hidden")}`}>{services.data.length}</span>
                     </>
                   ) : null}
                 </Link>
@@ -268,16 +306,34 @@ function Rail({
           </div>
         ))}
       </nav>
-      <div className="mt-auto flex flex-col gap-2 border-t border-rail-line px-2 pt-3">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={!mini}
+        aria-label={mini ? "Expand sidebar" : "Collapse sidebar"}
+        title={mini ? "Expand sidebar" : undefined}
+        className={`mt-auto hidden cursor-pointer items-center gap-2.5 rounded-md px-2.5 py-[7px] font-medium text-rail-fg-2 hover:bg-rail-active/60 hover:text-rail-fg rail:flex ${m("rail:h-9 rail:w-10 rail:justify-center rail:p-0")}`}
+      >
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="flex-none">
+          <rect x="3.5" y="4" width="17" height="16" rx="2" />
+          <path d="M9 4v16" />
+          <path d={mini ? "M13.5 10l2 2-2 2" : "M15.5 10l-2 2 2 2"} />
+        </svg>
+        <span className={m("rail:hidden")}>Collapse</span>
+      </button>
+      <div className={`flex flex-col gap-2 border-t border-rail-line px-2 pt-3 max-rail:mt-auto ${m("rail:w-full rail:items-center rail:px-0")}`}>
         <div className="flex items-center gap-2.5">
-          <span className="inline-grid size-7 flex-none place-items-center rounded-full bg-rail-active text-[11px] font-semibold uppercase">
+          <span
+            title={mini ? `${who} · ${canWrite ? "Writer" : "Reader"}` : undefined}
+            className="inline-grid size-7 flex-none place-items-center rounded-full bg-rail-active text-[11px] font-semibold uppercase"
+          >
             {short.slice(0, 2)}
           </span>
-          <span className="min-w-0 text-[13px] leading-tight">
+          <span className={`min-w-0 text-[13px] leading-tight ${m("rail:hidden")}`}>
             <span className="block truncate">{short}</span>
             <small className="block truncate text-[11.5px] text-rail-fg-2">{who}</small>
           </span>
-          <span className="ml-auto rounded-sm bg-rail-active px-1.5 py-px text-[11px] font-semibold">{canWrite ? "Writer" : "Reader"}</span>
+          <span className={`ml-auto rounded-sm bg-rail-active px-1.5 py-px text-[11px] font-semibold ${m("rail:hidden")}`}>{canWrite ? "Writer" : "Reader"}</span>
         </div>
         <button
           type="button"
@@ -288,9 +344,15 @@ function Rail({
             clearSession();
             router.replace("/login");
           }}
-          className="cursor-pointer rounded-md px-2.5 py-1.5 text-left text-[13px] font-medium text-rail-fg-2 hover:bg-rail-active/60 hover:text-rail-fg"
+          className={`cursor-pointer rounded-md px-2.5 py-1.5 text-left text-[13px] font-medium text-rail-fg-2 hover:bg-rail-active/60 hover:text-rail-fg ${m("rail:grid rail:size-9 rail:place-items-center rail:p-0")}`}
+          title={mini ? "Sign out" : undefined}
         >
-          Sign out
+          {mini ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="hidden rail:block">
+              <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l4-4-4-4M14 12H4" />
+            </svg>
+          ) : null}
+          <span className={m("rail:sr-only")}>Sign out</span>
         </button>
       </div>
     </aside>
