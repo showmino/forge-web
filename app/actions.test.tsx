@@ -821,9 +821,9 @@ describe("create a service", () => {
     await fillCreate("intranet");
     // A file template makes no service: it has no address to choose.
     fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/landing-zone" } });
-    expect(screen.queryByLabelText(/Innternal only/)).toBeNull();
+    expect(screen.queryByRole("checkbox", { name: /^Internal/ })).toBeNull();
     fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/go-grpc" } });
-    click(screen.getByLabelText(/Innternal only/));
+    click(screen.getByRole("checkbox", { name: /^Internal/ }));
     expect(screen.getByLabelText("The same from the terminal").textContent).toContain("--network-only");
     click(screen.getByRole("button", { name: "Create service" }));
     await screen.findByRole("heading", { name: "intranet was created" });
