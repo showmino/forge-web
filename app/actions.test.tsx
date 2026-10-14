@@ -815,6 +815,21 @@ describe("create a service", () => {
     expect((w.calls.create[0] as { runOptions?: object }).runOptions).toBeUndefined();
   });
 
+  it("makes a service that is reached only on the network, from any service template", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    await fillCreate("intranet");
+    // A file template makes no service: it has no address to choose.
+    fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/landing-zone" } });
+    expect(screen.queryByLabelText(/Only on our network/)).toBeNull();
+    fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/go-grpc" } });
+    click(screen.getByLabelText(/Only on our network/));
+    expect(screen.getByLabelText("The same from the terminal").textContent).toContain("--network-only");
+    click(screen.getByRole("button", { name: "Create service" }));
+    await screen.findByRole("heading", { name: "intranet was created" });
+    expect((w.calls.create[0] as { runOptions: object }).runOptions).toMatchObject({ networkOnly: true });
+  });
+
   it("sends the run options the template offers, and shows them as flags", async () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
