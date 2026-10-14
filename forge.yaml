@@ -10,6 +10,7 @@ service:
 run:
   port: 3000
   health: /api/healthz
+  replicas: 2
   # The dashboard is "forge", not "forge-web", to the people who open it:
   # forge.<domain> in production, forge-staging.<domain> in staging.
   host: forge

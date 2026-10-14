@@ -2,7 +2,11 @@ name: ci
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "forge.yaml"
   pull_request:
+    paths-ignore:
+      - "forge.yaml"
 
 permissions:
   contents: read
