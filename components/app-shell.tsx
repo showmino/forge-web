@@ -210,7 +210,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <Rail pathname={pathname} session={session} open={navOpen} mini={mini} onToggle={toggleRail} railRef={rail} />
       <div className="flex min-w-0 flex-col">
         <TopBar onMenu={() => setNavOpen(true)} onJump={() => setJumping(true)} open={navOpen} menuRef={menu} />
-        <main className="flex w-full max-w-[1320px] flex-col gap-8 px-4 pb-12 pt-6 rail:px-8 rail:pt-8">{children}</main>
+        <main className="flex w-full min-w-0 flex-col gap-8 px-4 pb-12 pt-6 rail:px-8 rail:pt-8">{children}</main>
       </div>
       {jumping ? <CommandPalette onClose={() => setJumping(false)} /> : null}
     </div>
