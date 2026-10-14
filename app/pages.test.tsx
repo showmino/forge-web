@@ -481,11 +481,15 @@ describe("the frame around every page", () => {
     renderWithApi(<AppShell>content</AppShell>, forge);
     const toggle = await screen.findByRole("button", { name: "Expand sidebar" });
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    const main = screen.getByRole("main");
+    expect(main.classList.contains("w-full")).toBe(true);
+    expect(main.className).not.toMatch(/max-w-/);
     // Collapsed, a link keeps its name for screen readers and shows it on hover.
     const overview = screen.getByRole("link", { name: "Overview" });
     expect(overview.getAttribute("title")).toBe("Overview");
     fireEvent.click(toggle);
     expect(screen.getByRole("button", { name: "Collapse sidebar" }).getAttribute("aria-expanded")).toBe("true");
+    expect(main.className).not.toMatch(/max-w-/);
     expect(screen.getByRole("link", { name: "Overview" }).getAttribute("title")).toBeNull();
     expect(localStorage.getItem("forge.rail")).toBe("full");
 
