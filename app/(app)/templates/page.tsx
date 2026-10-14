@@ -71,7 +71,7 @@ export default function Templates() {
                     {t.parameters.some((p) => p.required)
                       ? `: ${t.parameters
                           .filter((p) => p.required)
-                          .map((p) => p.name)
+                          .map((p) => p.label || p.name)
                           .join(", ")}`
                       : ""}
                   </p>

@@ -27,9 +27,11 @@ const words: Record<string, [doing: string, done: string]> = {
   create_repo: ["Creating the repo", "Created"],
   push: ["Pushing the first commit", "Pushed the first commit"],
   register: ["Registering the service", "Registered"],
+  pull_request: ["Opening the pull request", "Opened"],
 };
 
-type Outcome = { service?: Service; failure?: { step: string; message: string; rolledBack: boolean }; error?: unknown };
+type Change = { repoUrl: string; branch: string; pullRequestUrl: string; files: string[] };
+type Outcome = { service?: Service; change?: Change; failure?: { step: string; message: string; rolledBack: boolean }; error?: unknown };
 
 // Answers after which the API did nothing more: the next attempt is a new create.
 const REFUSED = [Code.InvalidArgument, Code.FailedPrecondition, Code.PermissionDenied, Code.Unauthenticated, Code.AlreadyExists, Code.NotFound];
@@ -38,7 +40,7 @@ const REFUSED = [Code.InvalidArgument, Code.FailedPrecondition, Code.PermissionD
 // one that applies when they give none.
 function shown(p: TemplateParameter, own: string | undefined): string {
   if (own !== undefined) return own;
-  if (p.type === TemplateParameter_Type.BOOL) return p.defaultValue;
+  if (p.type === TemplateParameter_Type.BOOL || p.type === TemplateParameter_Type.LIST) return p.defaultValue;
   // A required choice has no default: the first value is selected, and sent.
   if (p.type === TemplateParameter_Type.ENUM) return p.defaultValue || (p.required ? (p.values[0] ?? "") : "");
   return "";
@@ -49,6 +51,8 @@ function shown(p: TemplateParameter, own: string | undefined): string {
 // template wrote it (it may refer to the repo, "github.com/{owner}/{name}")
 // and fills it in only when the parameter is absent.
 function sent(p: TemplateParameter, own: string | undefined): string | undefined {
+  // A list with nothing ticked is a value: none of them.
+  if (p.type === TemplateParameter_Type.LIST && own !== undefined) return own;
   if (own !== undefined && own !== "") return own;
   if (own === undefined && p.type === TemplateParameter_Type.ENUM && p.required && !p.defaultValue) return p.values[0];
   // A required bool left unticked is false.
@@ -58,15 +62,37 @@ function sent(p: TemplateParameter, own: string | undefined): string | undefined
 
 function ParameterField({ p, own, error, onChange }: { p: TemplateParameter; own: string | undefined; error?: string; onChange: (v: string) => void }) {
   const id = `param-${p.name}`;
-  const label = p.name;
+  const label = p.label || p.name;
   const aside = p.required ? <span className="text-[11px] font-medium tracking-[.02em] text-fg-3">Required</span> : undefined;
   const value = shown(p, own);
+  if (p.type === TemplateParameter_Type.LIST) {
+    const ticked = value.split(",").filter(Boolean);
+    return (
+      <fieldset className="flex flex-col gap-1.5">
+        <legend className="type-small font-semibold">{label}</legend>
+        <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+          {p.values.map((v) => (
+            <label key={v} className="flex items-center gap-1.5 type-small">
+              <input
+                type="checkbox"
+                className="size-4 accent-ember"
+                checked={ticked.includes(v)}
+                onChange={(e) => onChange(p.values.filter((x) => (x === v ? e.target.checked : ticked.includes(x))).join(","))}
+              />
+              {v}
+            </label>
+          ))}
+        </div>
+        {p.description ? <span className="type-small text-fg-2">{p.description}</span> : null}
+      </fieldset>
+    );
+  }
   if (p.type === TemplateParameter_Type.BOOL) {
     return (
       <label className="flex items-center gap-2">
         <input id={id} type="checkbox" className="size-4 accent-ember" checked={value === "true"} onChange={(e) => onChange(String(e.target.checked))} />
         <span>
-          <span className="type-small font-semibold">{p.name}</span>
+          <span className="type-small font-semibold">{label}</span>
           {p.description ? <span className="block type-small text-fg-2">{p.description}</span> : null}
         </span>
       </label>
@@ -111,6 +137,7 @@ function ParameterField({ p, own, error, onChange }: { p: TemplateParameter; own
         className={`${inputClass} font-mono`}
         inputMode={p.type === TemplateParameter_Type.INT ? "numeric" : undefined}
         value={value}
+        placeholder={p.placeholder || undefined}
         onChange={(e) => onChange(e.target.value)}
         required={p.required}
         aria-invalid={!!error}
@@ -171,6 +198,9 @@ export default function CreateService() {
   });
   const required = template?.parameters.filter((p) => p.required) ?? [];
   const optional = template?.parameters.filter((p) => !p.required) ?? [];
+  // A file template is a form: its inputs in its own order, under their groups.
+  const isFile = template?.type === "file";
+  const groups = [...new Set((template?.parameters ?? []).map((p) => p.group))];
   const field = (p: TemplateParameter) => {
     const key = `${template?.name}/${p.name}`;
     return (
@@ -253,6 +283,8 @@ export default function CreateService() {
             });
           } else if (event.case === "service") {
             ended = { service: event.value };
+          } else if (event.case === "change") {
+            ended = { change: event.value };
           } else if (event.case === "failure") {
             show({ key: event.value.step, tone: "danger", text: `${(words[event.value.step] ?? [event.value.step])[0]} failed` });
             ended = { failure: event.value };
@@ -296,6 +328,30 @@ export default function CreateService() {
     if (SERVICE_NAME.test(name) && team.trim() && !busy) void create();
   }
 
+  if (outcome?.change) {
+    const ch = outcome.change;
+    return (
+      <>
+        <PageHeader
+          title={`Pull request opened for ${name}`}
+          lead={`It adds ${ch.files.length === 1 ? "one file" : `${ch.files.length} files`} to ${ch.repoUrl.replace("https://github.com/", "")}. Review and merge it there.`}
+          cli={`forge create ${name} --template ${template ? templateId(template.name) : "<template>"}`}
+        />
+        <Panel>
+          <StepLog steps={steps} />
+        </Panel>
+        <ul aria-label="Files" className="flex flex-col gap-1 font-mono text-[12.5px]">
+          {ch.files.map((f) => (
+            <li key={f}>{f}</li>
+          ))}
+        </ul>
+        <p>
+          <Addr href={ch.pullRequestUrl} />
+        </p>
+      </>
+    );
+  }
+
   if (outcome?.service) {
     const id = serviceId(outcome.service.name);
     return (
@@ -333,8 +389,12 @@ export default function CreateService() {
           <div className="flex flex-col gap-4">
             <Field
               id="service-name"
-              label="Service name"
-              hint="Lowercase letters, digits and hyphens. This becomes the repo name."
+              label={isFile ? "Name" : "Service name"}
+              hint={
+                isFile
+                  ? "Lowercase letters, digits and hyphens. The template puts it in the file names."
+                  : "Lowercase letters, digits and hyphens. This becomes the repo name."
+              }
               error={badName ? "Use lowercase letters, digits and hyphens only, at most 63." : undefined}
             >
               <input
@@ -353,7 +413,7 @@ export default function CreateService() {
               label="Template"
               hint={
                 template
-                  ? `${template.title || template.description}. ${paramSummary(template.parameters)}${optional.length > 0 ? `, ${optional.length} optional` : ""}.`
+                  ? `${template.title || template.description}. ${isFile ? `It opens a pull request in ${template.targetRepo}; no repo is made. ` : ""}${paramSummary(template.parameters)}${optional.length > 0 ? `, ${optional.length} optional` : ""}.`
                   : undefined
               }
             >
@@ -365,7 +425,20 @@ export default function CreateService() {
                 ))}
               </select>
             </Field>
-            {template && template.parameters.length > 0 ? (
+            {template && template.parameters.length > 0 && isFile ? (
+              <div key={template.name} className="flex min-w-0 max-w-[420px] flex-col gap-4">
+                {groups.map((g) =>
+                  g ? (
+                    <fieldset key={g} className="flex flex-col gap-4 rounded-md border border-line p-4">
+                      <legend className="-ml-1.5 px-1.5 type-small font-semibold">{g}</legend>
+                      {template.parameters.filter((p) => p.group === g).map(field)}
+                    </fieldset>
+                  ) : (
+                    template.parameters.filter((p) => !p.group).map(field)
+                  ),
+                )}
+              </div>
+            ) : template && template.parameters.length > 0 ? (
               <fieldset key={template.name} className="flex min-w-0 max-w-[420px] flex-col gap-4 rounded-md border border-line p-4">
                 <legend className="-ml-1.5 px-1.5 type-small font-semibold">
                   <span className="font-mono">{templateId(template.name)}</span> inputs
@@ -405,8 +478,8 @@ export default function CreateService() {
             ) : (
               <Field
                 id="service-team"
-                label="Owner"
-                hint="The GitHub team that owns the service."
+                label={isFile ? "GitHub team" : "Owner"}
+                hint={isFile ? "The GitHub team the template gives access." : "The GitHub team that owns the service."}
                 error={badTeam ? "Choose the team that owns the service." : undefined}
               >
                 <select
@@ -471,7 +544,7 @@ export default function CreateService() {
 
           <div>
             <Button kind="primary" type="submit" disabled={busy || !canWrite || !template}>
-              {busy ? "Creating" : "Create service"}
+              {busy ? "Creating" : isFile ? "Create pull request" : "Create service"}
             </Button>
           </div>
         </form>

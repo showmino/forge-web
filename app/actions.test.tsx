@@ -102,6 +102,21 @@ function forge(w: World) {
         yield { event: { case: "step" as const, value: { name: "fetch", state: CreateStep_State.STARTED } } };
         if (w.dropCreate-- > 0) throw new ConnectError("connection reset", Code.Unavailable);
         yield { event: { case: "step" as const, value: { name: "fetch", state: CreateStep_State.DONE, detail: "nextjs@v1.3.1" } } };
+        if (req.template === "templates/landing-zone") {
+          yield { event: { case: "step" as const, value: { name: "pull_request", state: CreateStep_State.DONE, detail: "https://github.com/showmino/landingzone/pull/4" } } };
+          yield {
+            event: {
+              case: "change" as const,
+              value: {
+                repoUrl: "https://github.com/showmino/landingzone",
+                branch: `forge/landing-zone-${req.serviceId}`,
+                pullRequestUrl: "https://github.com/showmino/landingzone/pull/4",
+                files: [`landingZones/Corp/lz-corp-${req.serviceId}.bicepparam`],
+              },
+            },
+          };
+          return;
+        }
         yield { event: { case: "step" as const, value: { name: "create_repo", state: CreateStep_State.STARTED } } };
         if (req.serviceId === "taken") {
           yield { event: { case: "failure" as const, value: { step: "create_repo", message: "the repo showmino/taken already exists.", rolledBack: true } } };
@@ -221,6 +236,20 @@ function forge(w: World) {
             options: ["replicas", "env", "jobs"],
           },
           { name: "templates/go-grpc", version: "v1.3.1", description: "ConnectRPC service in Go" },
+          {
+            name: "templates/landing-zone",
+            version: "v1.7.0",
+            title: "Landing zone",
+            description: "An Azure subscription",
+            type: "file",
+            targetRepo: "showmino/landingzone",
+            parameters: [
+              { name: "type", label: "LandingZone Arc Type", type: TemplateParameter_Type.ENUM, values: ["corp", "online"], required: true },
+              { name: "environments", label: "Environments", type: TemplateParameter_Type.LIST, values: ["prod", "staging", "dev", "test"], defaultValue: "prod" },
+              { name: "ipAddresses", label: "IP addresses needed", type: TemplateParameter_Type.INT, required: true, min: BigInt(1), max: BigInt(1024), placeholder: "1 - 1024" },
+              { name: "costCenter", label: "Cost center", type: TemplateParameter_Type.STRING, required: true, group: "Tags", placeholder: "Enter cost center" },
+            ],
+          },
           {
             name: "templates/opentofu",
             version: "v1.3.1",
@@ -937,6 +966,40 @@ describe("create a service", () => {
     await screen.findByRole("heading", { name: "infra was created" });
     // A required bool left unticked is false, not missing.
     expect((w.calls.create[0] as { parameters: object }).parameters).toEqual({ state_bucket: "forge-state", size: "10", public: "false" });
+  });
+
+  it("fills in a file template like a form, and ends with its pull request", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    await fillCreate("infosystems");
+    fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/landing-zone" } });
+    // A file template names what it is for: no repo is made.
+    expect(screen.getByLabelText("Name")).toBeTruthy();
+    expect(screen.getByLabelText("GitHub team")).toBeTruthy();
+    expect(screen.getByText(/opens a pull request in showmino\/landingzone/)).toBeTruthy();
+    // Inputs in the template's order, by label, the grouped ones under their heading.
+    const tags = within(screen.getByRole("group", { name: "Tags" }));
+    expect(tags.getByLabelText("Cost center")).toBeTruthy();
+    expect((screen.getByLabelText("IP addresses needed") as HTMLInputElement).placeholder).toBe("1 - 1024");
+    // A list is a row of checkboxes, its default ticked.
+    const envs = within(screen.getByRole("group", { name: "Environments" }));
+    expect((envs.getByLabelText("prod") as HTMLInputElement).checked).toBe(true);
+    click(envs.getByLabelText("test"));
+    click(envs.getByLabelText("prod"));
+
+    fireEvent.change(screen.getByLabelText("IP addresses needed"), { target: { value: "5000" } });
+    fireEvent.change(screen.getByLabelText("Cost center"), { target: { value: "60168" } });
+    click(screen.getByRole("button", { name: "Create pull request" }));
+    expect(document.getElementById("param-ipAddresses-note")!.textContent).toBe("Enter a whole number from 1 to 1024.");
+    expect(w.calls.create).toBeUndefined();
+
+    fireEvent.change(screen.getByLabelText("IP addresses needed"), { target: { value: "100" } });
+    expect(screen.getByLabelText("The same from the terminal").textContent).toContain("--set environments=test");
+    click(screen.getByRole("button", { name: "Create pull request" }));
+    expect(await screen.findByRole("heading", { name: "Pull request opened for infosystems" })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /pull\/4/ }).getAttribute("href")).toBe("https://github.com/showmino/landingzone/pull/4");
+    expect(screen.getByText("landingZones/Corp/lz-corp-infosystems.bicepparam")).toBeTruthy();
+    expect((w.calls.create[0] as { parameters: object }).parameters).toEqual({ type: "corp", environments: "test", ipAddresses: "100", costCenter: "60168" });
   });
 
   it("switches the questions with the template, and tells a reader they cannot create", async () => {
