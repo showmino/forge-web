@@ -1,5 +1,45 @@
 import { describe, expect, it } from "vitest";
-import { docHref, docPathOf, type HastNode, headingsOf, resolve } from "./docs";
+import { docHref, docPathOf, type HastNode, headingsOf, pageTree, resolve, stripFrontMatter } from "./docs";
+
+describe("the side menu", () => {
+  it("groups pages by folder, in the order of the pages", () => {
+    const p = (path: string) => ({ path, title: path });
+    expect(pageTree([p("index.md"), p("azure/aks.md"), p("kubernetes/Helm/01-intro.md"), p("kubernetes/Helm/02-install.md"), p("azure/vms.md"), p("runbook.md")])).toEqual([
+      { kind: "page", page: p("index.md") },
+      {
+        kind: "folder",
+        name: "azure",
+        path: "azure",
+        children: [
+          { kind: "page", page: p("azure/aks.md") },
+          { kind: "page", page: p("azure/vms.md") },
+        ],
+      },
+      {
+        kind: "folder",
+        name: "kubernetes",
+        path: "kubernetes",
+        children: [
+          {
+            kind: "folder",
+            name: "Helm",
+            path: "kubernetes/Helm",
+            children: [
+              { kind: "page", page: p("kubernetes/Helm/01-intro.md") },
+              { kind: "page", page: p("kubernetes/Helm/02-install.md") },
+            ],
+          },
+        ],
+      },
+      { kind: "page", page: p("runbook.md") },
+    ]);
+  });
+
+  it("leaves YAML front matter out of a page", () => {
+    expect(stripFrontMatter("---\ntitle: Installing\ntags: [helm]\n---\n# Installing\n")).toBe("# Installing\n");
+    expect(stripFrontMatter("# Plain\n\n---\n\nmore\n")).toBe("# Plain\n\n---\n\nmore\n");
+  });
+});
 
 describe("addresses of pages", () => {
   it("puts the start page at the service and others below it", () => {

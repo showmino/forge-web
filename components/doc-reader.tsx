@@ -15,7 +15,7 @@ import { inputClass } from "@/components/ui/field";
 import { ErrorNote, Loading, Panel } from "@/components/ui/layout";
 import type { DocSet } from "@/gen/forge/v1/docs_pb";
 import { isCode } from "@/lib/api";
-import { docHref, type HastNode, type Heading, headingsOf, ID_PREFIX, resolve, START } from "@/lib/docs";
+import { docHref, type HastNode, type Heading, headingsOf, ID_PREFIX, type MenuNode, pageTree, resolve, START, stripFrontMatter } from "@/lib/docs";
 import { shortCommit, when } from "@/lib/format";
 
 // The docs reader: the pages of a service on the left, the page in the
@@ -115,6 +115,32 @@ export function DocReader({ id, path, hash, nested = false, onOpen }: { id: stri
     </a>
   );
 
+  const menuLink = (p: { path: string; title: string }) =>
+    navLink(
+      p,
+      p.title,
+      `rounded-md px-2.5 py-1.5 text-[13.5px] no-underline ${
+        p.path === path ? "bg-surface-2 font-medium text-fg shadow-[inset_2px_0_0_var(--ember)]" : "text-fg-2 hover:bg-surface-2 hover:text-fg"
+      }`,
+    );
+  // A folder is open when the page shown is in it.
+  const menu = (nodes: MenuNode[]): ReactNode =>
+    nodes.map((n) =>
+      n.kind === "page" ? (
+        menuLink(n.page)
+      ) : (
+        <details key={n.path} open={path.startsWith(`${n.path}/`)}>
+          <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[13.5px] font-medium text-fg-2 hover:bg-surface-2 hover:text-fg">
+            <span aria-hidden="true" className="text-[10px] text-fg-3 transition-transform [details[open]>summary>&]:rotate-90">
+              ▶
+            </span>
+            {n.name}
+          </summary>
+          <div className="ml-3 flex flex-col gap-0.5 border-l border-line pl-1.5">{menu(n.children)}</div>
+        </details>
+      ),
+    );
+
   return (
     <div
       ref={top}
@@ -122,15 +148,7 @@ export function DocReader({ id, path, hash, nested = false, onOpen }: { id: stri
     >
       <nav aria-label="Pages" className="hidden flex-col gap-0.5 min-[861px]:sticky min-[861px]:top-[76px] min-[861px]:flex">
         <div className="px-2.5 pb-1.5 text-[11px] uppercase tracking-[0.08em] text-fg-3">{id}</div>
-        {pages.map((p) =>
-          navLink(
-            p,
-            p.title,
-            `rounded-md px-2.5 py-1.5 text-[13.5px] no-underline ${
-              p.path === path ? "bg-surface-2 font-medium text-fg shadow-[inset_2px_0_0_var(--ember)]" : "text-fg-2 hover:bg-surface-2 hover:text-fg"
-            }`,
-          ),
-        )}
+        {menu(pageTree(pages))}
       </nav>
       <div className="flex flex-col gap-1 min-[861px]:hidden">
         <label htmlFor="docs-page-select" className="type-small font-semibold">
@@ -140,7 +158,7 @@ export function DocReader({ id, path, hash, nested = false, onOpen }: { id: stri
           {at < 0 ? <option value="">{path}</option> : null}
           {pages.map((p) => (
             <option key={p.path} value={p.path}>
-              {p.title}
+              {p.path.includes("/") ? `${p.path.slice(0, p.path.lastIndexOf("/"))} / ${p.title}` : p.title}
             </option>
           ))}
         </select>
@@ -346,7 +364,7 @@ const Markdown = memo(function Markdown({
   );
   return (
     <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={rehypePlugins} components={components}>
-      {markdown}
+      {stripFrontMatter(markdown)}
     </ReactMarkdown>
   );
 });
