@@ -11,11 +11,12 @@ import { Addr, Button, TextLink } from "@/components/ui/button";
 import { CommandBlock } from "@/components/ui/cli";
 import { Field, inputClass } from "@/components/ui/field";
 import { ErrorNote, Loading, PageHeader, Panel, Section } from "@/components/ui/layout";
+import { useToast } from "@/components/ui/toast";
 import { CreateStep_State, type Service } from "@/gen/forge/v1/catalog_pb";
 import { TemplateParameter_Type, type TemplateParameter } from "@/gen/forge/v1/template_pb";
 import { serviceId, teamId, templateId } from "@/lib/api";
 import { randomString } from "@/lib/auth/pkce";
-import { paramProblem } from "@/lib/params";
+import { paramProblem, paramSummary } from "@/lib/params";
 
 const SERVICE_NAME = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 
@@ -57,7 +58,8 @@ function sent(p: TemplateParameter, own: string | undefined): string | undefined
 
 function ParameterField({ p, own, error, onChange }: { p: TemplateParameter; own: string | undefined; error?: string; onChange: (v: string) => void }) {
   const id = `param-${p.name}`;
-  const label = p.required ? p.name : `${p.name} (optional)`;
+  const label = p.name;
+  const aside = p.required ? <span className="text-[11px] font-medium tracking-[.02em] text-fg-3">Required</span> : undefined;
   const value = shown(p, own);
   if (p.type === TemplateParameter_Type.BOOL) {
     return (
@@ -72,7 +74,7 @@ function ParameterField({ p, own, error, onChange }: { p: TemplateParameter; own
   }
   if (p.type === TemplateParameter_Type.ENUM) {
     return (
-      <Field id={id} label={label} hint={p.description}>
+      <Field id={id} label={label} aside={aside} hint={p.description}>
         <select id={id} className={inputClass} value={value} onChange={(e) => onChange(e.target.value)}>
           {p.required ? null : <option value="">{p.defaultValue ? `The default (${p.defaultValue})` : "Not set"}</option>}
           {p.values.map((v) => (
@@ -88,6 +90,7 @@ function ParameterField({ p, own, error, onChange }: { p: TemplateParameter; own
     <Field
       id={id}
       label={label}
+      aside={aside}
       error={error}
       hint={
         <>
@@ -124,6 +127,7 @@ export default function CreateService() {
   const api = useApi();
   const queries = useQueryClient();
   const canWrite = useCanWrite();
+  const toast = useToast();
   const templates = useQuery({
     queryKey: ["templates"],
     queryFn: () => api.templates.listTemplates({}).then((r) => r.templates),
@@ -142,6 +146,8 @@ export default function CreateService() {
   });
   const [team, setTeam] = useState("");
   const [params, setParams] = useState<Record<string, string>>({});
+  // What was wrong with each input at the last press of Create, until it is edited.
+  const [paramErrors, setParamErrors] = useState<Record<string, string>>({});
   // The run options as typed, per template: switching templates keeps each one's.
   const [runs, setRuns] = useState<Record<string, RunForm>>({});
   const [checked, setChecked] = useState(false);
@@ -159,19 +165,39 @@ export default function CreateService() {
   const runAsked = runOptions(run, template?.options ?? []);
   const badName = checked && !SERVICE_NAME.test(name);
   const badTeam = checked && !team.trim();
-  const problems = new Map(
-    (template?.parameters ?? []).flatMap((p): [string, string][] => {
-      const problem = paramProblem(p, sent(p, own(p)));
-      return problem ? [[p.name, problem]] : [];
-    }),
-  );
+  const problems = (template?.parameters ?? []).flatMap((p): [TemplateParameter, string][] => {
+    const problem = paramProblem(p, sent(p, own(p)));
+    return problem ? [[p, problem]] : [];
+  });
+  const required = template?.parameters.filter((p) => p.required) ?? [];
+  const optional = template?.parameters.filter((p) => !p.required) ?? [];
+  const field = (p: TemplateParameter) => {
+    const key = `${template?.name}/${p.name}`;
+    return (
+      <ParameterField
+        key={key}
+        p={p}
+        own={own(p)}
+        error={paramErrors[key]}
+        onChange={(v) => {
+          setParams((all) => ({ ...all, [key]: v }));
+          setParamErrors((all) => {
+            const rest = { ...all };
+            delete rest[key];
+            return rest;
+          });
+        }}
+      />
+    );
+  };
   // The command that does the same, flag by flag, as the form is filled in.
   const flags: [string, string][] = [
     ["--template", template ? templateId(template.name) : "<template>"],
     ["--team", team.trim() || "<team>"],
     ...(template?.parameters ?? []).flatMap((p): [string, string][] => {
       const value = sent(p, own(p));
-      return value === undefined ? [] : [["--set", `${p.name}=${value}`]];
+      if (value === undefined) return p.required ? [["--set", `${p.name}=<${p.name}>`]] : [];
+      return [["--set", `${p.name}=${value}`]];
     }),
     ...runAsked.flags,
   ];
@@ -256,7 +282,18 @@ export default function CreateService() {
   function submit(e: FormEvent) {
     e.preventDefault();
     setChecked(true);
-    if (SERVICE_NAME.test(name) && team.trim() && problems.size === 0 && !busy) void create();
+    if (template) {
+      setParamErrors(Object.fromEntries(problems.map(([p, problem]) => [`${template.name}/${p.name}`, problem])));
+    }
+    if (problems.length > 0) {
+      const first = document.getElementById(`param-${problems[0][0].name}`);
+      const details = first?.closest("details");
+      if (details) details.open = true;
+      first?.focus();
+      toast(problems.length === 1 ? "One input needs fixing" : `${problems.length} inputs need fixing`);
+      return;
+    }
+    if (SERVICE_NAME.test(name) && team.trim() && !busy) void create();
   }
 
   if (outcome?.service) {
@@ -311,7 +348,15 @@ export default function CreateService() {
                 placeholder="payments-api"
               />
             </Field>
-            <Field id="service-template" label="Template" hint={template?.description}>
+            <Field
+              id="service-template"
+              label="Template"
+              hint={
+                template
+                  ? `${template.title || template.description}. ${paramSummary(template.parameters)}${optional.length > 0 ? `, ${optional.length} optional` : ""}.`
+                  : undefined
+              }
+            >
               <select id="service-template" className={inputClass} value={template?.name ?? ""} onChange={(e) => setPicked(e.target.value)}>
                 {templates.data.map((t) => (
                   <option key={t.name} value={t.name}>
@@ -320,6 +365,22 @@ export default function CreateService() {
                 ))}
               </select>
             </Field>
+            {template && template.parameters.length > 0 ? (
+              <fieldset key={template.name} className="flex min-w-0 max-w-[420px] flex-col gap-4 rounded-md border border-line p-4">
+                <legend className="-ml-1.5 px-1.5 type-small font-semibold">
+                  <span className="font-mono">{templateId(template.name)}</span> inputs
+                </legend>
+                {required.map(field)}
+                {optional.length > 0 ? (
+                  <details open={required.length === 0}>
+                    <summary className="cursor-pointer type-small font-medium text-fg-2">
+                      Optional <span className="tabular-nums text-fg-3">{optional.length}</span>
+                    </summary>
+                    <div className="flex flex-col gap-4 pt-3">{optional.map(field)}</div>
+                  </details>
+                ) : null}
+              </fieldset>
+            ) : null}
             {teams.error ? (
               // The list could not be read (the API says why): the team can still be typed, as on the CLI.
               <>
@@ -372,22 +433,6 @@ export default function CreateService() {
               </Field>
             )}
           </div>
-
-          {template && template.parameters.length > 0 ? (
-            <Section title={`What ${templateId(template.name)} asks for`}>
-              <div className="flex flex-col gap-4">
-                {template.parameters.map((p) => (
-                  <ParameterField
-                    key={`${template.name}/${p.name}`}
-                    p={p}
-                    own={own(p)}
-                    error={checked ? problems.get(p.name) : undefined}
-                    onChange={(v) => setParams((all) => ({ ...all, [`${template.name}/${p.name}`]: v }))}
-                  />
-                ))}
-              </div>
-            </Section>
-          ) : null}
 
           {template && template.options.length > 0 ? (
             <Section title="How it runs" note="optional; change it later in forge.yaml">

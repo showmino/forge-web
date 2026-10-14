@@ -395,6 +395,7 @@ describe("templates", () => {
     expect(card.getByText("Next.js web app")).toBeTruthy();
     expect(card.getByText(/v1\.3\.0 · platform/)).toBeTruthy();
     expect(card.getByText("typescript")).toBeTruthy();
+    expect(card.getByText("No required inputs")).toBeTruthy();
     // A reader cannot create, so the card offers them nothing to press.
     expect(card.queryByRole("link", { name: /Use template/ })).toBeNull();
     expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge template list");

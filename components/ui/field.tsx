@@ -9,21 +9,27 @@ export const inputClass =
 export function Field({
   id,
   label,
+  aside,
   hint,
   error,
   children,
 }: {
   id: string;
   label: string;
+  // Shown after the label but not part of it, so the input keeps its plain name.
+  aside?: ReactNode;
   hint?: ReactNode;
   error?: string;
   children: ReactNode;
 }) {
   return (
     <div className="flex max-w-[360px] flex-col gap-1">
-      <label htmlFor={id} className="type-small font-semibold">
-        {label}
-      </label>
+      <div className="flex items-baseline gap-2">
+        <label htmlFor={id} className="type-small font-semibold">
+          {label}
+        </label>
+        {aside}
+      </div>
       {children}
       {error ? (
         <span id={`${id}-note`} role="alert" className="flex items-center gap-1 type-small text-bad-fg">
