@@ -25,6 +25,7 @@ const pages: Record<string, string> = {
     "<script>alert('owned')</script>\n\n<img src=x onerror=alert(1)>\n\n[bad](javascript:alert(1)) [home](/settings) [up](../../forge.yaml)\n\nA claim.[^1]\n\n[^1]: The source.\n\n" +
     "## Pages\n\n| Page | What |\n| --- | --- |\n| runbook | fixes |\n\n- [x] done\n\n![flow](img/flow.png)\n\n![remote](https://example.com/a.png)\n\n```go\nfunc main() {}\n```\n",
   "runbook.md": "# Runbook\n\n## Sign-in fails\n\nCheck the login.\n",
+  "kubernetes/Helm/02-installation.md": "---\ntitle: Installing Helm\ndescription: on macOS or Windows\n---\n# Installing Helm\n\nA single binary.\n",
 };
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
 let assetsAsked: string[] = [];
@@ -46,6 +47,7 @@ function forge(router: ConnectRouter) {
           pages: [
             { path: "index.md", title: "Overview" },
             { path: "runbook.md", title: "Runbook" },
+            { path: "kubernetes/Helm/02-installation.md", title: "Installing Helm" },
           ],
         },
       };
@@ -57,7 +59,7 @@ function forge(router: ConnectRouter) {
         page: {
           service: req.service,
           path: req.path,
-          title: req.path === "runbook.md" ? "Runbook" : "Overview",
+          title: req.path === "runbook.md" ? "Runbook" : req.path?.endsWith("02-installation.md") ? "Installing Helm" : "Overview",
           markdown: md,
           commit: COMMIT,
           editUrl: `https://github.com/showmino/forge-web/edit/main/docs/${req.path}`,
@@ -142,6 +144,22 @@ describe("the reader", () => {
     expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge docs get forge-web");
     fireEvent.click(screen.getByRole("link", { name: /Next\s*Runbook/ }));
     expect(nav.router.push).toHaveBeenCalledWith("/docs/forge-web/runbook.md");
+  });
+
+  it("shows folders in the side menu, the one of the page open, and no front matter", async () => {
+    nav.params = { service: "forge-web", path: ["kubernetes", "Helm", "02-installation.md"] };
+    renderWithApi(<DocPage />, forge);
+    const article = within(await screen.findByRole("article", { name: "Installing Helm" }));
+    expect(article.getByRole("heading", { name: "Installing Helm", level: 1 })).toBeTruthy();
+    expect(document.querySelector("article")!.textContent).not.toContain("title:");
+    const menu = screen.getByRole("navigation", { name: "Pages" });
+    const kubernetes = within(menu).getByText("kubernetes").closest("details")!;
+    const helm = within(kubernetes).getByText("Helm").closest("details")!;
+    expect(kubernetes.open && helm.open).toBe(true);
+    expect(within(helm).getByRole("link", { name: "Installing Helm" }).getAttribute("aria-current")).toBe("page");
+    // Pages at the top stay at the top.
+    expect(within(menu).getByRole("link", { name: "Runbook" }).closest("details")).toBeNull();
+    nav.params = { service: "forge-web" };
   });
 
   it("says so when a page does not exist, and leads back to the start", async () => {

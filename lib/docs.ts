@@ -22,6 +22,38 @@ export function isPage(path: string): boolean {
   return /\.md$/i.test(path);
 }
 
+export type MenuPage = { path: string; title: string };
+export type MenuNode = { kind: "page"; page: MenuPage } | { kind: "folder"; name: string; path: string; children: MenuNode[] };
+
+// pageTree groups the pages of the side menu by folder, keeping their order:
+// a folder sits where its first page is.
+export function pageTree(pages: MenuPage[]): MenuNode[] {
+  const root: MenuNode[] = [];
+  const folders = new Map<string, MenuNode[]>();
+  for (const page of pages) {
+    const dirs = page.path.split("/").slice(0, -1);
+    let level = root;
+    for (let i = 0; i < dirs.length; i++) {
+      const path = dirs.slice(0, i + 1).join("/");
+      let children = folders.get(path);
+      if (!children) {
+        children = [];
+        folders.set(path, children);
+        level.push({ kind: "folder", name: dirs[i], path, children });
+      }
+      level = children;
+    }
+    level.push({ kind: "page", page });
+  }
+  return root;
+}
+
+// stripFrontMatter drops a leading YAML block (--- ... ---), which is the
+// page's metadata, not its text.
+export function stripFrontMatter(markdown: string): string {
+  return markdown.replace(/^---\r?\n[\s\S]*?\r?\n---[ \t]*(\r?\n|$)/, "");
+}
+
 export type Target =
   | { kind: "page"; path: string; hash: string }
   | { kind: "file"; path: string }
