@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { Code, ConnectError, type ConnectRouter } from "@connectrpc/connect";
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
@@ -94,6 +95,13 @@ describe("the docs page", () => {
 });
 
 describe("the reader", () => {
+  it("does not cap the article width inside its flexible grid column", () => {
+    const styles = readFileSync("app/globals.css", "utf8");
+    const articleRule = styles.match(/\.doc-article\s*\{([^}]*)\}/)?.[1];
+    expect(articleRule).toBeDefined();
+    expect(articleRule).not.toContain("max-width:");
+  });
+
   it("renders a page in the dashboard's look, with links that stay in the docs", async () => {
     nav.params = { service: "forge-web" };
     renderWithApi(<DocPage />, forge);

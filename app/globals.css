@@ -303,7 +303,6 @@
 /* A page of a service's docs, rendered from Markdown. */
 .doc-article {
   min-width: 0;
-  max-width: 72ch;
   font-size: 15px;
   line-height: 1.7;
   overflow-wrap: anywhere;
