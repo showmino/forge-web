@@ -221,6 +221,16 @@ function forge(w: World) {
             options: ["replicas", "env", "jobs"],
           },
           { name: "templates/go-grpc", version: "v1.3.1", description: "ConnectRPC service in Go" },
+          {
+            name: "templates/opentofu",
+            version: "v1.3.1",
+            description: "OpenTofu module",
+            parameters: [
+              { name: "state_bucket", type: TemplateParameter_Type.STRING, required: true, pattern: "^[a-z0-9-]+$" },
+              { name: "size", type: TemplateParameter_Type.INT, required: true },
+              { name: "public", type: TemplateParameter_Type.BOOL, required: true },
+            ],
+          },
         ],
       }),
     });
@@ -876,6 +886,31 @@ describe("create a service", () => {
     expect(screen.getByText("Creating the repo failed")).toBeTruthy();
     // The form is still there for another try.
     expect((screen.getByRole("button", { name: "Create service" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("checks what the template requires before asking the API", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    await fillCreate("infra");
+    fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/opentofu" } });
+    click(screen.getByRole("button", { name: "Create service" }));
+    expect(document.getElementById("param-state_bucket-note")!.textContent).toBe("Fill in state_bucket.");
+    expect(document.getElementById("param-size-note")!.textContent).toBe("Fill in size.");
+
+    fireEvent.change(screen.getByLabelText("state_bucket"), { target: { value: "Bad Bucket" } });
+    fireEvent.change(screen.getByLabelText("size"), { target: { value: "ten" } });
+    click(screen.getByRole("button", { name: "Create service" }));
+    expect(document.getElementById("param-state_bucket-note")!.textContent).toBe("Use a value that matches ^[a-z0-9-]+$.");
+    expect(document.getElementById("param-size-note")!.textContent).toBe("Use a whole number.");
+    expect(screen.getByLabelText("size").getAttribute("aria-invalid")).toBe("true");
+    expect(w.calls.create).toBeUndefined();
+
+    fireEvent.change(screen.getByLabelText("state_bucket"), { target: { value: "forge-state" } });
+    fireEvent.change(screen.getByLabelText("size"), { target: { value: "10" } });
+    click(screen.getByRole("button", { name: "Create service" }));
+    await screen.findByRole("heading", { name: "infra was created" });
+    // A required bool left unticked is false, not missing.
+    expect((w.calls.create[0] as { parameters: object }).parameters).toEqual({ state_bucket: "forge-state", size: "10", public: "false" });
   });
 
   it("switches the questions with the template, and tells a reader they cannot create", async () => {

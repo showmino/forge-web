@@ -15,6 +15,7 @@ import { CreateStep_State, type Service } from "@/gen/forge/v1/catalog_pb";
 import { TemplateParameter_Type, type TemplateParameter } from "@/gen/forge/v1/template_pb";
 import { serviceId, teamId, templateId } from "@/lib/api";
 import { randomString } from "@/lib/auth/pkce";
+import { paramProblem } from "@/lib/params";
 
 const SERVICE_NAME = /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$/;
 
@@ -49,10 +50,12 @@ function shown(p: TemplateParameter, own: string | undefined): string {
 function sent(p: TemplateParameter, own: string | undefined): string | undefined {
   if (own !== undefined && own !== "") return own;
   if (own === undefined && p.type === TemplateParameter_Type.ENUM && p.required && !p.defaultValue) return p.values[0];
+  // A required bool left unticked is false.
+  if (own === undefined && p.type === TemplateParameter_Type.BOOL && p.required && !p.defaultValue) return "false";
   return undefined;
 }
 
-function ParameterField({ p, own, onChange }: { p: TemplateParameter; own: string | undefined; onChange: (v: string) => void }) {
+function ParameterField({ p, own, error, onChange }: { p: TemplateParameter; own: string | undefined; error?: string; onChange: (v: string) => void }) {
   const id = `param-${p.name}`;
   const label = p.required ? p.name : `${p.name} (optional)`;
   const value = shown(p, own);
@@ -85,6 +88,7 @@ function ParameterField({ p, own, onChange }: { p: TemplateParameter; own: strin
     <Field
       id={id}
       label={label}
+      error={error}
       hint={
         <>
           {p.description ? `${p.description.replace(/[.\s]+$/, "")}. ` : null}
@@ -106,6 +110,8 @@ function ParameterField({ p, own, onChange }: { p: TemplateParameter; own: strin
         value={value}
         onChange={(e) => onChange(e.target.value)}
         required={p.required}
+        aria-invalid={!!error}
+        aria-describedby={`${id}-note`}
       />
     </Field>
   );
@@ -153,6 +159,12 @@ export default function CreateService() {
   const runAsked = runOptions(run, template?.options ?? []);
   const badName = checked && !SERVICE_NAME.test(name);
   const badTeam = checked && !team.trim();
+  const problems = new Map(
+    (template?.parameters ?? []).flatMap((p): [string, string][] => {
+      const problem = paramProblem(p, sent(p, own(p)));
+      return problem ? [[p.name, problem]] : [];
+    }),
+  );
   // The command that does the same, flag by flag, as the form is filled in.
   const flags: [string, string][] = [
     ["--template", template ? templateId(template.name) : "<template>"],
@@ -244,7 +256,7 @@ export default function CreateService() {
   function submit(e: FormEvent) {
     e.preventDefault();
     setChecked(true);
-    if (SERVICE_NAME.test(name) && team.trim() && !busy) void create();
+    if (SERVICE_NAME.test(name) && team.trim() && problems.size === 0 && !busy) void create();
   }
 
   if (outcome?.service) {
@@ -369,6 +381,7 @@ export default function CreateService() {
                     key={`${template.name}/${p.name}`}
                     p={p}
                     own={own(p)}
+                    error={checked ? problems.get(p.name) : undefined}
                     onChange={(v) => setParams((all) => ({ ...all, [`${template.name}/${p.name}`]: v }))}
                   />
                 ))}
