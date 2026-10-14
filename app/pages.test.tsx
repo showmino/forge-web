@@ -477,6 +477,24 @@ describe("the frame around every page", () => {
     expect(localStorage.getItem("forge.session")).toBeNull();
   });
 
+  it("starts with the rail as icons, and remembers when it is opened", async () => {
+    renderWithApi(<AppShell>content</AppShell>, forge);
+    const toggle = await screen.findByRole("button", { name: "Expand sidebar" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    // Collapsed, a link keeps its name for screen readers and shows it on hover.
+    const overview = screen.getByRole("link", { name: "Overview" });
+    expect(overview.getAttribute("title")).toBe("Overview");
+    fireEvent.click(toggle);
+    expect(screen.getByRole("button", { name: "Collapse sidebar" }).getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByRole("link", { name: "Overview" }).getAttribute("title")).toBeNull();
+    expect(localStorage.getItem("forge.rail")).toBe("full");
+
+    cleanup();
+    renderWithApi(<AppShell>content</AppShell>, forge);
+    expect(await screen.findByRole("button", { name: "Collapse sidebar" })).toBeTruthy();
+    localStorage.removeItem("forge.rail");
+  });
+
   it("names a writer", async () => {
     renderWithApi(<AppShell>content</AppShell>, (router) => {
       router.service(AuthService, { getStatus: () => ({ permissions: ["services.read", "services.write"] }) });

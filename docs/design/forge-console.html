@@ -113,6 +113,28 @@ a{color:inherit}
 .who{font-size:13px;line-height:1.25}
 .who small{display:block;color:var(--rail-fg-2);font-size:11.5px}
 
+.rail-toggle{display:flex;align-items:center;gap:10px;padding:7px 10px;border:0;border-radius:var(--r-md);background:transparent;color:var(--rail-fg-2);font:inherit;font-weight:500;cursor:pointer;margin-top:auto}
+.rail-toggle .chev{transform:rotate(180deg);transform-origin:14.5px 12px}
+@media (hover:hover) and (pointer:fine){.rail-toggle:hover{background:var(--rail-active);color:var(--rail-fg)}}
+.rail-toggle+.rail-foot{margin-top:0}
+@media (min-width:861px){
+  .app{transition:grid-template-columns .18s ease}
+  .app.rail-min{grid-template-columns:64px minmax(0,1fr)}
+  .rail-min .rail{padding-inline:10px;align-items:center}
+  .rail-min .brand{padding:2px 0 6px}
+  .rail-min .brand-word,.rail-min .brand-ver,.rail-min .nav-t,.rail-min .who,.rail-min .role{display:none}
+  .rail-min .nav{width:100%;align-items:center}
+  .rail-min .nav-label{font-size:0;padding:0;height:1px;width:24px;background:var(--rail-line);margin:var(--s2) 0}
+  .rail-min .nav a{width:40px;height:36px;padding:0;justify-content:center}
+  .rail-min .nav a[aria-current="page"]::before{left:-10px}
+  .rail-min .nav a .count{display:none}
+  .rail-min .nav a .count#nav-apr:not(:empty),.rail-min .nav a .count#nav-run:not(:empty){display:grid;place-items:center;position:absolute;top:2px;right:2px;min-width:15px;height:15px;padding:0 3px;border-radius:8px;background:var(--ember);color:var(--ember-on);font-size:9.5px;line-height:1;margin:0}
+  .rail-min .nav a[data-tip]:is(:hover,:focus-visible)::after{content:attr(data-tip);position:absolute;left:calc(100% + 12px);top:50%;transform:translateY(-50%);background:var(--rail-bg);color:var(--rail-fg);border:1px solid var(--rail-line);padding:4px 8px;border-radius:var(--r-sm);font-size:12.5px;white-space:nowrap;z-index:50;pointer-events:none;box-shadow:var(--shadow-2,0 4px 12px rgb(0 0 0/.2))}
+  .rail-min .rail-toggle{width:40px;height:36px;padding:0;justify-content:center}
+  .rail-min .rail-toggle .chev{transform:none}
+  .rail-min .rail-foot{padding-inline:0;justify-content:center;border-top:1px solid var(--rail-line);width:100%}
+}
+@media (max-width:860px){.rail-toggle{display:none}.rail-toggle+.rail-foot{margin-top:auto}}
 .rail-scrim{display:none;position:fixed;inset:0;background:var(--scrim);z-index:35}
 .main{min-width:0;display:flex;flex-direction:column}
 .topbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;display:flex;align-items:center;gap:var(--s3);padding:10px var(--s6);background:color-mix(in oklab,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
@@ -497,7 +519,7 @@ tr.group td{background:var(--surface-2);font-size:11.5px;letter-spacing:.06em;te
 @media (prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}}
 </style>
 
-<div class="app" id="app">
+<div class="app rail-min" id="app">
   <div class="rail-scrim" data-action="close-nav"></div>
   <aside class="rail" aria-label="Primary">
     <a class="brand" href="#overview" aria-label="Forge home">
@@ -520,8 +542,9 @@ tr.group td{background:var(--surface-2);font-size:11.5px;letter-spacing:.06em;te
       <a href="#audit" data-r="audit"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v6c0 4.5-3.2 7.8-7.5 9-4.3-1.2-7.5-4.5-7.5-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Audit log</a>
       <a href="#design" data-r="design"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="4.5"/><circle cx="16" cy="8" r="4.5"/><circle cx="12" cy="15.5" r="4.5"/></svg>Design language</a>
     </nav>
+    <button class="rail-toggle" data-action="toggle-rail" aria-label="Expand sidebar" aria-expanded="false"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M9 4v16"/><path class="chev" d="M13.5 10l2 2-2 2"/></svg><span class="nav-t">Collapse</span></button>
     <div class="rail-foot">
-      <span class="avatar">SM</span>
+      <span class="avatar" title="Showmino · deogratias-saidi · Writer">SM</span>
       <span class="who">Showmino<small>deogratias-saidi</small></span><span class="role">Writer</span>
     </div>
   </aside>
@@ -1067,6 +1090,17 @@ V.design=function(){
 /* ---------------- Router ---------------- */
 var view=document.getElementById("view");
 var app=document.getElementById("app");
+/* Sidebar: collapsed to icons by default; the choice is remembered per browser. */
+Array.prototype.forEach.call(document.querySelectorAll("#nav a"),function(a){
+  var t=Array.prototype.filter.call(a.childNodes,function(n){return n.nodeType===3&&n.textContent.trim();})[0];if(!t)return;
+  var sp=document.createElement("span");sp.className="nav-t";sp.textContent=t.textContent.trim();a.replaceChild(sp,t);a.dataset.tip=sp.textContent;
+});
+function setRail(min){
+  app.classList.toggle("rail-min",min);
+  var b=document.querySelector(".rail-toggle");b.setAttribute("aria-expanded",String(!min));b.setAttribute("aria-label",min?"Expand sidebar":"Collapse sidebar");
+  try{localStorage.setItem("forge-rail",min?"min":"full");}catch(e){}
+}
+(function(){var v=null;try{v=localStorage.getItem("forge-rail");}catch(e){}setRail(v!=="full");})();
 function route(){
   var h=(location.hash||"#overview").slice(1);
   var key=h.indexOf("service-")===0?"catalog":h.indexOf("docs-")===0?"docs":h;
@@ -1230,6 +1264,7 @@ document.addEventListener("click",function(e){
   if(a==="scrim"){if(e.target===el)closeLayer();return;}
   switch(a){
     case "open-nav":app.classList.add("nav-open");break;
+    case "toggle-rail":setRail(!app.classList.contains("rail-min"));break;
     case "close-nav":app.classList.remove("nav-open");break;
     case "theme":
       var cur=document.documentElement.getAttribute("data-theme");
