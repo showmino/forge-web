@@ -182,6 +182,8 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   const [paramErrors, setParamErrors] = useState<Record<string, string>>({});
   // The run options as typed, per template: switching templates keeps each one's.
   const [runs, setRuns] = useState<Record<string, RunForm>>({});
+  // No public address: forge.yaml gets run.domain: none.
+  const [networkOnly, setNetworkOnly] = useState(false);
   const [checked, setChecked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [steps, setSteps] = useState<Step[]>([]);
@@ -235,6 +237,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
       return [["--set", `${p.name}=${value}`]];
     }),
     ...runAsked.flags,
+    ...(networkOnly && !isFile ? [["--network-only", ""] as [string, string]] : []),
   ];
 
   async function create() {
@@ -252,7 +255,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
       template: template.name,
       ownerTeam: team.trim(),
       parameters,
-      runOptions: runAsked.options,
+      runOptions: networkOnly && !isFile ? { ...runAsked.options, networkOnly: true } : runAsked.options,
     };
     const signature = JSON.stringify(request);
     if (attempt.current?.request !== signature) attempt.current = { key: randomString(), request: signature };
@@ -529,6 +532,17 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                 </select>
               </Field>
             )}
+            {template && !isFile ? (
+              <label className="flex items-start gap-2">
+                <input type="checkbox" className="mt-0.5 size-4 accent-ember" checked={networkOnly} onChange={(e) => setNetworkOnly(e.target.checked)} />
+                <span>
+                  <span className="type-small font-semibold">Only on our network</span>
+                  <span className="block type-small text-fg-2">
+                    No public address: it is reached on the internal one, over HTTP. Change it later in forge.yaml (run.domain).
+                  </span>
+                </span>
+              </label>
+            ) : null}
           </div>
 
           {template && template.options.length > 0 ? (
