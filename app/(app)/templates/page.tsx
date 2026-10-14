@@ -84,7 +84,7 @@ export default function Templates() {
                       <ButtonLink
                         kind="primary"
                         size="sm"
-                        href={`/create?template=${encodeURIComponent(id)}`}
+                        href={`/templates/${encodeURIComponent(id)}/create`}
                         className="ml-auto"
                         aria-label={`Use template ${id}`}
                       >
