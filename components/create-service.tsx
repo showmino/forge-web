@@ -536,7 +536,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
               <label className="flex items-start gap-2">
                 <input type="checkbox" className="mt-0.5 size-4 accent-ember" checked={networkOnly} onChange={(e) => setNetworkOnly(e.target.checked)} />
                 <span>
-                  <span className="type-small font-semibold">Only on our network</span>
+                  <span className="type-small font-semibold">Internal</span>
                   <span className="block type-small text-fg-2">
                     No public address: it is reached on the internal one, over HTTP. Change it later in forge.yaml (run.domain).
                   </span>
