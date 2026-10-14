@@ -27,6 +27,7 @@ describe("paramProblem", () => {
   const bucket = p({ name: "state_bucket", type: TemplateParameter_Type.STRING, required: true, pattern: "^[a-z0-9-]+$" });
   const size = p({ name: "size", type: TemplateParameter_Type.INT, required: true });
   const port = p({ name: "port", type: TemplateParameter_Type.INT, defaultValue: "3000" });
+  const ips = p({ name: "ipAddresses", label: "IP addresses needed", type: TemplateParameter_Type.INT, required: true, min: BigInt(1), max: BigInt(1024) });
 
   it.each([
     [bucket, undefined, "state_bucket is required."],
@@ -39,6 +40,10 @@ describe("paramProblem", () => {
     [size, "+10", undefined],
     [port, undefined, undefined],
     [port, "x", "Enter a whole number."],
+    [ips, "0", "Enter a whole number from 1 to 1024."],
+    [ips, "1025", "Enter a whole number from 1 to 1024."],
+    [ips, "1024", undefined],
+    [ips, undefined, "IP addresses needed is required."],
   ])("%#: %s %s", (param, value, want) => {
     expect(paramProblem(param, value)).toBe(want);
   });

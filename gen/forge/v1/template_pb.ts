@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file forge/v1/template.proto.
  */
 export const file_forge_v1_template: GenFile = /*@__PURE__*/
-  fileDesc("Chdmb3JnZS92MS90ZW1wbGF0ZS5wcm90bxIIZm9yZ2UudjEirAEKCFRlbXBsYXRlEgwKBG5hbWUYASABKAkSDwoHdmVyc2lvbhgCIAEoCRINCgV0aXRsZRgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIMCgR0YWdzGAUgAygJEg0KBW93bmVyGAYgASgJEi8KCnBhcmFtZXRlcnMYByADKAsyGy5mb3JnZS52MS5UZW1wbGF0ZVBhcmFtZXRlchIPCgdvcHRpb25zGAggAygJIosCChFUZW1wbGF0ZVBhcmFtZXRlchIMCgRuYW1lGAEgASgJEi4KBHR5cGUYAiABKA4yIC5mb3JnZS52MS5UZW1wbGF0ZVBhcmFtZXRlci5UeXBlEhAKCHJlcXVpcmVkGAMgASgIEhUKDWRlZmF1bHRfdmFsdWUYBCABKAkSDwoHcGF0dGVybhgFIAEoCRIOCgZ2YWx1ZXMYBiADKAkSEwoLZGVzY3JpcHRpb24YByABKAkiWQoEVHlwZRIUChBUWVBFX1VOU1BFQ0lGSUVEEAASDwoLVFlQRV9TVFJJTkcQARIMCghUWVBFX0lOVBACEg0KCVRZUEVfQk9PTBADEg0KCVRZUEVfRU5VTRAEIjQKFExpc3RUZW1wbGF0ZXNSZXF1ZXN0Eg8KB3ZlcnNpb24YASABKAkSCwoDdGFnGAIgASgJIj4KFUxpc3RUZW1wbGF0ZXNSZXNwb25zZRIlCgl0ZW1wbGF0ZXMYASADKAsyEi5mb3JnZS52MS5UZW1wbGF0ZSIzChJHZXRUZW1wbGF0ZVJlcXVlc3QSDAoEbmFtZRgBIAEoCRIPCgd2ZXJzaW9uGAIgASgJIjsKE0dldFRlbXBsYXRlUmVzcG9uc2USJAoIdGVtcGxhdGUYASABKAsyEi5mb3JnZS52MS5UZW1wbGF0ZTK5AQoPVGVtcGxhdGVTZXJ2aWNlElUKDUxpc3RUZW1wbGF0ZXMSHi5mb3JnZS52MS5MaXN0VGVtcGxhdGVzUmVxdWVzdBofLmZvcmdlLnYxLkxpc3RUZW1wbGF0ZXNSZXNwb25zZSIDkAIBEk8KC0dldFRlbXBsYXRlEhwuZm9yZ2UudjEuR2V0VGVtcGxhdGVSZXF1ZXN0Gh0uZm9yZ2UudjEuR2V0VGVtcGxhdGVSZXNwb25zZSIDkAIBYgZwcm90bzM");
+  fileDesc("Chdmb3JnZS92MS90ZW1wbGF0ZS5wcm90bxIIZm9yZ2UudjEizwEKCFRlbXBsYXRlEgwKBG5hbWUYASABKAkSDwoHdmVyc2lvbhgCIAEoCRINCgV0aXRsZRgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIMCgR0YWdzGAUgAygJEg0KBW93bmVyGAYgASgJEi8KCnBhcmFtZXRlcnMYByADKAsyGy5mb3JnZS52MS5UZW1wbGF0ZVBhcmFtZXRlchIPCgdvcHRpb25zGAggAygJEgwKBHR5cGUYCSABKAkSEwoLdGFyZ2V0X3JlcG8YCiABKAkigQMKEVRlbXBsYXRlUGFyYW1ldGVyEgwKBG5hbWUYASABKAkSLgoEdHlwZRgCIAEoDjIgLmZvcmdlLnYxLlRlbXBsYXRlUGFyYW1ldGVyLlR5cGUSEAoIcmVxdWlyZWQYAyABKAgSFQoNZGVmYXVsdF92YWx1ZRgEIAEoCRIPCgdwYXR0ZXJuGAUgASgJEg4KBnZhbHVlcxgGIAMoCRITCgtkZXNjcmlwdGlvbhgHIAEoCRINCgVsYWJlbBgIIAEoCRITCgtwbGFjZWhvbGRlchgJIAEoCRINCgVncm91cBgKIAEoCRIQCgNtaW4YCyABKANIAIgBARIQCgNtYXgYDCABKANIAYgBASJoCgRUeXBlEhQKEFRZUEVfVU5TUEVDSUZJRUQQABIPCgtUWVBFX1NUUklORxABEgwKCFRZUEVfSU5UEAISDQoJVFlQRV9CT09MEAMSDQoJVFlQRV9FTlVNEAQSDQoJVFlQRV9MSVNUEAVCBgoEX21pbkIGCgRfbWF4IjQKFExpc3RUZW1wbGF0ZXNSZXF1ZXN0Eg8KB3ZlcnNpb24YASABKAkSCwoDdGFnGAIgASgJIj4KFUxpc3RUZW1wbGF0ZXNSZXNwb25zZRIlCgl0ZW1wbGF0ZXMYASADKAsyEi5mb3JnZS52MS5UZW1wbGF0ZSIzChJHZXRUZW1wbGF0ZVJlcXVlc3QSDAoEbmFtZRgBIAEoCRIPCgd2ZXJzaW9uGAIgASgJIjsKE0dldFRlbXBsYXRlUmVzcG9uc2USJAoIdGVtcGxhdGUYASABKAsyEi5mb3JnZS52MS5UZW1wbGF0ZTK5AQoPVGVtcGxhdGVTZXJ2aWNlElUKDUxpc3RUZW1wbGF0ZXMSHi5mb3JnZS52MS5MaXN0VGVtcGxhdGVzUmVxdWVzdBofLmZvcmdlLnYxLkxpc3RUZW1wbGF0ZXNSZXNwb25zZSIDkAIBEk8KC0dldFRlbXBsYXRlEhwuZm9yZ2UudjEuR2V0VGVtcGxhdGVSZXF1ZXN0Gh0uZm9yZ2UudjEuR2V0VGVtcGxhdGVSZXNwb25zZSIDkAIBYgZwcm90bzM");
 
 /**
  * Template is a service template at one version.
@@ -66,6 +66,20 @@ export type Template = Message<"forge.v1.Template"> & {
    * @generated from field: repeated string options = 8;
    */
   options: string[];
+
+  /**
+   * "service" makes a new repo; "file" adds files to target_repo by pull request.
+   *
+   * @generated from field: string type = 9;
+   */
+  type: string;
+
+  /**
+   * For a file template, "owner/repo".
+   *
+   * @generated from field: string target_repo = 10;
+   */
+  targetRepo: string;
 };
 
 /**
@@ -123,6 +137,39 @@ export type TemplateParameter = Message<"forge.v1.TemplateParameter"> & {
    * @generated from field: string description = 7;
    */
   description: string;
+
+  /**
+   * What a form shows instead of the name; empty means the name.
+   *
+   * @generated from field: string label = 8;
+   */
+  label: string;
+
+  /**
+   * An example value a form shows in an empty input.
+   *
+   * @generated from field: string placeholder = 9;
+   */
+  placeholder: string;
+
+  /**
+   * A heading a form shows the parameter under, such as "Tags".
+   *
+   * @generated from field: string group = 10;
+   */
+  group: string;
+
+  /**
+   * Bounds of an int, when set.
+   *
+   * @generated from field: optional int64 min = 11;
+   */
+  min?: bigint | undefined;
+
+  /**
+   * @generated from field: optional int64 max = 12;
+   */
+  max?: bigint | undefined;
 };
 
 /**
@@ -162,6 +209,13 @@ export enum TemplateParameter_Type {
    * @generated from enum value: TYPE_ENUM = 4;
    */
   ENUM = 4,
+
+  /**
+   * Several of values, sent comma-separated.
+   *
+   * @generated from enum value: TYPE_LIST = 5;
+   */
+  LIST = 5,
 }
 
 /**

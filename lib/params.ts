@@ -6,8 +6,15 @@ const INT = /^[+-]?\d+$/;
 // paramProblem says what is wrong with the value the create would send for p
 // (undefined: none), in the words the form shows. The API checks again.
 export function paramProblem(p: TemplateParameter, value: string | undefined): string | undefined {
-  if (value === undefined) return p.required ? `${p.name} is required.` : undefined;
-  if (p.type === TemplateParameter_Type.INT && !INT.test(value)) return "Enter a whole number.";
+  if (value === undefined) return p.required ? `${p.label || p.name} is required.` : undefined;
+  if (p.type === TemplateParameter_Type.INT) {
+    if (!INT.test(value)) return "Enter a whole number.";
+    const n = BigInt(value);
+    if ((p.min !== undefined && n < p.min) || (p.max !== undefined && n > p.max)) {
+      if (p.min !== undefined && p.max !== undefined) return `Enter a whole number from ${p.min} to ${p.max}.`;
+      return p.min !== undefined ? `Enter a whole number of at least ${p.min}.` : `Enter a whole number of at most ${p.max}.`;
+    }
+  }
   if (p.type === TemplateParameter_Type.STRING && p.pattern) {
     let re: RegExp;
     try {
