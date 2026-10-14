@@ -221,6 +221,18 @@ function forge(w: World) {
             options: ["replicas", "env", "jobs"],
           },
           { name: "templates/go-grpc", version: "v1.3.1", description: "ConnectRPC service in Go" },
+          {
+            name: "templates/opentofu",
+            version: "v1.3.1",
+            title: "OpenTofu stack",
+            description: "OpenTofu module",
+            parameters: [
+              { name: "state_bucket", type: TemplateParameter_Type.STRING, required: true, pattern: "^[a-z0-9-]+$" },
+              { name: "size", type: TemplateParameter_Type.INT, required: true },
+              { name: "public", type: TemplateParameter_Type.BOOL, required: true },
+              { name: "retries", type: TemplateParameter_Type.INT, defaultValue: "3" },
+            ],
+          },
         ],
       }),
     });
@@ -729,13 +741,13 @@ describe("create a service", () => {
     expect(screen.queryByLabelText("Owners")).toBeNull();
     await fillCreate("ledger");
     // A default is named, not filled in: left empty, the template applies it.
-    expect((screen.getByLabelText("port (optional)") as HTMLInputElement).value).toBe("");
+    expect((screen.getByLabelText("port") as HTMLInputElement).value).toBe("");
     expect(screen.getByText("3000").closest("span")!.parentElement!.textContent).toContain("Left empty, it is 3000.");
     expect((screen.getByLabelText("region") as HTMLSelectElement).value).toBe("eu");
     // A default written in the template's own syntax is described, not shown raw.
     expect(document.getElementById("param-module-note")!.textContent).toBe("Left empty, the template works it out from the repo.");
     expect(document.getElementById("param-port-note")!.textContent).toBe("Port the server listens on. Left empty, it is 3000.");
-    fireEvent.change(screen.getByLabelText("port (optional)"), { target: { value: "8080" } });
+    fireEvent.change(screen.getByLabelText("port"), { target: { value: "8080" } });
     click(screen.getByLabelText(/metrics/));
     // The same create as a command, flag by flag, as the form stands.
     const command = screen.getByLabelText("The same from the terminal").textContent!;
@@ -832,7 +844,7 @@ describe("create a service", () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
     expect(((await screen.findByLabelText("Template")) as HTMLSelectElement).value).toBe("templates/go-grpc");
-    expect(screen.queryByLabelText("port (optional)")).toBeNull();
+    expect(screen.queryByLabelText("port")).toBeNull();
     window.history.replaceState(null, "", "/");
   });
 
@@ -878,12 +890,61 @@ describe("create a service", () => {
     expect((screen.getByRole("button", { name: "Create service" }) as HTMLButtonElement).disabled).toBe(false);
   });
 
+  it("groups what the template requires, and checks it before asking the API", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    await fillCreate("infra");
+    fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/opentofu" } });
+    expect(document.getElementById("service-template-note")!.textContent).toBe("OpenTofu stack. 3 required inputs, 1 optional.");
+    const inputs = within(screen.getByRole("group", { name: "opentofu inputs" }));
+    expect(inputs.getAllByText("Required")).toHaveLength(2);
+    // The optional ones wait behind a disclosure while there are required ones.
+    const optional = screen.getByLabelText("retries").closest("details")!;
+    expect(optional.open).toBe(false);
+    // The command names every required input, with a placeholder until it is filled in.
+    const command = () => screen.getByLabelText("The same from the terminal").textContent!;
+    expect(command()).toContain("--set state_bucket=<state_bucket>");
+    expect(command()).toContain("--set size=<size>");
+
+    click(screen.getByRole("button", { name: "Create service" }));
+    expect(document.getElementById("param-state_bucket-note")!.textContent).toBe("state_bucket is required.");
+    expect(document.getElementById("param-size-note")!.textContent).toBe("size is required.");
+    expect(screen.getByText("2 inputs need fixing")).toBeTruthy();
+    expect(document.activeElement).toBe(screen.getByLabelText("state_bucket"));
+    // Editing a field clears its own error, not the others.
+    fireEvent.change(screen.getByLabelText("state_bucket"), { target: { value: "Bad Bucket" } });
+    expect(screen.getByLabelText("state_bucket").getAttribute("aria-invalid")).toBe("false");
+    expect(document.getElementById("param-size-note")!.textContent).toBe("size is required.");
+
+    fireEvent.change(screen.getByLabelText("size"), { target: { value: "ten" } });
+    click(screen.getByRole("button", { name: "Create service" }));
+    expect(document.getElementById("param-state_bucket-note")!.textContent).toBe("That doesn't look right: it must match ^[a-z0-9-]+$.");
+    expect(document.getElementById("param-size-note")!.textContent).toBe("Enter a whole number.");
+    expect(screen.getByLabelText("size").getAttribute("aria-invalid")).toBe("true");
+
+    // A bad optional input opens the disclosure and takes the focus.
+    fireEvent.change(screen.getByLabelText("state_bucket"), { target: { value: "forge-state" } });
+    fireEvent.change(screen.getByLabelText("size"), { target: { value: "10" } });
+    fireEvent.change(screen.getByLabelText("retries"), { target: { value: "x" } });
+    click(screen.getByRole("button", { name: "Create service" }));
+    expect(screen.getByText("One input needs fixing")).toBeTruthy();
+    expect(optional.open).toBe(true);
+    expect(document.activeElement).toBe(screen.getByLabelText("retries"));
+    expect(w.calls.create).toBeUndefined();
+
+    fireEvent.change(screen.getByLabelText("retries"), { target: { value: "" } });
+    click(screen.getByRole("button", { name: "Create service" }));
+    await screen.findByRole("heading", { name: "infra was created" });
+    // A required bool left unticked is false, not missing.
+    expect((w.calls.create[0] as { parameters: object }).parameters).toEqual({ state_bucket: "forge-state", size: "10", public: "false" });
+  });
+
   it("switches the questions with the template, and tells a reader they cannot create", async () => {
     const w = world({ writer: false });
     renderWithApi(<CreateService />, forge(w));
-    await screen.findByLabelText("port (optional)");
+    await screen.findByLabelText("port");
     fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/go-grpc" } });
-    expect(screen.queryByLabelText("port (optional)")).toBeNull();
+    expect(screen.queryByLabelText("port")).toBeNull();
     expect(screen.getByText(/Only writers can create a service/)).toBeTruthy();
     expect((screen.getByRole("button", { name: "Create service" }) as HTMLButtonElement).disabled).toBe(true);
   });

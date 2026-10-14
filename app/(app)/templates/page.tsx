@@ -7,6 +7,7 @@ import { ButtonLink, NameLink } from "@/components/ui/button";
 import { Empty, ErrorNote, Loading, PageHeader, Panel } from "@/components/ui/layout";
 import { Tag } from "@/components/ui/status";
 import { templateId } from "@/lib/api";
+import { paramSummary } from "@/lib/params";
 
 // mark is the short badge of a template card: "go-grpc" gives "GRPC", "nextjs" gives "NEXT".
 function mark(id: string): string {
@@ -65,6 +66,15 @@ export default function Templates() {
                       ))}
                     </div>
                   ) : null}
+                  <p className="text-[12.5px] text-fg-2">
+                    {paramSummary(t.parameters)}
+                    {t.parameters.some((p) => p.required)
+                      ? `: ${t.parameters
+                          .filter((p) => p.required)
+                          .map((p) => p.name)
+                          .join(", ")}`
+                      : ""}
+                  </p>
                   <div className="mt-auto flex items-center gap-3 pt-2 text-[12.5px] text-fg-3">
                     <span className="tabular-nums">
                       {t.version || "No release"}
