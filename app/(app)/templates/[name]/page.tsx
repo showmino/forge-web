@@ -54,7 +54,7 @@ export default function TemplatePage() {
         cli={`forge template get ${id}`}
       >
         {canWrite ? (
-          <ButtonLink kind="primary" href={`/create?template=${encodeURIComponent(id)}`}>
+          <ButtonLink kind="primary" href={`/templates/${encodeURIComponent(id)}/create`}>
             <Icon name="plus" />
             Use template
           </ButtonLink>

@@ -12,6 +12,7 @@ import { TeamService } from "@/gen/forge/v1/team_pb";
 import { TemplateParameter_Type, TemplateService } from "@/gen/forge/v1/template_pb";
 import { renderWithApi, signIn } from "@/test/helpers";
 import CreateService from "./(app)/create/page";
+import TemplateCreate from "./(app)/templates/[name]/create/page";
 import Environments from "./(app)/environments/page";
 import OperationPage from "./(app)/operations/[id]/page";
 import Operations from "./(app)/operations/page";
@@ -20,11 +21,12 @@ import ServicePage from "./(app)/services/[name]/page";
 // The writer's actions, each against an in-memory Forge API that records what
 // it was asked to do. Names and shapes are the live API's.
 
-const nav = vi.hoisted(() => ({ params: {} as Record<string, string>, router: { replace: vi.fn(), push: vi.fn() } }));
+const nav = vi.hoisted(() => ({ params: {} as Record<string, string>, search: "", router: { replace: vi.fn(), push: vi.fn() } }));
 vi.mock("next/navigation", () => ({
   useParams: () => nav.params,
   useRouter: () => nav.router,
   usePathname: () => "/",
+  useSearchParams: () => new URLSearchParams(nav.search),
 }));
 
 const ago = (minutes: number) => timestampFromDate(new Date(Date.now() - minutes * 60_000));
@@ -868,13 +870,44 @@ describe("create a service", () => {
     expect(keys[3]).not.toBe(keys[0]);
   });
 
-  it("starts from the template a card's Use template names", async () => {
-    window.history.replaceState(null, "", "/create?template=go-grpc");
+  it("starts from the template a link names, not the first one", async () => {
+    nav.search = "template=landing-zone";
     const w = world();
     renderWithApi(<CreateService />, forge(w));
-    expect(((await screen.findByLabelText("Template")) as HTMLSelectElement).value).toBe("templates/go-grpc");
+    expect(((await screen.findByLabelText("Template")) as HTMLSelectElement).value).toBe("templates/landing-zone");
     expect(screen.queryByLabelText("port")).toBeNull();
-    window.history.replaceState(null, "", "/");
+    nav.search = "";
+  });
+
+  it("creates from a template on the template's own page, and stays there", async () => {
+    nav.params = { name: "landing-zone" };
+    const w = world();
+    renderWithApi(<TemplateCreate />, forge(w));
+    // The template is fixed: it is not a choice here.
+    const tpl = (await screen.findByLabelText("Template")) as HTMLInputElement;
+    expect(tpl.tagName).toBe("INPUT");
+    expect(tpl.readOnly).toBe(true);
+    expect(tpl.value).toBe("landing-zone (v1.7.0)");
+    expect(within(screen.getByRole("navigation", { name: "Breadcrumb" })).getByRole("link", { name: "Templates" }).getAttribute("href")).toBe("/templates");
+    expect(within(screen.getByRole("navigation", { name: "Breadcrumb" })).getByRole("link", { name: "landing-zone" }).getAttribute("href")).toBe("/templates/landing-zone");
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "infosystems" } });
+    await screen.findByRole("option", { name: /^finance/ });
+    fireEvent.change(screen.getByLabelText("GitHub team"), { target: { value: "finance" } });
+    fireEvent.change(screen.getByLabelText("IP addresses needed"), { target: { value: "100" } });
+    fireEvent.change(screen.getByLabelText("Cost center"), { target: { value: "60168" } });
+    click(screen.getByRole("button", { name: "Create pull request" }));
+    expect(await screen.findByRole("heading", { name: "Pull request opened for infosystems" })).toBeTruthy();
+    expect(w.calls.create[0]).toMatchObject({ template: "templates/landing-zone" });
+    expect(nav.router.push).not.toHaveBeenCalled();
+    nav.params = {};
+  });
+
+  it("says so when a template's create page names a template that does not exist", async () => {
+    nav.params = { name: "nope" };
+    renderWithApi(<TemplateCreate />, forge(world()));
+    expect((await screen.findByRole("alert")).textContent).toContain("nope");
+    expect(screen.queryByRole("button", { name: /Create/ })).toBeNull();
+    nav.params = {};
   });
 
   it("asks for the owner before asking the API", async () => {
