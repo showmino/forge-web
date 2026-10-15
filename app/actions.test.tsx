@@ -316,10 +316,22 @@ function forge(w: World) {
 const dialog = () => within(screen.getByRole("dialog"));
 
 // fillCreate gives the create form its two required answers: a name, and the owner picked from GitHub's teams.
-async function fillCreate(name: string, team = "finance") {
-  fireEvent.change(await screen.findByLabelText("Service name"), { target: { value: name } });
+// The create form is a few steps: the template, the details, where it is
+// reached, how it runs, then a review with the Create button.
+const next = () => fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+async function pickTemplate(id: string) {
+  fireEvent.click(await screen.findByRole("radio", { name: new RegExp(`^${id}\\b`) }));
+}
+async function fillCreate(name: string, team = "finance", template?: string) {
+  if (template) await pickTemplate(template);
+  else await screen.findByRole("radio", { name: /^nextjs/ });
+  next();
+  fireEvent.change(screen.getByLabelText(/^(Service name|Name)$/), { target: { value: name } });
   await screen.findByRole("option", { name: /^finance/ });
-  fireEvent.change(screen.getByLabelText("Owner"), { target: { value: team } });
+  fireEvent.change(screen.getByLabelText(/^(Owner|GitHub team)$/), { target: { value: team } });
+}
+function toReview() {
+  for (let i = 0; i < 6 && screen.queryByRole("button", { name: "Continue" }); i++) next();
 }
 // The page's own promote button names the commit staging runs; the dialog's says where it goes.
 const PROMOTE = "Promote 18b1232 to production";
@@ -765,12 +777,19 @@ describe("create a service", () => {
   it("asks for what the template asks for, shows each step and ends with the new service", async () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
+    // The first step is the template, the first one chosen.
+    expect(((await screen.findByRole("radio", { name: /^nextjs/ })) as HTMLInputElement).checked).toBe(true);
+    const steps = within(screen.getByRole("navigation", { name: "Steps" }));
+    expect(steps.getAllByRole("button").map((b) => b.textContent)).toEqual(["1Template", "2Details", "3Visibility", "4Runtime", "5Review"]);
+    expect(steps.getByRole("button", { name: /Template/ }).getAttribute("aria-current")).toBe("step");
+    next();
     // The owner is a GitHub team, picked from the teams that exist; nobody types it.
-    const owner = (await screen.findByLabelText("Owner")) as HTMLSelectElement;
+    const owner = screen.getByLabelText("Owner") as HTMLSelectElement;
     await screen.findByRole("option", { name: "finance (Finance)" });
     expect([...owner.options].map((o) => o.value)).toEqual(["", "finance", "platform-engineering"]);
     expect(screen.queryByLabelText("Owners")).toBeNull();
-    await fillCreate("ledger");
+    fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "ledger" } });
+    fireEvent.change(owner, { target: { value: "finance" } });
     // A default is named, not filled in: left empty, the template applies it.
     expect((screen.getByLabelText("port") as HTMLInputElement).value).toBe("");
     expect(screen.getByText("3000").closest("span")!.parentElement!.textContent).toContain("Left empty, it is 3000.");
@@ -780,7 +799,7 @@ describe("create a service", () => {
     expect(document.getElementById("param-port-note")!.textContent).toBe("Port the server listens on. Left empty, it is 3000.");
     fireEvent.change(screen.getByLabelText("port"), { target: { value: "8080" } });
     click(screen.getByLabelText(/metrics/));
-    // The same create as a command, flag by flag, as the form stands.
+    // The same create as a command, flag by flag, as the form stands, beside every step.
     const command = screen.getByLabelText("The same from the terminal").textContent!;
     expect(command).toContain("forge create ledger");
     expect(command).not.toContain("--owner");
@@ -788,6 +807,14 @@ describe("create a service", () => {
       expect(command).toContain(flag);
     }
     expect(command).not.toContain("module=");
+    toReview();
+    // The review says what will be made before anything is.
+    const review = within(screen.getByRole("list", { name: "Review" }));
+    expect(review.getByText("ledger")).toBeTruthy();
+    expect(review.getByText("finance")).toBeTruthy();
+    expect(review.getByText("Public")).toBeTruthy();
+    expect(review.getByText("port=8080")).toBeTruthy();
+    expect(w.calls.create).toBeUndefined();
     click(screen.getByRole("button", { name: "Create service" }));
 
     expect(await screen.findByRole("heading", { name: "ledger was created" })).toBeTruthy();
@@ -809,38 +836,70 @@ describe("create a service", () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
     await fillCreate("ledger");
+    toReview();
     click(screen.getByRole("button", { name: "Create service" }));
     await screen.findByRole("heading", { name: "ledger was created" });
     expect((w.calls.create[0] as { parameters: object }).parameters).toEqual({ region: "eu" });
     expect((w.calls.create[0] as { runOptions?: object }).runOptions).toBeUndefined();
   });
 
-  it("makes a service that is reached only on the network, from any service template", async () => {
+  it("goes back without losing what was typed, and does not skip the details", async () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
-    await fillCreate("intranet");
-    // A file template makes no service: it has no address to choose.
-    fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/landing-zone" } });
-    expect(screen.queryByRole("checkbox", { name: /^Internal(?! ?staging)/ })).toBeNull();
-    fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/go-grpc" } });
-    click(screen.getByRole("checkbox", { name: /^Internal(?! ?staging)/ }));
-    expect(screen.getByLabelText("The same from the terminal").textContent).toContain("--internal");
-    // An internal service has no public staging to keep internal.
-    expect(screen.queryByRole("checkbox", { name: /^Internal ?staging/ })).toBeNull();
+    await fillCreate("ledger");
+    fireEvent.change(screen.getByLabelText("port"), { target: { value: "8080" } });
+    toReview();
+    const steps = () => within(screen.getByRole("navigation", { name: "Steps" }));
+    click(steps().getByRole("button", { name: /Details/ }));
+    expect(steps().getByRole("button", { name: /Details/ }).getAttribute("aria-current")).toBe("step");
+    expect((screen.getByLabelText("Service name") as HTMLInputElement).value).toBe("ledger");
+    expect((screen.getByLabelText("port") as HTMLInputElement).value).toBe("8080");
+    // A step ahead is only reached through the details being right.
+    fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "Bad Name" } });
+    click(steps().getByRole("button", { name: /Review/ }));
+    expect(steps().getByRole("button", { name: /Details/ }).getAttribute("aria-current")).toBe("step");
+    expect(screen.getByRole("alert").textContent).toContain("lowercase letters");
+    click(screen.getByRole("button", { name: "Back" }));
+    expect(steps().getByRole("button", { name: /Template/ }).getAttribute("aria-current")).toBe("step");
+    expect(w.calls.create).toBeUndefined();
+  });
+
+  it("makes a private service, from any service template", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    // A file template makes no service: it has no visibility to choose.
+    await pickTemplate("landing-zone");
+    expect(within(screen.getByRole("navigation", { name: "Steps" })).queryByRole("button", { name: /Visibility/ })).toBeNull();
+    await fillCreate("intranet", "finance", "go-grpc");
+    next();
+    const visibility = within(screen.getByRole("radiogroup", { name: "Visibility" }));
+    expect(visibility.getAllByRole("radio").map((r) => (r as HTMLInputElement).value)).toEqual(["public", "public-production", "private"]);
+    expect((visibility.getByRole("radio", { name: /^Public\b(?! production)/ }) as HTMLInputElement).checked).toBe(true);
+    click(visibility.getByRole("radio", { name: /^Private/ }));
+    const command = screen.getByLabelText("The same from the terminal").textContent!;
+    expect(command).toContain("--internal");
+    expect(command).not.toContain("--internal-staging");
+    toReview();
+    expect(within(screen.getByRole("list", { name: "Review" })).getByText("Private")).toBeTruthy();
     click(screen.getByRole("button", { name: "Create service" }));
     await screen.findByRole("heading", { name: "intranet was created" });
     expect((w.calls.create[0] as { runOptions: object }).runOptions).toMatchObject({ networkOnly: true });
   });
 
-  it("makes a service whose staging is reached only on the network", async () => {
+  it("makes a service with a public production and a private staging", async () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
-    await fillCreate("shop");
-    fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/landing-zone" } });
-    expect(screen.queryByRole("checkbox", { name: /^Internal ?staging/ })).toBeNull();
-    fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/go-grpc" } });
-    click(screen.getByRole("checkbox", { name: /^Internal ?staging/ }));
+    await fillCreate("shop", "finance", "go-grpc");
+    next();
+    const visibility = within(screen.getByRole("radiogroup", { name: "Visibility" }));
+    click(visibility.getByRole("radio", { name: /^Public production/ }));
     expect(screen.getByLabelText("The same from the terminal").textContent).toContain("--internal-staging");
+    // Back to public: no flag at all.
+    click(visibility.getByRole("radio", { name: /^Public\b(?! production)/ }));
+    expect(screen.getByLabelText("The same from the terminal").textContent).not.toContain("--internal");
+    click(visibility.getByRole("radio", { name: /^Public production/ }));
+    toReview();
+    expect(within(screen.getByRole("list", { name: "Review" })).getByText("Public production")).toBeTruthy();
     click(screen.getByRole("button", { name: "Create service" }));
     await screen.findByRole("heading", { name: "shop was created" });
     const sent = (w.calls.create[0] as { runOptions: { networkOnly?: boolean } }).runOptions;
@@ -852,6 +911,8 @@ describe("create a service", () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
     await fillCreate("ledger");
+    next();
+    next();
     // Only what nextjs offers is there.
     expect(screen.queryByText("1Password secrets")).toBeNull();
     fireEvent.change(screen.getByLabelText("Pods in production"), { target: { value: "3" } });
@@ -866,6 +927,7 @@ describe("create a service", () => {
     for (const flag of ["--replicas 3", "--env LOG_LEVEL=info", "--job 'cleanup=0 3 * * *:node cleanup.js'"]) {
       expect(command).toContain(flag);
     }
+    toReview();
     click(screen.getByRole("button", { name: "Create service" }));
     await screen.findByRole("heading", { name: "ledger was created" });
     expect((w.calls.create[0] as { runOptions: object }).runOptions).toMatchObject({
@@ -879,6 +941,7 @@ describe("create a service", () => {
     const w = world({ dropCreate: 1 });
     renderWithApi(<CreateService />, forge(w));
     await fillCreate("ledger");
+    toReview();
     click(screen.getByRole("button", { name: "Create service" }));
     expect(await screen.findByRole("heading", { name: "ledger was created" })).toBeTruthy();
     const keys = (w.calls.create as { requestId: string }[]).map((c) => c.requestId);
@@ -891,6 +954,7 @@ describe("create a service", () => {
     const w = world({ dropCreate: 2 });
     renderWithApi(<CreateService />, forge(w));
     await fillCreate("taken");
+    toReview();
     click(screen.getByRole("button", { name: "Create service" }));
     expect((await screen.findByRole("alert")).textContent).toContain("it does not start a second one");
     // The writer presses again: the same create, and this time the API answers (a failure).
@@ -903,12 +967,15 @@ describe("create a service", () => {
     expect(keys[3]).not.toBe(keys[0]);
   });
 
-  it("starts from the template a link names, not the first one", async () => {
+  it("starts from the template a link names, at its details", async () => {
     nav.search = "template=landing-zone";
     const w = world();
     renderWithApi(<CreateService />, forge(w));
-    expect(((await screen.findByLabelText("Template")) as HTMLSelectElement).value).toBe("templates/landing-zone");
+    expect(await screen.findByLabelText("Name")).toBeTruthy();
+    expect(screen.getByLabelText("The same from the terminal").textContent).toContain("--template landing-zone");
     expect(screen.queryByLabelText("port")).toBeNull();
+    click(screen.getByRole("button", { name: "Back" }));
+    expect((screen.getByRole("radio", { name: /^landing-zone/ }) as HTMLInputElement).checked).toBe(true);
     nav.search = "";
   });
 
@@ -916,11 +983,13 @@ describe("create a service", () => {
     nav.params = { name: "landing-zone" };
     const w = world();
     renderWithApi(<TemplateCreate />, forge(w));
-    // The template is fixed: it is not a choice here.
+    // The template is fixed: it is not a step here.
     const tpl = (await screen.findByLabelText("Template")) as HTMLInputElement;
     expect(tpl.tagName).toBe("INPUT");
     expect(tpl.readOnly).toBe(true);
     expect(tpl.value).toBe("landing-zone (v1.7.0)");
+    expect(within(screen.getByRole("navigation", { name: "Steps" })).getAllByRole("button").map((b) => b.textContent)).toEqual(["1Details", "2Review"]);
+    expect(screen.queryByRole("button", { name: "Back" })).toBeNull();
     expect(within(screen.getByRole("navigation", { name: "Breadcrumb" })).getByRole("link", { name: "Templates" }).getAttribute("href")).toBe("/templates");
     expect(within(screen.getByRole("navigation", { name: "Breadcrumb" })).getByRole("link", { name: "landing-zone" }).getAttribute("href")).toBe("/templates/landing-zone");
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "infosystems" } });
@@ -928,6 +997,7 @@ describe("create a service", () => {
     fireEvent.change(screen.getByLabelText("GitHub team"), { target: { value: "finance" } });
     fireEvent.change(screen.getByLabelText("IP addresses needed"), { target: { value: "100" } });
     fireEvent.change(screen.getByLabelText("Cost center"), { target: { value: "60168" } });
+    toReview();
     click(screen.getByRole("button", { name: "Create pull request" }));
     expect(await screen.findByRole("heading", { name: "Pull request opened for infosystems" })).toBeTruthy();
     expect(w.calls.create[0]).toMatchObject({ template: "templates/landing-zone" });
@@ -939,37 +1009,44 @@ describe("create a service", () => {
     nav.params = { name: "nope" };
     renderWithApi(<TemplateCreate />, forge(world()));
     expect((await screen.findByRole("alert")).textContent).toContain("nope");
-    expect(screen.queryByRole("button", { name: /Create/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Create|Continue/ })).toBeNull();
     nav.params = {};
   });
 
-  it("asks for the owner before asking the API", async () => {
+  it("asks for the owner before going on", async () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
-    fireEvent.change(await screen.findByLabelText("Service name"), { target: { value: "ledger" } });
+    await screen.findByRole("radio", { name: /^nextjs/ });
+    next();
+    fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "ledger" } });
     await screen.findByRole("option", { name: /^finance/ });
-    click(screen.getByRole("button", { name: "Create service" }));
+    next();
     expect(screen.getByRole("alert").textContent).toContain("Choose the team that owns the service.");
+    expect(screen.getByLabelText("Service name")).toBeTruthy();
     expect(w.calls.create).toBeUndefined();
   });
 
   it("says why the teams cannot be listed, and still lets the owner be typed", async () => {
     const w = world({ teamsDenied: true });
     renderWithApi(<CreateService />, forge(w));
+    await screen.findByRole("radio", { name: /^nextjs/ });
+    next();
     expect((await screen.findByRole("alert")).textContent).toContain('grant it the organization permission "Members: read"');
     fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "ledger" } });
     fireEvent.change(screen.getByLabelText("Owner"), { target: { value: " finance " } });
+    toReview();
     click(screen.getByRole("button", { name: "Create service" }));
     await screen.findByRole("heading", { name: "ledger was created" });
     expect(w.calls.create[0]).toMatchObject({ serviceId: "ledger", ownerTeam: "finance" });
   });
 
-  it("refuses a bad name before asking the API", async () => {
+  it("refuses a bad name before going on", async () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
     await fillCreate("My Service");
-    click(screen.getByRole("button", { name: "Create service" }));
+    next();
     expect(screen.getByRole("alert").textContent).toContain("lowercase letters");
+    expect(screen.queryByRole("button", { name: "Create service" })).toBeNull();
     expect(w.calls.create).toBeUndefined();
   });
 
@@ -977,6 +1054,7 @@ describe("create a service", () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
     await fillCreate("taken");
+    toReview();
     click(screen.getByRole("button", { name: "Create service" }));
     const alert = await screen.findByText(/already exists/);
     expect(alert.textContent).toContain("Nothing was left behind");
@@ -985,12 +1063,12 @@ describe("create a service", () => {
     expect((screen.getByRole("button", { name: "Create service" }) as HTMLButtonElement).disabled).toBe(false);
   });
 
-  it("groups what the template requires, and checks it before asking the API", async () => {
+  it("groups what the template requires, and checks it before going on", async () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
-    await fillCreate("infra");
-    fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/opentofu" } });
-    expect(document.getElementById("service-template-note")!.textContent).toBe("OpenTofu stack. 3 required inputs, 1 optional.");
+    // A template's card says what it asks for.
+    expect((await screen.findByRole("radio", { name: /^opentofu/ })).closest("label")!.textContent).toContain("3 required inputs, 1 optional");
+    await fillCreate("infra", "finance", "opentofu");
     const inputs = within(screen.getByRole("group", { name: "opentofu inputs" }));
     expect(inputs.getAllByText("Required")).toHaveLength(2);
     // The optional ones wait behind a disclosure while there are required ones.
@@ -1001,7 +1079,7 @@ describe("create a service", () => {
     expect(command()).toContain("--set state_bucket=<state_bucket>");
     expect(command()).toContain("--set size=<size>");
 
-    click(screen.getByRole("button", { name: "Create service" }));
+    next();
     expect(document.getElementById("param-state_bucket-note")!.textContent).toBe("state_bucket is required.");
     expect(document.getElementById("param-size-note")!.textContent).toBe("size is required.");
     expect(screen.getByText("2 inputs need fixing")).toBeTruthy();
@@ -1012,7 +1090,7 @@ describe("create a service", () => {
     expect(document.getElementById("param-size-note")!.textContent).toBe("size is required.");
 
     fireEvent.change(screen.getByLabelText("size"), { target: { value: "ten" } });
-    click(screen.getByRole("button", { name: "Create service" }));
+    next();
     expect(document.getElementById("param-state_bucket-note")!.textContent).toBe("That doesn't look right: it must match ^[a-z0-9-]+$.");
     expect(document.getElementById("param-size-note")!.textContent).toBe("Enter a whole number.");
     expect(screen.getByLabelText("size").getAttribute("aria-invalid")).toBe("true");
@@ -1021,13 +1099,14 @@ describe("create a service", () => {
     fireEvent.change(screen.getByLabelText("state_bucket"), { target: { value: "forge-state" } });
     fireEvent.change(screen.getByLabelText("size"), { target: { value: "10" } });
     fireEvent.change(screen.getByLabelText("retries"), { target: { value: "x" } });
-    click(screen.getByRole("button", { name: "Create service" }));
+    next();
     expect(screen.getByText("One input needs fixing")).toBeTruthy();
     expect(optional.open).toBe(true);
     expect(document.activeElement).toBe(screen.getByLabelText("retries"));
     expect(w.calls.create).toBeUndefined();
 
     fireEvent.change(screen.getByLabelText("retries"), { target: { value: "" } });
+    toReview();
     click(screen.getByRole("button", { name: "Create service" }));
     await screen.findByRole("heading", { name: "infra was created" });
     // A required bool left unticked is false, not missing.
@@ -1037,12 +1116,11 @@ describe("create a service", () => {
   it("fills in a file template like a form, and ends with its pull request", async () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
-    await fillCreate("infosystems");
-    fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/landing-zone" } });
     // A file template names what it is for: no repo is made.
+    expect((await screen.findByRole("radio", { name: /^landing-zone/ })).closest("label")!.textContent).toContain("Opens a pull request in showmino/landingzone");
+    await fillCreate("infosystems", "finance", "landing-zone");
     expect(screen.getByLabelText("Name")).toBeTruthy();
     expect(screen.getByLabelText("GitHub team")).toBeTruthy();
-    expect(screen.getByText(/opens a pull request in showmino\/landingzone/)).toBeTruthy();
     // Inputs in the template's order, by label, the grouped ones under their heading.
     const tags = within(screen.getByRole("group", { name: "Tags" }));
     expect(tags.getByLabelText("Cost center")).toBeTruthy();
@@ -1055,12 +1133,14 @@ describe("create a service", () => {
 
     fireEvent.change(screen.getByLabelText("IP addresses needed"), { target: { value: "5000" } });
     fireEvent.change(screen.getByLabelText("Cost center"), { target: { value: "60168" } });
-    click(screen.getByRole("button", { name: "Create pull request" }));
+    next();
     expect(document.getElementById("param-ipAddresses-note")!.textContent).toBe("Enter a whole number from 1 to 1024.");
     expect(w.calls.create).toBeUndefined();
 
     fireEvent.change(screen.getByLabelText("IP addresses needed"), { target: { value: "100" } });
     expect(screen.getByLabelText("The same from the terminal").textContent).toContain("--set environments=test");
+    next();
+    // A pull request has no visibility or runtime: straight to the review.
     click(screen.getByRole("button", { name: "Create pull request" }));
     expect(await screen.findByRole("heading", { name: "Pull request opened for infosystems" })).toBeTruthy();
     expect(screen.getByRole("link", { name: /pull\/4/ }).getAttribute("href")).toBe("https://github.com/showmino/landingzone/pull/4");
@@ -1071,10 +1151,18 @@ describe("create a service", () => {
   it("switches the questions with the template, and tells a reader they cannot create", async () => {
     const w = world({ writer: false });
     renderWithApi(<CreateService />, forge(w));
-    await screen.findByLabelText("port");
-    fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/go-grpc" } });
+    await screen.findByRole("radio", { name: /^nextjs/ });
+    next();
+    expect(screen.getByLabelText("port")).toBeTruthy();
+    click(screen.getByRole("button", { name: "Back" }));
+    await pickTemplate("go-grpc");
+    next();
     expect(screen.queryByLabelText("port")).toBeNull();
     expect(screen.getByText(/Only writers can create a service/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "ledger" } });
+    await screen.findByRole("option", { name: /^finance/ });
+    fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "finance" } });
+    toReview();
     expect((screen.getByRole("button", { name: "Create service" }) as HTMLButtonElement).disabled).toBe(true);
   });
 });
