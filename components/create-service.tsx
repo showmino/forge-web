@@ -184,6 +184,8 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   const [runs, setRuns] = useState<Record<string, RunForm>>({});
   // No public address: forge.yaml gets run.domain: none.
   const [networkOnly, setNetworkOnly] = useState(false);
+  // Staging only on the internal address, production public: run.staging.public: false.
+  const [stagingNetworkOnly, setStagingNetworkOnly] = useState(false);
   const [checked, setChecked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [steps, setSteps] = useState<Step[]>([]);
@@ -227,6 +229,15 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
       />
     );
   };
+  // Where it is reached: a file template makes no service, and an internal
+  // service has no public staging to keep internal.
+  const address = isFile
+    ? { flags: [] as [string, string][], options: {} }
+    : networkOnly
+      ? { flags: [["--internal", ""]] as [string, string][], options: { networkOnly: true } }
+      : stagingNetworkOnly
+        ? { flags: [["--internal-staging", ""]] as [string, string][], options: { stagingNetworkOnly: true } }
+        : { flags: [] as [string, string][], options: {} };
   // The command that does the same, flag by flag, as the form is filled in.
   const flags: [string, string][] = [
     ["--template", template ? templateId(template.name) : "<template>"],
@@ -237,7 +248,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
       return [["--set", `${p.name}=${value}`]];
     }),
     ...runAsked.flags,
-    ...(networkOnly && !isFile ? [["--network-only", ""] as [string, string]] : []),
+    ...address.flags,
   ];
 
   async function create() {
@@ -255,7 +266,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
       template: template.name,
       ownerTeam: team.trim(),
       parameters,
-      runOptions: networkOnly && !isFile ? { ...runAsked.options, networkOnly: true } : runAsked.options,
+      runOptions: Object.keys(address.options).length > 0 ? { ...runAsked.options, ...address.options } : runAsked.options,
     };
     const signature = JSON.stringify(request);
     if (attempt.current?.request !== signature) attempt.current = { key: randomString(), request: signature };
@@ -539,6 +550,23 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                   <span className="type-small font-semibold">Internal</span>
                   <span className="block type-small text-fg-2">
                     No public address: it is reached on the internal one, over HTTP. Change it later in forge.yaml (run.domain).
+                  </span>
+                </span>
+              </label>
+            ) : null}
+            {template && !isFile && !networkOnly ? (
+              <label className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 size-4 accent-ember"
+                  checked={stagingNetworkOnly}
+                  onChange={(e) => setStagingNetworkOnly(e.target.checked)}
+                />
+                <span>
+                  <span className="type-small font-semibold">Internal staging</span>
+                  <span className="block type-small text-fg-2">
+                    Staging is reached on the internal address, over HTTP; production stays public. Change it later in forge.yaml
+                    (run.staging.public).
                   </span>
                 </span>
               </label>

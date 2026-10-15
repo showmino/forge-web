@@ -821,13 +821,31 @@ describe("create a service", () => {
     await fillCreate("intranet");
     // A file template makes no service: it has no address to choose.
     fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/landing-zone" } });
-    expect(screen.queryByRole("checkbox", { name: /^Internal/ })).toBeNull();
+    expect(screen.queryByRole("checkbox", { name: /^Internal(?! ?staging)/ })).toBeNull();
     fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/go-grpc" } });
-    click(screen.getByRole("checkbox", { name: /^Internal/ }));
-    expect(screen.getByLabelText("The same from the terminal").textContent).toContain("--network-only");
+    click(screen.getByRole("checkbox", { name: /^Internal(?! ?staging)/ }));
+    expect(screen.getByLabelText("The same from the terminal").textContent).toContain("--internal");
+    // An internal service has no public staging to keep internal.
+    expect(screen.queryByRole("checkbox", { name: /^Internal ?staging/ })).toBeNull();
     click(screen.getByRole("button", { name: "Create service" }));
     await screen.findByRole("heading", { name: "intranet was created" });
     expect((w.calls.create[0] as { runOptions: object }).runOptions).toMatchObject({ networkOnly: true });
+  });
+
+  it("makes a service whose staging is reached only on the network", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    await fillCreate("shop");
+    fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/landing-zone" } });
+    expect(screen.queryByRole("checkbox", { name: /^Internal ?staging/ })).toBeNull();
+    fireEvent.change(screen.getByLabelText("Template"), { target: { value: "templates/go-grpc" } });
+    click(screen.getByRole("checkbox", { name: /^Internal ?staging/ }));
+    expect(screen.getByLabelText("The same from the terminal").textContent).toContain("--internal-staging");
+    click(screen.getByRole("button", { name: "Create service" }));
+    await screen.findByRole("heading", { name: "shop was created" });
+    const sent = (w.calls.create[0] as { runOptions: { networkOnly?: boolean } }).runOptions;
+    expect(sent).toMatchObject({ stagingNetworkOnly: true });
+    expect(sent.networkOnly).toBeFalsy();
   });
 
   it("sends the run options the template offers, and shows them as flags", async () => {
