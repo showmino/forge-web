@@ -3,7 +3,7 @@
 import { Code, ConnectError } from "@connectrpc/connect";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useCanWrite } from "@/components/app-shell";
 import { StepLog, type Step } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
@@ -11,7 +11,7 @@ import { emptyRunForm, RunOptionsFields, runOptions, type RunForm } from "@/comp
 import { Addr, Button, TextLink } from "@/components/ui/button";
 import { CommandBlock } from "@/components/ui/cli";
 import { Field, inputClass } from "@/components/ui/field";
-import { Crumbs, ErrorNote, Loading, PageHeader, Panel, Section } from "@/components/ui/layout";
+import { Crumbs, ErrorNote, Loading, PageHeader, Panel } from "@/components/ui/layout";
 import { useToast } from "@/components/ui/toast";
 import { CreateStep_State, type Service } from "@/gen/forge/v1/catalog_pb";
 import { TemplateParameter_Type, type TemplateParameter } from "@/gen/forge/v1/template_pb";
@@ -148,9 +148,47 @@ function ParameterField({ p, own, error, onChange }: { p: TemplateParameter; own
   );
 }
 
-// Create a service from a template: the API renders the template, creates the
-// repo, pushes the first commit and registers the service, and the page shows
-// each step as it happens.
+// The steps of the form, in order. A file template makes no service, so it
+// has no visibility or runtime to choose; a fixed template is not a choice.
+type Stage = "template" | "details" | "visibility" | "runtime" | "review";
+const stageNames: Record<Stage, string> = {
+  template: "Template",
+  details: "Details",
+  visibility: "Visibility",
+  runtime: "Runtime",
+  review: "Review",
+};
+
+// Where a service is reached from. Private is the internal address, over HTTP:
+// forge.yaml's run.domain: none, or run.staging.public: false for staging alone.
+type Visibility = "public" | "public-production" | "private";
+const visibilities: { value: Visibility; title: string; text: string; staging: boolean; production: boolean }[] = [
+  { value: "public", title: "Public", text: "Staging and production are on the internet, over HTTPS.", staging: true, production: true },
+  {
+    value: "public-production",
+    title: "Public production",
+    text: "Production is on the internet. Staging stays on the private network, for testing before a release.",
+    staging: false,
+    production: true,
+  },
+  {
+    value: "private",
+    title: "Private",
+    text: "Only on the private network, in staging and production: for internal tools and APIs other services call.",
+    staging: false,
+    production: false,
+  },
+];
+
+function Reach({ env, open }: { env: string; open: boolean }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded border border-line bg-surface-2 px-1.5 py-0.5 text-[11.5px] text-fg-2">
+      <span className={`size-1.5 rounded-full ${open ? "bg-info-dot" : "bg-fg-3"}`} aria-hidden />
+      {env}: {open ? "Internet" : "Private network"}
+    </span>
+  );
+}
+
 // Create a service from a template: the API renders the template, creates the
 // repo, pushes the first commit and registers the service, and the page shows
 // each step as it happens. initial picks the template a link named ("go-grpc");
@@ -182,10 +220,17 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   const [paramErrors, setParamErrors] = useState<Record<string, string>>({});
   // The run options as typed, per template: switching templates keeps each one's.
   const [runs, setRuns] = useState<Record<string, RunForm>>({});
-  // No public address: forge.yaml gets run.domain: none.
-  const [networkOnly, setNetworkOnly] = useState(false);
-  // Staging only on the internal address, production public: run.staging.public: false.
-  const [stagingNetworkOnly, setStagingNetworkOnly] = useState(false);
+  const [visibility, setVisibility] = useState<Visibility>("public");
+  // A link that names the template starts at the details: the choice is made.
+  const [stage, setStage] = useState<Stage>(fixed || initial ? "details" : "template");
+  const [reached, setReached] = useState<Set<Stage>>(() => new Set([fixed || initial ? "details" : "template"]));
+  // The heading of the step takes the focus when the writer moves to another step.
+  const heading = useRef<HTMLHeadingElement>(null);
+  const moved = useRef(false);
+  useEffect(() => {
+    if (moved.current) heading.current?.focus();
+    moved.current = false;
+  }, [stage]);
   const [checked, setChecked] = useState(false);
   const [busy, setBusy] = useState(false);
   const [steps, setSteps] = useState<Step[]>([]);
@@ -233,9 +278,9 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   // service has no public staging to keep internal.
   const address = isFile
     ? { flags: [] as [string, string][], options: {} }
-    : networkOnly
+    : visibility === "private"
       ? { flags: [["--internal", ""]] as [string, string][], options: { networkOnly: true } }
-      : stagingNetworkOnly
+      : visibility === "public-production"
         ? { flags: [["--internal-staging", ""]] as [string, string][], options: { stagingNetworkOnly: true } }
         : { flags: [] as [string, string][], options: {} };
   // The command that does the same, flag by flag, as the form is filled in.
@@ -330,8 +375,17 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     setBusy(false);
   }
 
-  function submit(e: FormEvent) {
-    e.preventDefault();
+  const stages: Stage[] = [
+    ...(fixed ? [] : (["template"] as const)),
+    "details",
+    ...(template && !isFile ? (["visibility"] as const) : []),
+    ...(template && !isFile && template.options.length > 0 ? (["runtime"] as const) : []),
+    "review",
+  ];
+  const at = Math.max(0, stages.indexOf(stage));
+
+  // detailsOk checks the details, shows what is wrong and puts the focus on it.
+  function detailsOk(): boolean {
     setChecked(true);
     if (template) {
       setParamErrors(Object.fromEntries(problems.map(([p, problem]) => [`${template.name}/${p.name}`, problem])));
@@ -342,9 +396,41 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
       if (details) details.open = true;
       first?.focus();
       toast(problems.length === 1 ? "One input needs fixing" : `${problems.length} inputs need fixing`);
+      return false;
+    }
+    if (!SERVICE_NAME.test(name)) {
+      document.getElementById("service-name")?.focus();
+      return false;
+    }
+    if (!team.trim()) {
+      document.getElementById("service-team")?.focus();
+      return false;
+    }
+    return true;
+  }
+
+  function go(target: Stage) {
+    const to = stages.indexOf(target);
+    const details = stages.indexOf("details");
+    // Nothing past the details is reached while they are wrong.
+    const ok = !(to > details && at <= details) || detailsOk();
+    const landing = ok ? target : "details";
+    if (landing !== stage) moved.current = true;
+    setStage(landing);
+    setReached((r) => new Set(r).add(landing));
+  }
+
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    if (stage !== "review") {
+      go(stages[at + 1]);
       return;
     }
-    if (SERVICE_NAME.test(name) && team.trim() && !busy) void create();
+    if (!detailsOk()) {
+      go("details");
+      return;
+    }
+    if (!busy) void create();
   }
 
   if (outcome?.change) {
@@ -391,6 +477,90 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     );
   }
 
+  const chosen = visibilities.find((v) => v.value === visibility)!;
+  const setInputs = (template?.parameters ?? []).flatMap((p) => {
+    const value = sent(p, own(p));
+    return value === undefined ? [] : [`${p.name}=${value}`];
+  });
+  const summary: [Stage, string, ReactNode][] = [
+    ...(template
+      ? ([
+          [
+            "template",
+            "Template",
+            <>
+              <span className="font-mono">{templateId(template.name)}</span> <span className="text-fg-3">{template.version}</span>
+            </>,
+          ],
+        ] as [Stage, string, ReactNode][])
+      : []),
+    ["details", isFile ? "Name" : "Service name", <span key="name" className="font-mono">{name}</span>],
+    ["details", isFile ? "GitHub team" : "Owner", <span key="team" className="font-mono">{team.trim()}</span>],
+    [
+      "details",
+      "Inputs",
+      setInputs.length > 0 ? (
+        <span className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-[12.5px]">
+          {setInputs.map((v) => (
+            <span key={v}>{v}</span>
+          ))}
+        </span>
+      ) : (
+        <span className="text-fg-2">The template&apos;s defaults</span>
+      ),
+    ],
+    ...(stages.includes("visibility")
+      ? ([
+          [
+            "visibility",
+            "Visibility",
+            <>
+              <span className="font-medium">{chosen.title}</span>
+              <span className="mt-1 flex flex-wrap gap-1.5">
+                <Reach env="Staging" open={chosen.staging} />
+                <Reach env="Production" open={chosen.production} />
+              </span>
+            </>,
+          ],
+        ] as [Stage, string, ReactNode][])
+      : []),
+    ...(stages.includes("runtime")
+      ? ([
+          [
+            "runtime",
+            "Runtime",
+            runAsked.flags.length > 0 ? (
+              <span className="flex flex-col gap-0.5 font-mono text-[12.5px]">
+                {runAsked.flags.map(([f, v], i) => (
+                  <span key={i}>{`${f} ${v}`.trim()}</span>
+                ))}
+              </span>
+            ) : (
+              <span className="text-fg-2">The template&apos;s defaults</span>
+            ),
+          ],
+        ] as [Stage, string, ReactNode][])
+      : []),
+  ];
+
+  const titles: Record<Stage, [string, string]> = {
+    template: ["Choose a template", "What Forge makes the service from. Each is a tagged release of the templates repo."],
+    details: [
+      isFile ? "Details" : "Name and owner",
+      isFile
+        ? "The name goes into the file names; the template's inputs fill in the rest."
+        : "The name becomes the repo and the service; the owner is the GitHub team that answers for it.",
+    ],
+    visibility: ["Visibility", "Who can reach the service, in staging and in production."],
+    runtime: ["How it runs", "Optional. The template's defaults apply to anything left empty; change it later in forge.yaml."],
+    review: [
+      "Review",
+      isFile
+        ? "Nothing is made until you press the button: then Forge renders the files and opens the pull request."
+        : "Nothing is made until you press the button: then Forge creates the repo, starts its CI and adds it to the catalog.",
+    ],
+  };
+
   return (
     <>
       <PageHeader
@@ -409,7 +579,6 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
             ? "Forge renders the template's files and opens a pull request that adds them."
             : "Forge makes the repo from a template, starts its CI and adds it to the catalog."
         }
-        cli={`forge create ${name || "<name>"} --template ${template ? templateId(template.name) : "<template>"} --team ${team.trim() || "<team>"}`}
       />
       {!canWrite ? <p className="text-fg-2">Only writers can create a service. Ask platform-engineering for access.</p> : null}
       {templates.isPending ? (
@@ -420,198 +589,328 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
         <ErrorNote error={new Error(`There is no template ${fixed} in the newest release. See the templates for the ones there are.`)} />
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-6" noValidate>
-          <div className="flex flex-col gap-4">
-            <Field
-              id="service-name"
-              label={isFile ? "Name" : "Service name"}
-              hint={
-                isFile
-                  ? "Lowercase letters, digits and hyphens. The template puts it in the file names."
-                  : "Lowercase letters, digits and hyphens. This becomes the repo name."
-              }
-              error={badName ? "Use lowercase letters, digits and hyphens only, at most 63." : undefined}
-            >
-              <input
-                id="service-name"
-                className={`${inputClass} font-mono`}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onBlur={() => setChecked(true)}
-                aria-invalid={badName}
-                aria-describedby="service-name-note"
-                placeholder="payments-api"
-              />
-            </Field>
-            <Field
-              id="service-template"
-              label="Template"
-              hint={
-                template
-                  ? `${template.title || template.description}. ${isFile ? `It opens a pull request in ${template.targetRepo}; no repo is made. ` : ""}${paramSummary(template.parameters)}${optional.length > 0 ? `, ${optional.length} optional` : ""}.`
-                  : undefined
-              }
-            >
-              {fixed ? (
-                <input id="service-template" className={`${inputClass} font-mono`} readOnly value={template ? `${templateId(template.name)} (${template.version})` : fixed} />
-              ) : (
-                <select id="service-template" className={inputClass} value={template?.name ?? ""} onChange={(e) => setPicked(e.target.value)}>
-                  {templates.data.map((t) => (
-                    <option key={t.name} value={t.name}>
-                      {templateId(t.name)} ({t.version})
-                    </option>
-                  ))}
-                </select>
-              )}
-            </Field>
-            {template && template.parameters.length > 0 && isFile ? (
-              <div key={template.name} className="flex min-w-0 max-w-[420px] flex-col gap-4">
-                {groups.map((g) =>
-                  g ? (
-                    <fieldset key={g} className="flex flex-col gap-4 rounded-md border border-line p-4">
-                      <legend className="-ml-1.5 px-1.5 type-small font-semibold">{g}</legend>
-                      {template.parameters.filter((p) => p.group === g).map(field)}
-                    </fieldset>
-                  ) : (
-                    template.parameters.filter((p) => !p.group).map(field)
-                  ),
-                )}
+          <nav aria-label="Steps" className="overflow-x-auto">
+            <ol className="flex min-w-max items-center gap-1">
+              {stages.map((s, i) => {
+                const current = i === at;
+                const done = i < at;
+                return (
+                  <li key={s} className="flex items-center gap-1">
+                    {i > 0 ? <span aria-hidden className={`h-px w-6 ${i <= at ? "bg-ember" : "bg-line-strong"}`} /> : null}
+                    <button
+                      type="button"
+                      aria-current={current ? "step" : undefined}
+                      disabled={!current && i > at && !reached.has(s)}
+                      onClick={() => go(s)}
+                      className={`flex items-center gap-2 rounded-md px-2 py-1 type-small font-medium enabled:cursor-pointer enabled:hover:bg-surface-2 disabled:cursor-not-allowed ${
+                        current ? "text-fg" : done ? "text-fg-2" : "text-fg-3"
+                      }`}
+                    >
+                      <span
+                        className={`grid size-6 place-items-center rounded-full border text-[12px] tabular-nums ${
+                          current ? "border-ember bg-ember text-ember-on" : done ? "border-ember text-ember-ink" : "border-line-strong"
+                        }`}
+                      >
+                        {i + 1}
+                      </span>
+                      <span>{stageNames[s]}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
+
+          <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="flex min-w-0 flex-col gap-5">
+              <div className="flex flex-col gap-1">
+                <h2 ref={heading} tabIndex={-1} className="type-heading outline-none">
+                  {titles[stage][0]}
+                </h2>
+                <p className="max-w-[62ch] text-fg-2">{titles[stage][1]}</p>
               </div>
-            ) : template && template.parameters.length > 0 ? (
-              <fieldset key={template.name} className="flex min-w-0 max-w-[420px] flex-col gap-4 rounded-md border border-line p-4">
-                <legend className="-ml-1.5 px-1.5 type-small font-semibold">
-                  <span className="font-mono">{templateId(template.name)}</span> inputs
-                </legend>
-                {required.map(field)}
-                {optional.length > 0 ? (
-                  <details open={required.length === 0}>
-                    <summary className="cursor-pointer type-small font-medium text-fg-2">
-                      Optional <span className="tabular-nums text-fg-3">{optional.length}</span>
-                    </summary>
-                    <div className="flex flex-col gap-4 pt-3">{optional.map(field)}</div>
-                  </details>
-                ) : null}
-              </fieldset>
-            ) : null}
-            {teams.error ? (
-              // The list could not be read (the API says why): the team can still be typed, as on the CLI.
-              <>
-                <ErrorNote error={teams.error} />
-                <Field
-                  id="service-team"
-                  label="Owner"
-                  hint="The GitHub team that owns the service, by its name on GitHub."
-                  error={badTeam ? "Name the team that owns the service." : undefined}
-                >
-                  <input
-                    id="service-team"
-                    className={`${inputClass} font-mono`}
-                    value={team}
-                    onChange={(e) => setTeam(e.target.value)}
-                    aria-invalid={badTeam}
-                    aria-describedby="service-team-note"
-                    placeholder="platform-engineering"
-                  />
-                </Field>
-              </>
-            ) : (
-              <Field
-                id="service-team"
-                label={isFile ? "GitHub team" : "Owner"}
-                hint={isFile ? "The GitHub team the template gives access." : "The GitHub team that owns the service."}
-                error={badTeam ? "Choose the team that owns the service." : undefined}
-              >
-                <select
-                  id="service-team"
-                  className={inputClass}
-                  value={team}
-                  onChange={(e) => setTeam(e.target.value)}
-                  aria-invalid={badTeam}
-                  aria-describedby="service-team-note"
-                  disabled={teams.isPending}
-                >
-                  <option value="" disabled>
-                    {teams.isPending ? "Loading the teams from GitHub" : "Choose a team"}
-                  </option>
-                  {(teams.data ?? []).map((t) => {
-                    const slug = teamId(t.name);
+
+              {stage === "template" ? (
+                <fieldset className="grid gap-3 sm:grid-cols-2">
+                  <legend className="sr-only">Template</legend>
+                  {templates.data.map((t) => {
+                    const file = t.type === "file";
+                    const optionalCount = t.parameters.filter((p) => !p.required).length;
                     return (
-                      <option key={t.name} value={slug}>
-                        {t.displayName && t.displayName !== slug ? `${slug} (${t.displayName})` : slug}
-                      </option>
+                      <label
+                        key={t.name}
+                        className="flex cursor-pointer gap-3 rounded-md border border-line bg-surface p-4 hover:border-line-strong has-[:checked]:border-ember has-[:checked]:bg-ember-soft has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ember"
+                      >
+                        <input
+                          type="radio"
+                          name="template"
+                          value={t.name}
+                          checked={template?.name === t.name}
+                          onChange={() => setPicked(t.name)}
+                          aria-labelledby={`tpl-${templateId(t.name)}`}
+                          aria-describedby={`tpl-${templateId(t.name)}-about`}
+                          className="mt-1 size-4 shrink-0 accent-ember"
+                        />
+                        <span className="flex min-w-0 flex-col gap-1">
+                          <span className="flex flex-wrap items-center gap-2">
+                            <span id={`tpl-${templateId(t.name)}`} className="font-mono text-[13.5px] font-semibold">
+                              {templateId(t.name)}
+                            </span>
+                            <span className="text-[12px] tabular-nums text-fg-3">{t.version}</span>
+                            <span className="ml-auto rounded border border-line px-1.5 text-[11px] font-medium text-fg-2">
+                              {file ? "Pull request" : "New repo"}
+                            </span>
+                          </span>
+                          <span id={`tpl-${templateId(t.name)}-about`} className="flex flex-col gap-1">
+                            {t.title ? <span className="type-small font-semibold">{t.title}</span> : null}
+                            <span className="type-small text-fg-2">{t.description}</span>
+                            {file ? <span className="type-small text-fg-2">Opens a pull request in {t.targetRepo}; no repo is made.</span> : null}
+                            <span className="text-[12px] text-fg-3">
+                              {paramSummary(t.parameters)}
+                              {optionalCount > 0 ? `, ${optionalCount} optional` : ""}
+                            </span>
+                          </span>
+                        </span>
+                      </label>
                     );
                   })}
-                </select>
-              </Field>
-            )}
-            {template && !isFile ? (
-              <label className="flex items-start gap-2">
-                <input type="checkbox" className="mt-0.5 size-4 accent-ember" checked={networkOnly} onChange={(e) => setNetworkOnly(e.target.checked)} />
-                <span>
-                  <span className="type-small font-semibold">Internal</span>
-                  <span className="block type-small text-fg-2">
-                    No public address: it is reached on the internal one, over HTTP. Change it later in forge.yaml (run.domain).
-                  </span>
+                </fieldset>
+              ) : null}
+
+              {stage === "details" ? (
+                <div className="flex flex-col gap-4">
+                  {fixed ? (
+                    <Field id="service-template" label="Template" hint={template ? template.title || template.description : undefined}>
+                      <input
+                        id="service-template"
+                        className={`${inputClass} font-mono`}
+                        readOnly
+                        value={template ? `${templateId(template.name)} (${template.version})` : fixed}
+                      />
+                    </Field>
+                  ) : template ? (
+                    <p className="flex flex-wrap items-center gap-2 type-small text-fg-2">
+                      From the template <span className="font-mono text-fg">{templateId(template.name)}</span>
+                      <span className="tabular-nums text-fg-3">{template.version}</span>
+                    </p>
+                  ) : null}
+                  <Field
+                    id="service-name"
+                    label={isFile ? "Name" : "Service name"}
+                    hint={
+                      isFile
+                        ? "Lowercase letters, digits and hyphens. The template puts it in the file names."
+                        : "Lowercase letters, digits and hyphens. This becomes the repo name."
+                    }
+                    error={badName ? "Use lowercase letters, digits and hyphens only, at most 63." : undefined}
+                  >
+                    <input
+                      id="service-name"
+                      className={`${inputClass} font-mono`}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      onBlur={() => setChecked(true)}
+                      aria-invalid={badName}
+                      aria-describedby="service-name-note"
+                      placeholder="payments-api"
+                    />
+                  </Field>
+                  {teams.error ? (
+                    // The list could not be read (the API says why): the team can still be typed, as on the CLI.
+                    <>
+                      <ErrorNote error={teams.error} />
+                      <Field
+                        id="service-team"
+                        label="Owner"
+                        hint="The GitHub team that owns the service, by its name on GitHub."
+                        error={badTeam ? "Name the team that owns the service." : undefined}
+                      >
+                        <input
+                          id="service-team"
+                          className={`${inputClass} font-mono`}
+                          value={team}
+                          onChange={(e) => setTeam(e.target.value)}
+                          aria-invalid={badTeam}
+                          aria-describedby="service-team-note"
+                          placeholder="platform-engineering"
+                        />
+                      </Field>
+                    </>
+                  ) : (
+                    <Field
+                      id="service-team"
+                      label={isFile ? "GitHub team" : "Owner"}
+                      hint={isFile ? "The GitHub team the template gives access." : "The GitHub team that owns the service."}
+                      error={badTeam ? "Choose the team that owns the service." : undefined}
+                    >
+                      <select
+                        id="service-team"
+                        className={inputClass}
+                        value={team}
+                        onChange={(e) => setTeam(e.target.value)}
+                        aria-invalid={badTeam}
+                        aria-describedby="service-team-note"
+                        disabled={teams.isPending}
+                      >
+                        <option value="" disabled>
+                          {teams.isPending ? "Loading the teams from GitHub" : "Choose a team"}
+                        </option>
+                        {(teams.data ?? []).map((t) => {
+                          const slug = teamId(t.name);
+                          return (
+                            <option key={t.name} value={slug}>
+                              {t.displayName && t.displayName !== slug ? `${slug} (${t.displayName})` : slug}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </Field>
+                  )}
+                  {template && template.parameters.length > 0 && isFile ? (
+                    <div key={template.name} className="flex min-w-0 max-w-[420px] flex-col gap-4">
+                      {groups.map((g) =>
+                        g ? (
+                          <fieldset key={g} className="flex flex-col gap-4 rounded-md border border-line p-4">
+                            <legend className="-ml-1.5 px-1.5 type-small font-semibold">{g}</legend>
+                            {template.parameters.filter((p) => p.group === g).map(field)}
+                          </fieldset>
+                        ) : (
+                          template.parameters.filter((p) => !p.group).map(field)
+                        ),
+                      )}
+                    </div>
+                  ) : template && template.parameters.length > 0 ? (
+                    <fieldset key={template.name} className="flex min-w-0 max-w-[420px] flex-col gap-4 rounded-md border border-line p-4">
+                      <legend className="-ml-1.5 px-1.5 type-small font-semibold">
+                        <span className="font-mono">{templateId(template.name)}</span> inputs
+                      </legend>
+                      {required.map(field)}
+                      {optional.length > 0 ? (
+                        <details open={required.length === 0}>
+                          <summary className="cursor-pointer type-small font-medium text-fg-2">
+                            Optional <span className="tabular-nums text-fg-3">{optional.length}</span>
+                          </summary>
+                          <div className="flex flex-col gap-4 pt-3">{optional.map(field)}</div>
+                        </details>
+                      ) : null}
+                    </fieldset>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {stage === "visibility" ? (
+                <div className="flex flex-col gap-3">
+                  <div role="radiogroup" aria-label="Visibility" className="flex flex-col gap-3">
+                    {visibilities.map((v) => (
+                      <label
+                        key={v.value}
+                        className="flex cursor-pointer gap-3 rounded-md border border-line bg-surface p-4 hover:border-line-strong has-[:checked]:border-ember has-[:checked]:bg-ember-soft has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ember"
+                      >
+                        <input
+                          type="radio"
+                          name="visibility"
+                          value={v.value}
+                          checked={visibility === v.value}
+                          onChange={() => setVisibility(v.value)}
+                          aria-labelledby={`visibility-${v.value}`}
+                          aria-describedby={`visibility-${v.value}-about`}
+                          className="mt-1 size-4 shrink-0 accent-ember"
+                        />
+                        <span className="flex min-w-0 flex-col gap-1.5">
+                          <span id={`visibility-${v.value}`} className="font-semibold">
+                            {v.title}
+                          </span>
+                          <span id={`visibility-${v.value}-about`} className="type-small text-fg-2">
+                            {v.text}
+                          </span>
+                          <span className="flex flex-wrap gap-1.5">
+                            <Reach env="Staging" open={v.staging} />
+                            <Reach env="Production" open={v.production} />
+                          </span>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="max-w-[62ch] text-[12.5px] text-fg-3">
+                    The private network is the cluster&apos;s internal address, over HTTP. Change it later in forge.yaml:{" "}
+                    <span className="font-mono">run.domain</span> and <span className="font-mono">run.staging.public</span>.
+                  </p>
+                </div>
+              ) : null}
+
+              {stage === "runtime" && template ? (
+                <RunOptionsFields offered={template.options} form={run} onChange={(f) => setRuns((all) => ({ ...all, [template.name]: f }))} />
+              ) : null}
+
+              {stage === "review" ? (
+                <div className="flex flex-col gap-4">
+                  <Panel>
+                    <ul aria-label="Review" className="divide-y divide-line">
+                      {summary.map(([s, label, value]) => (
+                        <li key={label} className="grid grid-cols-[120px_minmax(0,1fr)_auto] items-start gap-4 px-4 py-3 text-[13.5px]">
+                          <span className="text-fg-3">{label}</span>
+                          <span className="flex min-w-0 flex-col break-words">{value}</span>
+                          <Button kind="quiet" size="sm" aria-label={`Change ${label.toLowerCase()}`} onClick={() => go(s)}>
+                            Change
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </Panel>
+                  {steps.length > 0 ? (
+                    <Panel>
+                      <StepLog steps={steps} />
+                    </Panel>
+                  ) : null}
+                  {outcome?.failure ? (
+                    <ErrorNote
+                      error={
+                        new Error(
+                          `${outcome.failure.message} ${
+                            outcome.failure.rolledBack
+                              ? "Nothing was left behind: fix it and create again."
+                              : "The repo could not be deleted: delete it on GitHub before trying again."
+                          }`,
+                        )
+                      }
+                    />
+                  ) : null}
+                  {outcome?.error ? <ErrorNote error={outcome.error} /> : null}
+                </div>
+              ) : null}
+
+              <div className="flex items-center gap-2 border-t border-line pt-4">
+                {at > 0 ? (
+                  <Button
+                    onClick={() => {
+                      moved.current = true;
+                      setStage(stages[at - 1]);
+                    }}
+                    disabled={busy}
+                  >
+                    Back
+                  </Button>
+                ) : null}
+                <span className="ml-auto text-[12.5px] tabular-nums text-fg-3">
+                  Step {at + 1} of {stages.length}
                 </span>
-              </label>
-            ) : null}
-            {template && !isFile && !networkOnly ? (
-              <label className="flex items-start gap-2">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 size-4 accent-ember"
-                  checked={stagingNetworkOnly}
-                  onChange={(e) => setStagingNetworkOnly(e.target.checked)}
-                />
-                <span>
-                  <span className="type-small font-semibold">Internal staging</span>
-                  <span className="block type-small text-fg-2">
-                    Staging is reached on the internal address, over HTTP; production stays public. Change it later in forge.yaml
-                    (run.staging.public).
-                  </span>
-                </span>
-              </label>
-            ) : null}
-          </div>
+                {stage === "review" ? (
+                  <Button kind="primary" type="submit" disabled={busy || !canWrite || !template}>
+                    {busy ? "Creating" : isFile ? "Create pull request" : "Create service"}
+                  </Button>
+                ) : (
+                  <Button kind="primary" type="submit" disabled={!template}>
+                    Continue
+                  </Button>
+                )}
+              </div>
+            </div>
 
-          {template && template.options.length > 0 ? (
-            <Section title="How it runs" note="optional; change it later in forge.yaml">
-              <RunOptionsFields
-                offered={template.options}
-                form={run}
-                onChange={(f) => setRuns((all) => ({ ...all, [template.name]: f }))}
-              />
-            </Section>
-          ) : null}
-
-          <div className="flex max-w-[640px] flex-col gap-1.5">
-            <span className="text-[12px] text-fg-3">From the terminal</span>
-            <CommandBlock command={`forge create ${name || "<name>"}`} flags={flags} />
-          </div>
-
-          {steps.length > 0 ? (
-            <Panel>
-              <StepLog steps={steps} />
-            </Panel>
-          ) : null}
-          {outcome?.failure ? (
-            <ErrorNote
-              error={
-                new Error(
-                  `${outcome.failure.message} ${
-                    outcome.failure.rolledBack
-                      ? "Nothing was left behind: fix it and create again."
-                      : "The repo could not be deleted: delete it on GitHub before trying again."
-                  }`,
-                )
-              }
-            />
-          ) : null}
-          {outcome?.error ? <ErrorNote error={outcome.error} /> : null}
-
-          <div>
-            <Button kind="primary" type="submit" disabled={busy || !canWrite || !template}>
-              {busy ? "Creating" : isFile ? "Create pull request" : "Create service"}
-            </Button>
+            <aside className="flex min-w-0 flex-col gap-1.5 lg:sticky lg:top-6">
+              <span className="text-[12px] text-fg-3">From the terminal</span>
+              <CommandBlock command={`forge create ${name || "<name>"}`} flags={flags} />
+              <span className="text-[12px] text-fg-3">It follows the form as you fill it in.</span>
+            </aside>
           </div>
         </form>
       )}

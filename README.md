@@ -102,8 +102,9 @@ decides what they may see and do. The server only serves the pages and
   in `app/globals.css`; its parts are in `components/ui` and
   `components/app-shell.tsx`. Every page follows the design's layout for
   it: Services, a service, Templates (cards), Docs, Environments, Deployments,
-  Operations, Ownership, the Audit log and Create (with the whole
-  command shown as the form is filled in). What the mockup shows that Forge
+  Operations, Ownership, the Audit log and Create (in steps: template,
+  details, visibility, runtime, review; the whole command is shown beside
+  every step as the form is filled in). What the mockup shows that Forge
   does not know is left out: rules and approvals, the golden path, tiers
   and SLOs, team members and on-call, docs search (TechDocs milestone 3),
   template lint.
