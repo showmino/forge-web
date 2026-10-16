@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useCanWrite } from "@/components/app-shell";
+import { usePermissions } from "@/components/app-shell";
 import { useApi } from "@/components/providers";
 import { ButtonLink, NameLink } from "@/components/ui/button";
 import { Empty, ErrorNote, Loading, PageHeader, Panel } from "@/components/ui/layout";
@@ -18,7 +18,7 @@ function mark(id: string): string {
 // The templates a new service can start from, one card each.
 export default function Templates() {
   const api = useApi();
-  const canWrite = useCanWrite();
+  const canCreate = usePermissions().can("service.create");
   const templates = useQuery({
     queryKey: ["templates"],
     queryFn: () => api.templates.listTemplates({}).then((r) => r.templates),
@@ -80,7 +80,7 @@ export default function Templates() {
                       {t.version || "No release"}
                       {t.owner ? ` · ${t.owner}` : ""}
                     </span>
-                    {canWrite ? (
+                    {canCreate ? (
                       <ButtonLink
                         kind="primary"
                         size="sm"

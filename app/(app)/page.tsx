@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { useCanWrite } from "@/components/app-shell";
+import { usePermissions } from "@/components/app-shell";
 import { StepLog, type Step, useOperation } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
 import { ExtendDialog } from "@/components/service-actions";
@@ -12,7 +12,7 @@ import { MiniLine, StageLine, Stats } from "@/components/ui/pipeline";
 import { StatusBadge, Tag } from "@/components/ui/status";
 import type { Environment } from "@/gen/forge/v1/environment_pb";
 import type { Operation } from "@/gen/forge/v1/operation_pb";
-import { lastDay, listAllServices, operationId } from "@/lib/api";
+import { lastDay, listAllServices, operationId, serviceId } from "@/lib/api";
 import { timeAgo, when } from "@/lib/format";
 import { attention, dayStats, deployKind, pipelineOf, recentDeploys, shipping, type Attention, type RecentDeploy } from "@/lib/overview";
 import { operationTitle, type Status, type Tone } from "@/lib/status";
@@ -24,7 +24,7 @@ const mono = "font-mono text-[0.92em] font-medium";
 // what the API already knows.
 export default function Overview() {
   const api = useApi();
-  const canWrite = useCanWrite();
+  const canCreate = usePermissions().can("service.create");
   const queries = useQueryClient();
   const [extending, setExtending] = useState<Environment | null>(null);
 
@@ -68,7 +68,7 @@ export default function Overview() {
         lead="What is shipping, what is broken and what needs you, in staging and production."
         cli="forge deploy status"
       >
-        {canWrite ? (
+        {canCreate ? (
           <ButtonLink kind="primary" href="/create">
             <Icon name="plus" />
             Create service
@@ -110,7 +110,7 @@ export default function Overview() {
             <Panel>
               <ul aria-label="Needs attention">
                 {needs.map((a) => (
-                  <AttentionRow key={a.key} item={a} canWrite={canWrite} onExtend={setExtending} />
+                  <AttentionRow key={a.key} item={a} onExtend={setExtending} />
                 ))}
               </ul>
             </Panel>
@@ -152,7 +152,9 @@ export default function Overview() {
 
 const row = "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-t border-line px-4 py-[11px] first:border-t-0";
 
-function AttentionRow({ item, canWrite, onExtend }: { item: Attention; canWrite: boolean; onExtend: (e: Environment) => void }) {
+function AttentionRow({ item, onExtend }: { item: Attention; onExtend: (e: Environment) => void }) {
+  // Only a preview is extended from here; its service decides who may.
+  const canExtend = usePermissions(item.extend ? serviceId(item.extend.service) : undefined).can("environment.extend");
   return (
     <li className={row}>
       <span aria-hidden="true" className={`w-[3px] self-stretch rounded-[2px] ${item.tone === "danger" ? "bg-bad-dot" : "bg-warn-dot"}`} />
@@ -164,7 +166,7 @@ function AttentionRow({ item, canWrite, onExtend }: { item: Attention; canWrite:
         </div>
         <div className="mt-px break-words text-[12.5px] text-fg-3">{item.detail}</div>
       </div>
-      {item.extend && canWrite ? (
+      {item.extend && canExtend ? (
         <Button size="sm" onClick={() => onExtend(item.extend!)} aria-label={`Extend ${item.subject}`}>
           Extend
         </Button>

@@ -98,12 +98,41 @@ const groups: { label: string; items: Item[] }[] = [
   },
 ];
 
-// useCanWrite asks the API what the reader may do. It only hides buttons a
-// reader cannot use: the API still decides every call.
-export function useCanWrite(): boolean {
+export type Permissions = {
+  // can answers whether the caller may do an action ("deploy.promote", as the
+  // audit log names it). It answers false while the answer is loading or failed.
+  can: (action: string) => boolean;
+  // The caller's role toward the service: "admin", "team" or "reader" ("" until known).
+  role: string;
+  loading: boolean;
+};
+
+// usePermissions asks the API which actions the caller may do on one service
+// (its id) or, without one, about no one service (service.create). It only
+// hides buttons the caller cannot use: the API still decides every call.
+export function usePermissions(service?: string): Permissions {
+  const api = useApi();
+  const q = useQuery({
+    queryKey: ["can", service ?? ""],
+    queryFn: () => api.auth.testPermissions({ service: service ? `services/${service}` : "" }),
+    staleTime: 5 * 60_000,
+  });
+  const allowed = q.data?.allowed;
+  return {
+    can: (action: string) => allowed?.includes(action) ?? false,
+    role: q.data?.role ?? "",
+    loading: q.isPending,
+  };
+}
+
+// useRole names what the caller is in Forge: an admin, a member of a team, or
+// a reader of everything.
+export function useRole(): "Admin" | "Team" | "Reader" {
   const api = useApi();
   const status = useQuery({ queryKey: ["status"], queryFn: () => api.auth.getStatus({}), staleTime: 5 * 60_000 });
-  return status.data?.permissions.includes("services.write") ?? false;
+  if (status.data?.admin) return "Admin";
+  if ((status.data?.teams.length ?? 0) > 0) return "Team";
+  return "Reader";
 }
 
 // AppShell is the frame of every page behind the login: the rail, the top bar,
@@ -234,7 +263,7 @@ function Rail({
 }) {
   const api = useApi();
   const router = useRouter();
-  const canWrite = useCanWrite();
+  const role = useRole();
   // The same list the Services page shows, so the count costs nothing extra there.
   const services = useQuery({ queryKey: ["services"], queryFn: () => listAllServices(api) });
   const who = session.email || session.subject;
@@ -324,7 +353,7 @@ function Rail({
       <div className={`flex flex-col gap-2 border-t border-rail-line px-2 pt-3 max-rail:mt-auto ${m("rail:w-full rail:items-center rail:px-0")}`}>
         <div className="flex items-center gap-2.5">
           <span
-            title={mini ? `${who} · ${canWrite ? "Writer" : "Reader"}` : undefined}
+            title={mini ? `${who} · ${role}` : undefined}
             className="inline-grid size-7 flex-none place-items-center rounded-full bg-rail-active text-[11px] font-semibold uppercase"
           >
             {short.slice(0, 2)}
@@ -333,7 +362,7 @@ function Rail({
             <span className="block truncate">{short}</span>
             <small className="block truncate text-[11.5px] text-rail-fg-2">{who}</small>
           </span>
-          <span className={`ml-auto rounded-sm bg-rail-active px-1.5 py-px text-[11px] font-semibold ${m("rail:hidden")}`}>{canWrite ? "Writer" : "Reader"}</span>
+          <span className={`ml-auto rounded-sm bg-rail-active px-1.5 py-px text-[11px] font-semibold ${m("rail:hidden")}`}>{role}</span>
         </div>
         <button
           type="button"

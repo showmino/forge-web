@@ -35,9 +35,10 @@ A service's page (`/services/<name>`) has tabs:
 | Deployments | What was deployed to staging and production, newest first |
 | Dependencies | The services it depends on, and the ones that depend on it |
 | Docs | The service's docs, when its repo has `docs/index.md` |
-| Settings | For writers: the owning team, the contacts, the lifecycle, and Delete |
+| Settings | For the service's team and admins: the contacts and the lifecycle; for admins also the owning team, the address and Delete |
 
-Writers deploy, promote and roll back from the top of the page and from the
+The members of the service's team (and admins) deploy, promote and roll back
+from the top of the page and from the
 Staging and production table. Every action asks first, names what it will do,
 and then shows the work live until it ends.
 
@@ -65,8 +66,8 @@ minute of reaching the default branch. To give a service docs, see
 
 `/environments`: how staging and production are doing across the catalog,
 and every preview with the time it has left. A preview runs one branch of a
-service at its own address until its time is up; writers create, extend and
-destroy them here or on the service's page.
+service at its own address until its time is up; the members of the
+service's team create, extend and destroy them here or on the service's page.
 `forge env list`, `forge env create <name> --service <service> --ref <branch>`
 
 ## Deployments and Operations
@@ -83,7 +84,7 @@ destroy them here or on the service's page.
 
 `/ownership`: which GitHub team owns which service. It points out services
 whose team is not a team on GitHub, services with no contacts, and teams with
-no services. A writer fixes an owner from the service's Settings.
+no services. An admin moves a service to another team from its Settings.
 `forge team list`
 
 ## Audit log

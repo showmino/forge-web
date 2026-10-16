@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { useCanWrite } from "@/components/app-shell";
+import { usePermissions } from "@/components/app-shell";
 import { useApi } from "@/components/providers";
 import { ButtonLink, Icon, NameLink } from "@/components/ui/button";
 import { Empty, ErrorNote, Loading, PageHeader, TableFrame, td, th, tr } from "@/components/ui/layout";
@@ -26,7 +26,7 @@ export default function Catalog() {
   });
   const [filter, setFilter] = useState("");
   const [team, setTeam] = useState("");
-  const canWrite = useCanWrite();
+  const canCreate = usePermissions().can("service.create");
 
   const byEnv = useMemo(() => {
     const m = new Map<string, Deployment>();
@@ -50,7 +50,7 @@ export default function Catalog() {
         lead="Every service in the catalog, and how its environments are doing."
         cli={team ? `forge service list --team ${team}` : "forge service list"}
       >
-        {canWrite ? (
+        {canCreate ? (
           <ButtonLink kind="primary" href="/create">
             <Icon name="plus" />
             Create service
@@ -63,7 +63,7 @@ export default function Catalog() {
       ) : services.error ? (
         <ErrorNote error={services.error} />
       ) : all.length === 0 ? (
-        <Empty>No services yet. {canWrite ? "Create the first one from a template." : "Writers create one from a template."}</Empty>
+        <Empty>No services yet. {canCreate ? "Create the first one from a template." : "Members of a team create one from a template."}</Empty>
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-2">

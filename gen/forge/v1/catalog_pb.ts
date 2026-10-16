@@ -693,7 +693,8 @@ export const CreateServiceResponseSchema: GenMessage<CreateServiceResponse> = /*
   messageDesc(file_forge_v1_catalog, 17);
 
 /**
- * CreateStep reports progress of one step: fetch, render, create_repo, push, register.
+ * CreateStep reports progress of one step: fetch, render, create_repo, grant_team,
+ * push, register.
  *
  * @generated from message forge.v1.CreateStep
  */
