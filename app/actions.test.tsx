@@ -62,6 +62,8 @@ type World = {
   deleteRuns: boolean;
   // How a watched operation ends, when not well.
   opError?: { code: string; message: string };
+  // The API's public domains, the default first.
+  domains?: string[];
   // Whether the API cuts versions: staging then runs a release candidate.
   versions: boolean;
 };
@@ -137,6 +139,10 @@ function forge(w: World) {
       },
     });
     router.service(DeployService, {
+      listDomains: (req) => {
+        record("listDomains", req);
+        return { domains: (w.domains ?? ["showmino.com", "deogratias.cloud", "forgegate.io"]).map((name, i) => ({ name, isDefault: i === 0 })) };
+      },
       listDeployments: () => ({
         deployments: [
           {
@@ -956,6 +962,60 @@ describe("create a service", () => {
     const sent = (w.calls.create[0] as { runOptions: { networkOnly?: boolean } }).runOptions;
     expect(sent).toMatchObject({ stagingNetworkOnly: true });
     expect(sent.networkOnly).toBeFalsy();
+  });
+
+  it("puts a public service under the domain the writer picks", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    await fillCreate("gate", "finance", "go-grpc");
+    next();
+    const domain = (await screen.findByLabelText("Domain")) as HTMLSelectElement;
+    expect([...domain.options].map((o) => o.textContent)).toEqual(["showmino.com (default)", "deogratias.cloud", "forgegate.io"]);
+    expect(domain.value).toBe("showmino.com");
+    expect(screen.getByText("https://gate.showmino.com")).toBeTruthy();
+    fireEvent.change(domain, { target: { value: "forgegate.io" } });
+    expect(screen.getByLabelText("The same from the terminal").textContent).toContain("--domain forgegate.io");
+    expect(screen.getByText("https://gate.forgegate.io")).toBeTruthy();
+    expect(screen.getByText("https://gate-staging.forgegate.io")).toBeTruthy();
+    // A private service has no domain.
+    const visibility = within(screen.getByRole("radiogroup", { name: "Visibility" }));
+    click(visibility.getByRole("radio", { name: /^Private/ }));
+    expect(screen.queryByLabelText("Domain")).toBeNull();
+    expect(screen.getByLabelText("The same from the terminal").textContent).not.toContain("--domain");
+    click(visibility.getByRole("radio", { name: /^Public production/ }));
+    expect((screen.getByLabelText("Domain") as HTMLSelectElement).value).toBe("forgegate.io");
+    expect(screen.queryByText("https://gate-staging.forgegate.io")).toBeNull();
+    toReview();
+    expect(within(screen.getByRole("list", { name: "Review" })).getByText("gate.forgegate.io")).toBeTruthy();
+    click(screen.getByRole("button", { name: "Create service" }));
+    await screen.findByRole("heading", { name: "gate was created" });
+    expect((w.calls.create[0] as { runOptions: object }).runOptions).toMatchObject({ domain: "forgegate.io", stagingNetworkOnly: true });
+  });
+
+  it("leaves the domain to the API when the writer keeps the default, or there is no choice", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    await fillCreate("ledger", "finance", "go-grpc");
+    next();
+    await screen.findByLabelText("Domain");
+    expect(screen.getByLabelText("The same from the terminal").textContent).not.toContain("--domain");
+    toReview();
+    click(screen.getByRole("button", { name: "Create service" }));
+    await screen.findByRole("heading", { name: "ledger was created" });
+    expect((w.calls.create[0] as { runOptions?: { domain?: string } }).runOptions?.domain ?? "").toBe("");
+    cleanup();
+
+    // One domain is no choice; none (an internal-only API) shows nothing.
+    for (const domains of [["showmino.com"], []]) {
+      const v = world({ domains });
+      renderWithApi(<CreateService />, forge(v));
+      await fillCreate("solo", "finance", "go-grpc");
+      next();
+      await waitFor(() => expect((v.calls.listDomains ?? []).length).toBe(1));
+      await act(() => new Promise((r) => setTimeout(r, 0)));
+      expect(screen.queryByLabelText("Domain")).toBeNull();
+      cleanup();
+    }
   });
 
   it("sends the run options the template offers, and shows them as flags", async () => {

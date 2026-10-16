@@ -50,8 +50,10 @@ and then shows the work live until it ends.
 `/templates` lists what a new service can start from (`go-grpc`, `nextjs`),
 with the parameters each asks for. **Create service** (`/create`) makes the
 GitHub repository, its CI and the catalog entry, and shows the command it is
-the same as while you fill in the form.
-`forge template list`, `forge create <name> --template nextjs --team <team>`
+the same as while you fill in the form. In the Visibility step, a public
+service also picks its **Domain** from the ones Forge offers (the default
+first) and shows the addresses it will have.
+`forge template list`, `forge domain list`, `forge create <name> --template nextjs --team <team> --domain <domain>`
 
 ## Docs
 
