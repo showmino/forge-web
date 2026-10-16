@@ -26,6 +26,7 @@ const words: Record<string, [doing: string, done: string]> = {
   fetch: ["Fetching the template", "Fetched template"],
   render: ["Rendering the files", "Rendered"],
   create_repo: ["Creating the repo", "Created"],
+  grant_team: ["Giving the team access", "Gave access to"],
   push: ["Pushing the first commit", "Pushed the first commit"],
   register: ["Registering the service", "Registered"],
   pull_request: ["Opening the pull request", "Opened"],
