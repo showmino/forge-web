@@ -236,6 +236,19 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   // The run options as typed, per template: switching templates keeps each one's.
   const [runs, setRuns] = useState<Record<string, RunForm>>({});
   const [visibility, setVisibility] = useState<Visibility>("public");
+  // The public domains the API offers, the default first. An API that predates
+  // the list, or offers none, gives no choice: the service gets the default.
+  const domains = useQuery({
+    queryKey: ["domains"],
+    queryFn: () => api.deploys.listDomains({}).then((r) => r.domains.map((d) => d.name)),
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+  const domainList = domains.data ?? [];
+  const [domainPick, setDomainPick] = useState("");
+  const defaultDomain = domainList[0] ?? "";
+  const domain = domainList.includes(domainPick) ? domainPick : defaultDomain;
+  const choosesDomain = domainList.length > 1 && visibility !== "private";
   // A link that names the template starts at the details: the choice is made.
   const [stage, setStage] = useState<Stage>(fixed || initial ? "details" : "template");
   const [reached, setReached] = useState<Set<Stage>>(() => new Set([fixed || initial ? "details" : "template"]));
@@ -291,13 +304,23 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   };
   // Where it is reached: a file template makes no service, and an internal
   // service has no public staging to keep internal.
-  const address = isFile
+  const reach = isFile
     ? { flags: [] as [string, string][], options: {} }
     : visibility === "private"
       ? { flags: [["--internal", ""]] as [string, string][], options: { networkOnly: true } }
       : visibility === "public-production"
         ? { flags: [["--internal-staging", ""]] as [string, string][], options: { stagingNetworkOnly: true } }
         : { flags: [] as [string, string][], options: {} };
+  // The default domain is left to the API, as forge.yaml leaves it.
+  const ownDomain = !isFile && choosesDomain && domain !== defaultDomain;
+  const address = ownDomain
+    ? { flags: [...reach.flags, ["--domain", domain]] as [string, string][], options: { ...reach.options, domain } }
+    : reach;
+  // Where the service will be reached, as forge-api works it out.
+  const hosts =
+    isFile || visibility === "private" || !domain
+      ? []
+      : [`${name}.${domain}`, ...(visibility === "public" ? [`${name}-staging.${domain}`] : [])];
   // The command that does the same, flag by flag, as the form is filled in.
   const flags: [string, string][] = [
     ["--template", template ? templateId(template.name) : "<template>"],
@@ -535,6 +558,13 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                 <Reach env="Staging" open={chosen.staging} />
                 <Reach env="Production" open={chosen.production} />
               </span>
+              {hosts.length > 0 ? (
+                <span className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[12.5px]">
+                  {hosts.map((h) => (
+                    <span key={h}>{h}</span>
+                  ))}
+                </span>
+              ) : null}
             </>,
           ],
         ] as [Stage, string, ReactNode][])
@@ -847,6 +877,33 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                       </label>
                     ))}
                   </div>
+                  {choosesDomain ? (
+                    <Field id="service-domain" label="Domain" hint="The domain the service is reached under. Ask platform-engineering for another.">
+                      <select
+                        id="service-domain"
+                        className={inputClass}
+                        value={domain}
+                        onChange={(e) => setDomainPick(e.target.value)}
+                        aria-describedby="service-domain-note service-domain-hosts"
+                      >
+                        {domainList.map((d) => (
+                          <option key={d} value={d}>
+                            {d === defaultDomain ? `${d} (default)` : d}
+                          </option>
+                        ))}
+                      </select>
+                    </Field>
+                  ) : null}
+                  {hosts.length > 0 ? (
+                    <p id="service-domain-hosts" className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[12.5px] text-fg-2">
+                      <span>Reached at</span>
+                      {hosts.map((h) => (
+                        <span key={h} className="font-mono text-fg">
+                          https://{h}
+                        </span>
+                      ))}
+                    </p>
+                  ) : null}
                   <p className="max-w-[62ch] text-[12.5px] text-fg-3">
                     The private network is the cluster&apos;s internal address, over HTTP. Change it later in forge.yaml:{" "}
                     <span className="font-mono">run.domain</span> and <span className="font-mono">run.staging.public</span>.
