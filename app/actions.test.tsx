@@ -1,6 +1,6 @@
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { Code, ConnectError, type ConnectRouter } from "@connectrpc/connect";
-import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuditService } from "@/gen/forge/v1/audit_pb";
 import { AuthService } from "@/gen/forge/v1/auth_pb";
@@ -87,7 +87,14 @@ function forge(w: World) {
   };
   return (router: ConnectRouter) => {
     const teamOf = (service: string) => (service === payments.name ? payments.ownerTeam : service === "services/ledger" ? "finance" : "");
-    router.service(AuthService, authAs(w.caller ?? (w.writer ? ADMIN : READER), teamOf));
+    const auth = authAs(w.caller ?? (w.writer ? ADMIN : READER), teamOf);
+    router.service(AuthService, {
+      ...auth,
+      testPermissions: (req) => {
+        record("testPermissions", req);
+        return auth.testPermissions(req);
+      },
+    });
     router.service(ServiceCatalogService, {
       getService: () => ({ service: payments }),
       listServices: () => ({ services: [payments, { name: "services/ledger", ownerTeam: "finance" }] }),
@@ -338,6 +345,14 @@ function toReview() {
 const PROMOTE = "Promote 18b1232 to production";
 const click = (el: HTMLElement) => fireEvent.click(el);
 
+// permissionsAnswered waits until the API has said what the caller may do on
+// the service ("" for none) and the page has rendered the answer, so that a
+// check for a missing button cannot pass before the answer arrives.
+async function permissionsAnswered(w: World, service: string) {
+  await waitFor(() => expect((w.calls.testPermissions ?? []).some((r) => (r as { service: string }).service === service)).toBe(true));
+  await act(() => new Promise((r) => setTimeout(r, 0)));
+}
+
 async function openService(w: World) {
   nav.params = { name: "payments" };
   renderWithApi(<ServicePage />, forge(w));
@@ -389,9 +404,9 @@ describe("who may act", () => {
   });
 
   it("shows a member of another team no actions on the service", async () => {
-    await openService(world({ caller: { teams: ["finance"] } }));
-    // Give the API time to answer what the caller may do.
-    await new Promise((r) => setTimeout(r, 50));
+    const w = world({ caller: { teams: ["finance"] } });
+    await openService(w);
+    await permissionsAnswered(w, "services/payments");
     for (const name of ["Deploy to staging", PROMOTE, "Preview env", "Roll back staging", "Extend pr-42", "Destroy pr-42", "Service settings"]) {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
@@ -1293,10 +1308,11 @@ describe("the environments page", () => {
     expect(screen.getByRole("button", { name: "Preview env" })).toBeTruthy();
     cleanup();
 
-    renderWithApi(<Environments />, forge(world({ caller: { teams: ["finance"] } })));
+    const w = world({ caller: { teams: ["finance"] } });
+    renderWithApi(<Environments />, forge(w));
     expect(await screen.findByRole("button", { name: "Preview env" })).toBeTruthy();
     await screen.findByRole("table", { name: "Previews" });
-    await new Promise((r) => setTimeout(r, 50));
+    await permissionsAnswered(w, "");
     expect(screen.queryByRole("button", { name: "Extend pr-42" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Destroy pr-42" })).toBeNull();
   });

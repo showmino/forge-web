@@ -80,6 +80,8 @@ function SettingsForm({ service: s, canMoveTeam, canChangeRepo }: { service: Ser
         (res) => {
           if (res.service) queries.setQueryData(["service", id], res.service);
           void queries.invalidateQueries({ queryKey: ["services"] });
+          // A move to another team changes who may do what on the service.
+          void queries.invalidateQueries({ queryKey: ["can", id] });
           toast(`Settings saved for ${id}`, command);
         },
         (err: unknown) => {
