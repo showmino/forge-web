@@ -51,7 +51,8 @@ decides what they may see and do. The server only serves the pages and
   TechDocs). `/docs/<service>/<path>` is one page: the pages on the left, the
   page in the middle, its headings on the right, with the commit it was read
   at and "Edit on GitHub". `components/doc-reader.tsx` renders it with
-  react-markdown (GitHub tables, task lists, footnotes, highlighted code).
+  react-markdown (GitHub tables, task lists, footnotes, highlighted code with
+  a copy button).
   Raw HTML in a page is shown as text, never run; links between pages stay in
   the dashboard; images come through `GetDocAsset` as `data:` URLs (the repos
   are private, and the Content-Security-Policy allows no other site); an

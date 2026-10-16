@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 
 // copyText puts text on the clipboard. The clipboard API only exists on HTTPS
 // pages, and a Forge on a LAN may be plain HTTP, so there is an older way too.
-async function copyText(text: string): Promise<boolean> {
+export async function copyText(text: string): Promise<boolean> {
   try {
     if (navigator.clipboard && window.isSecureContext) {
       await navigator.clipboard.writeText(text);

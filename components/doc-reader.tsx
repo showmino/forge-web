@@ -11,6 +11,7 @@ import remarkGfm from "remark-gfm";
 import type { PluggableList } from "unified";
 import { useApi } from "@/components/providers";
 import { Cli } from "@/components/ui/cli";
+import { CodeBlock } from "@/components/ui/code-block";
 import { inputClass } from "@/components/ui/field";
 import { ErrorNote, Loading, Panel } from "@/components/ui/layout";
 import type { DocSet } from "@/gen/forge/v1/docs_pb";
@@ -345,6 +346,10 @@ const Markdown = memo(function Markdown({
           <table>{children}</table>
         </div>
       ),
+      pre: ({ ...props }) => {
+        delete props.node;
+        return <CodeBlock {...props} />;
+      },
       // Inside a service's page the page's title is not the page's h1.
       ...(nested
         ? {

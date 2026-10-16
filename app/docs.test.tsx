@@ -154,6 +154,18 @@ describe("the reader", () => {
     expect(nav.router.push).toHaveBeenCalledWith("/docs/forge-web/runbook.md");
   });
 
+  it("copies a code block with its button", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    Object.defineProperty(window, "isSecureContext", { value: true, configurable: true });
+    nav.params = { service: "forge-web" };
+    renderWithApi(<DocPage />, forge);
+    const article = within(await screen.findByRole("article", { name: "Overview" }));
+    fireEvent.click(article.getByRole("button", { name: "Copy code" }));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("func main() {}"));
+    expect(await article.findByRole("button", { name: "Copied" })).toBeTruthy();
+  });
+
   it("shows folders in the side menu, the one of the page open, and no front matter", async () => {
     nav.params = { service: "forge-web", path: ["kubernetes", "Helm", "02-installation.md"] };
     renderWithApi(<DocPage />, forge);
