@@ -7,13 +7,18 @@ Next.js app with TypeScript and Tailwind CSS.
 ## What it is
 
 The web dashboard of Forge: the catalog, a page per service, the templates,
-environments, deployments, operations, ownership and the audit log. A writer also creates a service from a template,
-deploys, promotes, rolls back, manages previews and changes a service's
-owner, contacts and lifecycle from it, each behind a
+environments, deployments, operations, ownership and the audit log. The
+members of a service's team (and an admin) also deploy, promote, roll back,
+manage previews and change its contacts and lifecycle from it; a member of
+any team creates a service of their team from a template; moving a service to
+another team, its address and deleting it are an admin's. Each is behind a
 confirmation, with the work shown live (`WatchOperation`) and a toast that
 names the CLI command. It is a thin client of the Forge API, like the CLI: every call
 goes from the browser to forge-api with the reader's own token, and the API
-decides what they may see and do. The server only serves the pages and
+decides what they may see and do. The dashboard asks it which actions the
+caller may do (`AuthService.TestPermissions`, per service, through
+`usePermissions` in `components/app-shell.tsx`) only to hide the buttons of
+the others. The server only serves the pages and
 `/api/healthz`; it holds no secrets.
 
 - **Overview** (`/`): what is shipping, what is broken and what needs
@@ -28,15 +33,18 @@ decides what they may see and do. The server only serves the pages and
 - **A service** (`/services/<name>`) has tabs: Overview (what runs in
   staging and production, previews, recent activity, about), Deployments
   (`ListDeployHistory` of both environments), Dependencies (what it depends
-  on, and what in the catalog depends on it) and, for a writer, Settings
-  (the gear button too): the owning team, the contacts and the lifecycle,
+  on, and what in the catalog depends on it) and, for the service's team and
+  admins, Settings (the gear button too): the owning team (an admin's only),
+  the contacts and the lifecycle,
   saved with `UpdateService` and the etag the page read, so a change someone
-  made meanwhile is refused, not overwritten. Delete is in its danger zone.
+  made meanwhile is refused, not overwritten. Delete and Change address are
+  in its danger zone, for admins.
   A link to `#settings` opens that tab.
 - **Environments** (`/environments`): staging and production across the
   catalog (how many services run there, which are not healthy, deploys
-  today) and every preview with the time it has left. A writer creates a
-  preview of any service from here.
+  today) and every preview with the time it has left. A member of a team
+  creates a preview from here, and extends or destroys those of the team's
+  services.
 - **Deployments** (`/deployments`): deploys, promotions and rollbacks of the
   last 7 days from the audit log, and the running ones from the operations.
   `/operations` stays: it also lists creates, previews and deletes.
@@ -66,7 +74,7 @@ decides what they may see and do. The server only serves the pages and
   on the API by Sign out. There is no refresh token. Against an API that
   keeps no sessions, the ID token lives in the tab's `sessionStorage` for an
   hour, as before.
-- **Delete:** a writer deletes a service from the danger zone of its
+- **Delete:** an admin deletes a service from the danger zone of its
   settings. The name is typed to
   confirm, as on the CLI; the API then takes down everything the service
   runs (previews, staging, production, their namespaces) and removes it from

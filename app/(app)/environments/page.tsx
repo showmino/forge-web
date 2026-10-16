@@ -2,7 +2,7 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { useCanWrite } from "@/components/app-shell";
+import { usePermissions } from "@/components/app-shell";
 import { OperationLog } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
 import { DestroyDialog, ExtendDialog, PreviewDialog } from "@/components/service-actions";
@@ -27,7 +27,8 @@ const ENVS = [
 export default function Environments() {
   const api = useApi();
   const queries = useQueryClient();
-  const canWrite = useCanWrite();
+  // A reader is in no team and works on no service: no preview actions at all.
+  const inTeam = usePermissions().can("service.create");
   const [open, setOpen] = useState<Open | null>(null);
   const [started, setStarted] = useState<string[]>([]);
 
@@ -62,7 +63,7 @@ export default function Environments() {
         lead="Every service runs in staging and production. Previews are short-lived copies of one branch, each at its own address."
         cli="forge env list"
       >
-        {canWrite ? (
+        {inTeam ? (
           <Button kind="primary" onClick={() => setOpen({ kind: "preview" })}>
             <Icon name="plus" />
             Preview env
@@ -150,7 +151,7 @@ export default function Environments() {
                 <th className={th}>Status</th>
                 <th className={th}>Time left</th>
                 <th className={th}>Created by</th>
-                {canWrite ? (
+                {inTeam ? (
                   <th className={th}>
                     <span className="sr-only">Actions</span>
                   </th>
@@ -192,14 +193,9 @@ export default function Environments() {
                       )}
                     </td>
                     <td className={`${td} font-mono text-[12.5px]`}>{e.creator || "–"}</td>
-                    {canWrite ? (
+                    {inTeam ? (
                       <td className={`${td} text-right`}>
-                        <Button kind="quiet" size="sm" onClick={() => setOpen({ kind: "extend", environment: e })} aria-label={`Extend ${id}`}>
-                          Extend
-                        </Button>
-                        <Button kind="quiet" size="sm" onClick={() => setOpen({ kind: "destroy", environment: e })} aria-label={`Destroy ${id}`}>
-                          Destroy
-                        </Button>
+                        <PreviewActions environment={e} onOpen={setOpen} />
                       </td>
                     ) : null}
                   </tr>
@@ -215,6 +211,26 @@ export default function Environments() {
       ) : null}
       {open?.kind === "extend" ? <ExtendDialog environment={open.environment} onClose={close} onStarted={onStarted} /> : null}
       {open?.kind === "destroy" ? <DestroyDialog environment={open.environment} onClose={close} onStarted={onStarted} /> : null}
+    </>
+  );
+}
+
+// PreviewActions are the buttons of one preview, as its service allows them.
+function PreviewActions({ environment, onOpen }: { environment: Environment; onOpen: (o: Open) => void }) {
+  const { can } = usePermissions(serviceId(environment.service));
+  const id = environmentId(environment.name);
+  return (
+    <>
+      {can("environment.extend") ? (
+        <Button kind="quiet" size="sm" onClick={() => onOpen({ kind: "extend", environment })} aria-label={`Extend ${id}`}>
+          Extend
+        </Button>
+      ) : null}
+      {can("environment.destroy") ? (
+        <Button kind="quiet" size="sm" onClick={() => onOpen({ kind: "destroy", environment })} aria-label={`Destroy ${id}`}>
+          Destroy
+        </Button>
+      ) : null}
     </>
   );
 }

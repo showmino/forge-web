@@ -6,7 +6,7 @@ import { useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-q
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
-import { useCanWrite } from "@/components/app-shell";
+import { usePermissions } from "@/components/app-shell";
 import { DocReader, DocsLink, useHasDocs } from "@/components/doc-reader";
 import { OperationLog } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
@@ -45,8 +45,8 @@ type Tab = "overview" | "deploys" | "deps" | "docs" | "settings";
 const row = "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-t border-line px-4 py-[11px] first:border-t-0";
 
 // One service: what runs in staging and production, its previews, its recent
-// history and who owns it. A writer also deploys, promotes, rolls back and
-// manages previews from here.
+// history and who owns it. The service's team (and an admin) also deploys,
+// promotes, rolls back and manages previews from here.
 export default function ServicePage() {
   const { name: id } = useParams<{ name: string }>();
   // Next reuses this page from one service to the next. The key gives each
@@ -59,7 +59,8 @@ function ServiceView({ id }: { id: string }) {
   const name = `services/${id}`;
   const api = useApi();
   const queries = useQueryClient();
-  const canWrite = useCanWrite();
+  const { can, role } = usePermissions(id);
+  const canUpdate = can("service.update");
   const router = useRouter();
   const [open, setOpen] = useState<Open | null>(null);
   const [tab, setTab] = useState<Tab>("overview");
@@ -71,11 +72,11 @@ function ServiceView({ id }: { id: string }) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (tab === "docs" && !hasDocs) setTab("overview");
   }, [tab, hasDocs]);
-  // A link to "#settings" (from the Ownership page) opens the settings of a writer.
+  // A link to "#settings" (from the Ownership page) opens the settings for whoever may change them.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (canWrite && window.location.hash === "#settings") setTab("settings");
-  }, [canWrite]);
+    if (canUpdate && window.location.hash === "#settings") setTab("settings");
+  }, [canUpdate]);
   const [started, setStarted] = useState<string[]>([]);
   // The delete of this service: its operation while it runs, "gone" once the service is no more.
   const [deleting, setDeleting] = useState<string | "gone" | null>(null);
@@ -215,26 +216,32 @@ function ServiceView({ id }: { id: string }) {
         }
         cli={`forge service get ${id}`}
       >
-        {canWrite ? (
+        {canUpdate || can("environment.create") || can("deploy.start") || can("deploy.promote") ? (
           <>
-            <Button
-              onClick={() => setTab(tab === "settings" ? "overview" : "settings")}
-              aria-label="Service settings"
-              aria-pressed={tab === "settings"}
-              title="Settings"
-              className="!px-[9px] aria-pressed:border-fg-3 aria-pressed:bg-surface-2"
-            >
-              <Icon name="gear" />
-            </Button>
-            <Button onClick={() => setOpen({ kind: "preview" })}>
-              <Icon name="plus" />
-              Preview env
-            </Button>
-            {ahead && staging ? (
+            {canUpdate ? (
+              <Button
+                onClick={() => setTab(tab === "settings" ? "overview" : "settings")}
+                aria-label="Service settings"
+                aria-pressed={tab === "settings"}
+                title="Settings"
+                className="!px-[9px] aria-pressed:border-fg-3 aria-pressed:bg-surface-2"
+              >
+                <Icon name="gear" />
+              </Button>
+            ) : null}
+            {can("environment.create") ? (
+              <Button onClick={() => setOpen({ kind: "preview" })}>
+                <Icon name="plus" />
+                Preview env
+              </Button>
+            ) : null}
+            {ahead && staging && can("deploy.promote") ? (
               <>
-                <Button onClick={() => setOpen({ kind: "deploy" })} aria-label="Deploy to staging">
-                  Deploy
-                </Button>
+                {can("deploy.start") ? (
+                  <Button onClick={() => setOpen({ kind: "deploy" })} aria-label="Deploy to staging">
+                    Deploy
+                  </Button>
+                ) : null}
                 <Button
                   kind="primary"
                   onClick={() => setOpen({ kind: "promote" })}
@@ -244,12 +251,12 @@ function ServiceView({ id }: { id: string }) {
                   Promote {staging.version || shortCommit(staging.commit)}
                 </Button>
               </>
-            ) : (
+            ) : can("deploy.start") ? (
               <Button kind="primary" onClick={() => setOpen({ kind: "deploy" })} aria-label="Deploy to staging">
                 <Icon name="ship" />
                 Deploy
               </Button>
-            )}
+            ) : null}
           </>
         ) : null}
       </PageHeader>
@@ -283,7 +290,7 @@ function ServiceView({ id }: { id: string }) {
             ),
           },
           ...(hasDocs ? [{ value: "docs" as const, label: "Docs" }] : []),
-          ...(canWrite ? [{ value: "settings" as const, label: "Settings" }] : []),
+          ...(canUpdate ? [{ value: "settings" as const, label: "Settings" }] : []),
         ]}
       >
         {tab === "deploys" ? <DeployHistory id={id} /> : null}
@@ -305,41 +312,47 @@ function ServiceView({ id }: { id: string }) {
             />
           </>
         ) : null}
-        {tab === "settings" && canWrite ? (
+        {tab === "settings" && canUpdate ? (
           <div className="flex max-w-[720px] flex-col gap-6">
-            <ServiceSettings service={s} />
-            <Panel className="border-bad-dot/45">
-              <section aria-label="Danger zone" className="contents">
-                <div className="px-4 pb-3 pt-4">
-                  <h2 className="type-heading text-bad-fg">Danger zone</h2>
-                </div>
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-4 pb-4">
-                  <div className="min-w-0 flex-[1_1_280px]">
-                    <b className="font-semibold">Change address</b>
-                    <p className="mt-0.5 text-[13.5px] text-fg-2">
-                      {s.address
-                        ? `Set here, over forge.yaml: ${s.address.host === "@" ? "the domain itself" : s.address.host || id} on ${s.address.domain || "the default domain"}. `
-                        : "Comes from forge.yaml. "}
-                      Moving it breaks the old address. Rarely needed.
-                    </p>
+            <ServiceSettings service={s} canMoveTeam={can("service.update.team")} canChangeRepo={role === "admin"} />
+            {can("service.address") || can("service.delete") ? (
+              <Panel className="border-bad-dot/45">
+                <section aria-label="Danger zone" className="contents">
+                  <div className="px-4 pb-3 pt-4">
+                    <h2 className="type-heading text-bad-fg">Danger zone</h2>
                   </div>
-                  <Button kind="danger" onClick={() => setOpen({ kind: "address" })}>
-                    Change address
-                  </Button>
-                </div>
-                <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-line px-4 py-4">
-                  <div className="min-w-0 flex-[1_1_280px]">
-                    <b className="font-semibold">Delete service</b>
-                    <p className="mt-0.5 text-[13.5px] text-fg-2">
-                      Takes down staging, production and any previews, and removes {id} from the catalog. The repository is kept.
-                    </p>
-                  </div>
-                  <Button kind="danger" onClick={() => setOpen({ kind: "delete" })}>
-                    Delete service
-                  </Button>
-                </div>
-              </section>
-            </Panel>
+                  {can("service.address") ? (
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 px-4 pb-4">
+                      <div className="min-w-0 flex-[1_1_280px]">
+                        <b className="font-semibold">Change address</b>
+                        <p className="mt-0.5 text-[13.5px] text-fg-2">
+                          {s.address
+                            ? `Set here, over forge.yaml: ${s.address.host === "@" ? "the domain itself" : s.address.host || id} on ${s.address.domain || "the default domain"}. `
+                            : "Comes from forge.yaml. "}
+                          Moving it breaks the old address. Rarely needed.
+                        </p>
+                      </div>
+                      <Button kind="danger" onClick={() => setOpen({ kind: "address" })}>
+                        Change address
+                      </Button>
+                    </div>
+                  ) : null}
+                  {can("service.delete") ? (
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-line px-4 py-4">
+                      <div className="min-w-0 flex-[1_1_280px]">
+                        <b className="font-semibold">Delete service</b>
+                        <p className="mt-0.5 text-[13.5px] text-fg-2">
+                          Takes down staging, production and any previews, and removes {id} from the catalog. The repository is kept.
+                        </p>
+                      </div>
+                      <Button kind="danger" onClick={() => setOpen({ kind: "delete" })}>
+                        Delete service
+                      </Button>
+                    </div>
+                  ) : null}
+                </section>
+              </Panel>
+            ) : null}
           </div>
         ) : null}
         {tab === "overview" ? (
@@ -349,7 +362,7 @@ function ServiceView({ id }: { id: string }) {
             deployments={deployments}
             previews={previews}
             events={events}
-            canWrite={canWrite}
+            can={can}
             ahead={ahead}
             deployment={deployment}
             deployed={deployed}
@@ -419,7 +432,7 @@ function OverviewTab({
   deployments,
   previews,
   events,
-  canWrite,
+  can,
   ahead,
   deployment,
   deployed,
@@ -430,7 +443,7 @@ function OverviewTab({
   deployments: UseQueryResult<Deployment[]>;
   previews: UseQueryResult<Environment[]>;
   events: UseQueryResult<AuditEvent[]>;
-  canWrite: boolean;
+  can: (action: string) => boolean;
   ahead: boolean;
   deployment: (env: string) => Deployment | undefined;
   deployed: (env: string) => boolean;
@@ -463,7 +476,7 @@ function OverviewTab({
                 <th className={th}>Commit</th>
                 <th className={th}>Deployed</th>
                 <th className={th}>Address</th>
-                {canWrite ? <th className={th}>Actions</th> : null}
+                {can("deploy.rollback") ? <th className={th}>Actions</th> : null}
               </tr>
             </thead>
             <tbody>
@@ -505,7 +518,7 @@ function OverviewTab({
                         </div>
                       ) : null}
                     </td>
-                    {canWrite ? (
+                    {can("deploy.rollback") ? (
                       <td className={td}>
                         {deployed(env) ? (
                           <Button kind="quiet" size="sm" onClick={() => setOpen({ kind: "rollback", env })} aria-label={`Roll back ${env}`}>
@@ -554,15 +567,15 @@ function OverviewTab({
                         </div>
                         <div className="ml-auto flex flex-wrap items-center justify-end gap-1">
                           <StatusBadge status={environmentStatus(e)} title={e.stateMessage || undefined} />
-                          {canWrite ? (
-                            <>
-                              <Button kind="quiet" size="sm" onClick={() => setOpen({ kind: "extend", environment: e })} aria-label={`Extend ${preview}`}>
-                                Extend
-                              </Button>
-                              <Button kind="quiet" size="sm" onClick={() => setOpen({ kind: "destroy", environment: e })} aria-label={`Destroy ${preview}`}>
-                                Destroy
-                              </Button>
-                            </>
+                          {can("environment.extend") ? (
+                            <Button kind="quiet" size="sm" onClick={() => setOpen({ kind: "extend", environment: e })} aria-label={`Extend ${preview}`}>
+                              Extend
+                            </Button>
+                          ) : null}
+                          {can("environment.destroy") ? (
+                            <Button kind="quiet" size="sm" onClick={() => setOpen({ kind: "destroy", environment: e })} aria-label={`Destroy ${preview}`}>
+                              Destroy
+                            </Button>
                           ) : null}
                         </div>
                       </li>

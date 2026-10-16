@@ -39,10 +39,14 @@ nonce from the layout; never add `'unsafe-inline'`.
 
 ## Buttons are missing
 
-A reader sees no Create, Deploy, Promote or Settings: those are for writers,
-the team `platform-engineering`. The rail's foot says **Reader** or
-**Writer**. A change of team takes effect within the hour, when Forge checks
-the session against GitHub again.
+What a person may do on a service depends on their role toward it: a member
+of the service's owning team deploys, promotes, rolls back, manages previews
+and changes its settings; an admin (the team `platform-engineering`) also
+moves it to another team, changes its address and deletes it; anyone else
+only reads. The rail's foot says **Admin**, **Team** (in at least one team)
+or **Reader**. Buttons follow `AuthService.TestPermissions` for each service.
+A change of team takes effect within the hour, when Forge checks the session
+against GitHub again.
 
 ## A deploy or promote is stuck
 

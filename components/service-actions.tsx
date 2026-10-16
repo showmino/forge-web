@@ -16,7 +16,7 @@ import { randomString } from "@/lib/auth/pkce";
 import { shortCommit, when } from "@/lib/format";
 import { deploymentStatus } from "@/lib/status";
 
-// The actions a writer takes on one service. Each is a dialog that names the
+// The actions taken on one service. Each is a dialog that names the
 // target, says what will happen, and starts the work with the same verb as its
 // title. The API decides whether the reader may do it.
 

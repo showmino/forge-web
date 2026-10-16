@@ -11,7 +11,7 @@ import { OperationService } from "@/gen/forge/v1/operation_pb";
 import { DocsService } from "@/gen/forge/v1/docs_pb";
 import { TeamService } from "@/gen/forge/v1/team_pb";
 import { TemplateParameter_Type, TemplateService } from "@/gen/forge/v1/template_pb";
-import { idToken, renderWithApi, signIn } from "@/test/helpers";
+import { ADMIN, authAs, idToken, READER, renderWithApi, signIn } from "@/test/helpers";
 import { saveForgeSession } from "@/lib/auth/session";
 import { AppShell } from "@/components/app-shell";
 import AuditLog from "./(app)/audit/page";
@@ -445,7 +445,7 @@ describe("the frame around every page", () => {
     window.history.replaceState(null, "", "/");
   });
 
-  it("shows who is logged in, as a reader or a writer, and signs out", async () => {
+  it("shows who is logged in, and their role, and signs out", async () => {
     renderWithApi(<AppShell>content</AppShell>, forge);
     expect(await screen.findByText("content")).toBeTruthy();
     expect(screen.getByText("ana@example.com")).toBeTruthy();
@@ -499,11 +499,17 @@ describe("the frame around every page", () => {
     localStorage.removeItem("forge.rail");
   });
 
-  it("names a writer", async () => {
+  it.each([
+    ["an admin", ADMIN, "Admin"],
+    ["a member of a team", { teams: ["payments"] }, "Team"],
+    ["anyone else", READER, "Reader"],
+  ] as const)("names %s in the rail", async (_, caller, word) => {
     renderWithApi(<AppShell>content</AppShell>, (router) => {
-      router.service(AuthService, { getStatus: () => ({ permissions: ["services.read", "services.write"] }) });
+      router.service(AuthService, authAs(caller));
     });
-    expect(await screen.findByText("Writer")).toBeTruthy();
+    expect(await screen.findByText(word)).toBeTruthy();
+    // The rail starts as icons: the avatar says it on hover.
+    expect(screen.getByTitle(`ana@example.com · ${word}`)).toBeTruthy();
   });
 
   it("jumps to a service from the palette", async () => {

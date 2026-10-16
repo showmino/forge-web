@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import { useCanWrite } from "@/components/app-shell";
+import { usePermissions } from "@/components/app-shell";
 import { useApi } from "@/components/providers";
 import { ButtonLink, Icon } from "@/components/ui/button";
 import { Crumbs } from "@/components/ui/layout";
@@ -27,7 +27,7 @@ function typeText(p: TemplateParameter): string {
 export default function TemplatePage() {
   const { name: id } = useParams<{ name: string }>();
   const api = useApi();
-  const canWrite = useCanWrite();
+  const canCreate = usePermissions().can("service.create");
   const template = useQuery({
     queryKey: ["template", id],
     queryFn: () => api.templates.getTemplate({ name: `templates/${id}` }).then((r) => r.template),
@@ -53,7 +53,7 @@ export default function TemplatePage() {
         lead={t.description}
         cli={`forge template get ${id}`}
       >
-        {canWrite ? (
+        {canCreate ? (
           <ButtonLink kind="primary" href={`/templates/${encodeURIComponent(id)}/create`}>
             <Icon name="plus" />
             Use template

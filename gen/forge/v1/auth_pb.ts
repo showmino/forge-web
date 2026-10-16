@@ -12,7 +12,68 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file forge/v1/auth.proto.
  */
 export const file_forge_v1_auth: GenFile = /*@__PURE__*/
-  fileDesc("ChNmb3JnZS92MS9hdXRoLnByb3RvEghmb3JnZS52MSK4AgoHU2Vzc2lvbhIMCgRuYW1lGAEgASgJEigKBmNsaWVudBgCIAEoDjIYLmZvcmdlLnYxLlNlc3Npb24uQ2xpZW50Eg0KBWxhYmVsGAMgASgJEi8KC2NyZWF0ZV90aW1lGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIxCg1sYXN0X3VzZV90aW1lGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtleHBpcmVfdGltZRgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHY3VycmVudBgHIAEoCCJACgZDbGllbnQSFgoSQ0xJRU5UX1VOU1BFQ0lGSUVEEAASDgoKQ0xJRU5UX0NMSRABEg4KCkNMSUVOVF9XRUIQAiIlChRDcmVhdGVTZXNzaW9uUmVxdWVzdBINCgVsYWJlbBgBIAEoCSJKChVDcmVhdGVTZXNzaW9uUmVzcG9uc2USIgoHc2Vzc2lvbhgBIAEoCzIRLmZvcmdlLnYxLlNlc3Npb24SDQoFdG9rZW4YAiABKAkiFQoTTGlzdFNlc3Npb25zUmVxdWVzdCI7ChRMaXN0U2Vzc2lvbnNSZXNwb25zZRIjCghzZXNzaW9ucxgBIAMoCzIRLmZvcmdlLnYxLlNlc3Npb24iJAoURGVsZXRlU2Vzc2lvblJlcXVlc3QSDAoEbmFtZRgBIAEoCSIXChVEZWxldGVTZXNzaW9uUmVzcG9uc2UiFgoUR2V0U2VydmVySW5mb1JlcXVlc3QigQEKFUdldFNlcnZlckluZm9SZXNwb25zZRIWCg5zZXJ2ZXJfdmVyc2lvbhgBIAEoCRIaChJtaW5fY2xpZW50X3ZlcnNpb24YAiABKAkSIgoEb2lkYxgDIAEoCzIULmZvcmdlLnYxLk9JRENDb25maWcSEAoIc2Vzc2lvbnMYBCABKAgiagoKT0lEQ0NvbmZpZxIOCgZpc3N1ZXIYASABKAkSEQoJY2xpZW50X2lkGAIgASgJEg4KBnNjb3BlcxgDIAMoCRIVCg13ZWJfY2xpZW50X2lkGAQgASgJEhIKCndlYl9zY29wZXMYBSADKAkiEgoQR2V0U3RhdHVzUmVxdWVzdCJ8ChFHZXRTdGF0dXNSZXNwb25zZRIPCgdzdWJqZWN0GAEgASgJEg0KBWVtYWlsGAIgASgJEg4KBmdyb3VwcxgDIAMoCRITCgtwZXJtaXNzaW9ucxgEIAMoCRIiCgdzZXNzaW9uGAUgASgLMhEuZm9yZ2UudjEuU2Vzc2lvbjKnAwoLQXV0aFNlcnZpY2USVQoNR2V0U2VydmVySW5mbxIeLmZvcmdlLnYxLkdldFNlcnZlckluZm9SZXF1ZXN0Gh8uZm9yZ2UudjEuR2V0U2VydmVySW5mb1Jlc3BvbnNlIgOQAgESSQoJR2V0U3RhdHVzEhouZm9yZ2UudjEuR2V0U3RhdHVzUmVxdWVzdBobLmZvcmdlLnYxLkdldFN0YXR1c1Jlc3BvbnNlIgOQAgESUAoNQ3JlYXRlU2Vzc2lvbhIeLmZvcmdlLnYxLkNyZWF0ZVNlc3Npb25SZXF1ZXN0Gh8uZm9yZ2UudjEuQ3JlYXRlU2Vzc2lvblJlc3BvbnNlElIKDExpc3RTZXNzaW9ucxIdLmZvcmdlLnYxLkxpc3RTZXNzaW9uc1JlcXVlc3QaHi5mb3JnZS52MS5MaXN0U2Vzc2lvbnNSZXNwb25zZSIDkAIBElAKDURlbGV0ZVNlc3Npb24SHi5mb3JnZS52MS5EZWxldGVTZXNzaW9uUmVxdWVzdBofLmZvcmdlLnYxLkRlbGV0ZVNlc3Npb25SZXNwb25zZWIGcHJvdG8z", [file_google_protobuf_timestamp]);
+  fileDesc("ChNmb3JnZS92MS9hdXRoLnByb3RvEghmb3JnZS52MSJOChZUZXN0UGVybWlzc2lvbnNSZXF1ZXN0Eg8KB3NlcnZpY2UYASABKAkSDwoHYWN0aW9ucxgCIAMoCRISCgpvd25lcl90ZWFtGAMgASgJIjgKF1Rlc3RQZXJtaXNzaW9uc1Jlc3BvbnNlEg8KB2FsbG93ZWQYASADKAkSDAoEcm9sZRgCIAEoCSK4AgoHU2Vzc2lvbhIMCgRuYW1lGAEgASgJEigKBmNsaWVudBgCIAEoDjIYLmZvcmdlLnYxLlNlc3Npb24uQ2xpZW50Eg0KBWxhYmVsGAMgASgJEi8KC2NyZWF0ZV90aW1lGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIxCg1sYXN0X3VzZV90aW1lGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtleHBpcmVfdGltZRgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHY3VycmVudBgHIAEoCCJACgZDbGllbnQSFgoSQ0xJRU5UX1VOU1BFQ0lGSUVEEAASDgoKQ0xJRU5UX0NMSRABEg4KCkNMSUVOVF9XRUIQAiIlChRDcmVhdGVTZXNzaW9uUmVxdWVzdBINCgVsYWJlbBgBIAEoCSJKChVDcmVhdGVTZXNzaW9uUmVzcG9uc2USIgoHc2Vzc2lvbhgBIAEoCzIRLmZvcmdlLnYxLlNlc3Npb24SDQoFdG9rZW4YAiABKAkiFQoTTGlzdFNlc3Npb25zUmVxdWVzdCI7ChRMaXN0U2Vzc2lvbnNSZXNwb25zZRIjCghzZXNzaW9ucxgBIAMoCzIRLmZvcmdlLnYxLlNlc3Npb24iJAoURGVsZXRlU2Vzc2lvblJlcXVlc3QSDAoEbmFtZRgBIAEoCSIXChVEZWxldGVTZXNzaW9uUmVzcG9uc2UiFgoUR2V0U2VydmVySW5mb1JlcXVlc3QigQEKFUdldFNlcnZlckluZm9SZXNwb25zZRIWCg5zZXJ2ZXJfdmVyc2lvbhgBIAEoCRIaChJtaW5fY2xpZW50X3ZlcnNpb24YAiABKAkSIgoEb2lkYxgDIAEoCzIULmZvcmdlLnYxLk9JRENDb25maWcSEAoIc2Vzc2lvbnMYBCABKAgiagoKT0lEQ0NvbmZpZxIOCgZpc3N1ZXIYASABKAkSEQoJY2xpZW50X2lkGAIgASgJEg4KBnNjb3BlcxgDIAMoCRIVCg13ZWJfY2xpZW50X2lkGAQgASgJEhIKCndlYl9zY29wZXMYBSADKAkiEgoQR2V0U3RhdHVzUmVxdWVzdCKaAQoRR2V0U3RhdHVzUmVzcG9uc2USDwoHc3ViamVjdBgBIAEoCRINCgVlbWFpbBgCIAEoCRIOCgZncm91cHMYAyADKAkSEwoLcGVybWlzc2lvbnMYBCADKAkSIgoHc2Vzc2lvbhgFIAEoCzIRLmZvcmdlLnYxLlNlc3Npb24SDQoFYWRtaW4YBiABKAgSDQoFdGVhbXMYByADKAkyhAQKC0F1dGhTZXJ2aWNlElUKDUdldFNlcnZlckluZm8SHi5mb3JnZS52MS5HZXRTZXJ2ZXJJbmZvUmVxdWVzdBofLmZvcmdlLnYxLkdldFNlcnZlckluZm9SZXNwb25zZSIDkAIBEkkKCUdldFN0YXR1cxIaLmZvcmdlLnYxLkdldFN0YXR1c1JlcXVlc3QaGy5mb3JnZS52MS5HZXRTdGF0dXNSZXNwb25zZSIDkAIBElAKDUNyZWF0ZVNlc3Npb24SHi5mb3JnZS52MS5DcmVhdGVTZXNzaW9uUmVxdWVzdBofLmZvcmdlLnYxLkNyZWF0ZVNlc3Npb25SZXNwb25zZRJSCgxMaXN0U2Vzc2lvbnMSHS5mb3JnZS52MS5MaXN0U2Vzc2lvbnNSZXF1ZXN0Gh4uZm9yZ2UudjEuTGlzdFNlc3Npb25zUmVzcG9uc2UiA5ACARJQCg1EZWxldGVTZXNzaW9uEh4uZm9yZ2UudjEuRGVsZXRlU2Vzc2lvblJlcXVlc3QaHy5mb3JnZS52MS5EZWxldGVTZXNzaW9uUmVzcG9uc2USWwoPVGVzdFBlcm1pc3Npb25zEiAuZm9yZ2UudjEuVGVzdFBlcm1pc3Npb25zUmVxdWVzdBohLmZvcmdlLnYxLlRlc3RQZXJtaXNzaW9uc1Jlc3BvbnNlIgOQAgFiBnByb3RvMw", [file_google_protobuf_timestamp]);
+
+/**
+ * @generated from message forge.v1.TestPermissionsRequest
+ */
+export type TestPermissionsRequest = Message<"forge.v1.TestPermissionsRequest"> & {
+  /**
+   * "services/{service}", or empty for actions about no one service
+   * (service.create, service.register).
+   *
+   * @generated from field: string service = 1;
+   */
+  service: string;
+
+  /**
+   * Actions such as "deploy.promote", as the audit log names them. Empty
+   * asks for every action.
+   *
+   * @generated from field: repeated string actions = 2;
+   */
+  actions: string[];
+
+  /**
+   * For service.create: the team the new service would belong to.
+   *
+   * @generated from field: string owner_team = 3;
+   */
+  ownerTeam: string;
+};
+
+/**
+ * Describes the message forge.v1.TestPermissionsRequest.
+ * Use `create(TestPermissionsRequestSchema)` to create a new message.
+ */
+export const TestPermissionsRequestSchema: GenMessage<TestPermissionsRequest> = /*@__PURE__*/
+  messageDesc(file_forge_v1_auth, 0);
+
+/**
+ * @generated from message forge.v1.TestPermissionsResponse
+ */
+export type TestPermissionsResponse = Message<"forge.v1.TestPermissionsResponse"> & {
+  /**
+   * The actions of the request the caller may do, in the request's order.
+   *
+   * @generated from field: repeated string allowed = 1;
+   */
+  allowed: string[];
+
+  /**
+   * The caller's role toward the service: "admin", "team" or "reader".
+   *
+   * @generated from field: string role = 2;
+   */
+  role: string;
+};
+
+/**
+ * Describes the message forge.v1.TestPermissionsResponse.
+ * Use `create(TestPermissionsResponseSchema)` to create a new message.
+ */
+export const TestPermissionsResponseSchema: GenMessage<TestPermissionsResponse> = /*@__PURE__*/
+  messageDesc(file_forge_v1_auth, 1);
 
 /**
  * Session is a login Forge keeps for one client. Its token is shown once,
@@ -70,7 +131,7 @@ export type Session = Message<"forge.v1.Session"> & {
  * Use `create(SessionSchema)` to create a new message.
  */
 export const SessionSchema: GenMessage<Session> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 0);
+  messageDesc(file_forge_v1_auth, 2);
 
 /**
  * Client is what holds the session.
@@ -98,7 +159,7 @@ export enum Session_Client {
  * Describes the enum forge.v1.Session.Client.
  */
 export const Session_ClientSchema: GenEnum<Session_Client> = /*@__PURE__*/
-  enumDesc(file_forge_v1_auth, 0, 0);
+  enumDesc(file_forge_v1_auth, 2, 0);
 
 /**
  * @generated from message forge.v1.CreateSessionRequest
@@ -118,7 +179,7 @@ export type CreateSessionRequest = Message<"forge.v1.CreateSessionRequest"> & {
  * Use `create(CreateSessionRequestSchema)` to create a new message.
  */
 export const CreateSessionRequestSchema: GenMessage<CreateSessionRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 1);
+  messageDesc(file_forge_v1_auth, 3);
 
 /**
  * @generated from message forge.v1.CreateSessionResponse
@@ -142,7 +203,7 @@ export type CreateSessionResponse = Message<"forge.v1.CreateSessionResponse"> & 
  * Use `create(CreateSessionResponseSchema)` to create a new message.
  */
 export const CreateSessionResponseSchema: GenMessage<CreateSessionResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 2);
+  messageDesc(file_forge_v1_auth, 4);
 
 /**
  * @generated from message forge.v1.ListSessionsRequest
@@ -155,7 +216,7 @@ export type ListSessionsRequest = Message<"forge.v1.ListSessionsRequest"> & {
  * Use `create(ListSessionsRequestSchema)` to create a new message.
  */
 export const ListSessionsRequestSchema: GenMessage<ListSessionsRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 3);
+  messageDesc(file_forge_v1_auth, 5);
 
 /**
  * @generated from message forge.v1.ListSessionsResponse
@@ -174,7 +235,7 @@ export type ListSessionsResponse = Message<"forge.v1.ListSessionsResponse"> & {
  * Use `create(ListSessionsResponseSchema)` to create a new message.
  */
 export const ListSessionsResponseSchema: GenMessage<ListSessionsResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 4);
+  messageDesc(file_forge_v1_auth, 6);
 
 /**
  * @generated from message forge.v1.DeleteSessionRequest
@@ -193,7 +254,7 @@ export type DeleteSessionRequest = Message<"forge.v1.DeleteSessionRequest"> & {
  * Use `create(DeleteSessionRequestSchema)` to create a new message.
  */
 export const DeleteSessionRequestSchema: GenMessage<DeleteSessionRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 5);
+  messageDesc(file_forge_v1_auth, 7);
 
 /**
  * @generated from message forge.v1.DeleteSessionResponse
@@ -206,7 +267,7 @@ export type DeleteSessionResponse = Message<"forge.v1.DeleteSessionResponse"> & 
  * Use `create(DeleteSessionResponseSchema)` to create a new message.
  */
 export const DeleteSessionResponseSchema: GenMessage<DeleteSessionResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 6);
+  messageDesc(file_forge_v1_auth, 8);
 
 /**
  * @generated from message forge.v1.GetServerInfoRequest
@@ -219,7 +280,7 @@ export type GetServerInfoRequest = Message<"forge.v1.GetServerInfoRequest"> & {
  * Use `create(GetServerInfoRequestSchema)` to create a new message.
  */
 export const GetServerInfoRequestSchema: GenMessage<GetServerInfoRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 7);
+  messageDesc(file_forge_v1_auth, 9);
 
 /**
  * @generated from message forge.v1.GetServerInfoResponse
@@ -258,7 +319,7 @@ export type GetServerInfoResponse = Message<"forge.v1.GetServerInfoResponse"> & 
  * Use `create(GetServerInfoResponseSchema)` to create a new message.
  */
 export const GetServerInfoResponseSchema: GenMessage<GetServerInfoResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 8);
+  messageDesc(file_forge_v1_auth, 10);
 
 /**
  * OIDCConfig is what a public client needs to log in: the CLI runs the
@@ -305,7 +366,7 @@ export type OIDCConfig = Message<"forge.v1.OIDCConfig"> & {
  * Use `create(OIDCConfigSchema)` to create a new message.
  */
 export const OIDCConfigSchema: GenMessage<OIDCConfig> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 9);
+  messageDesc(file_forge_v1_auth, 11);
 
 /**
  * @generated from message forge.v1.GetStatusRequest
@@ -318,7 +379,7 @@ export type GetStatusRequest = Message<"forge.v1.GetStatusRequest"> & {
  * Use `create(GetStatusRequestSchema)` to create a new message.
  */
 export const GetStatusRequestSchema: GenMessage<GetStatusRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 10);
+  messageDesc(file_forge_v1_auth, 12);
 
 /**
  * @generated from message forge.v1.GetStatusResponse
@@ -355,6 +416,22 @@ export type GetStatusResponse = Message<"forge.v1.GetStatusResponse"> & {
    * @generated from field: forge.v1.Session session = 5;
    */
   session?: Session | undefined;
+
+  /**
+   * True for a member of an admin group, who may do everything on every
+   * service.
+   *
+   * @generated from field: bool admin = 6;
+   */
+  admin: boolean;
+
+  /**
+   * The slugs of the organization's teams the caller is in. A team's members
+   * work on the services it owns.
+   *
+   * @generated from field: repeated string teams = 7;
+   */
+  teams: string[];
 };
 
 /**
@@ -362,7 +439,7 @@ export type GetStatusResponse = Message<"forge.v1.GetStatusResponse"> & {
  * Use `create(GetStatusResponseSchema)` to create a new message.
  */
 export const GetStatusResponseSchema: GenMessage<GetStatusResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_auth, 11);
+  messageDesc(file_forge_v1_auth, 13);
 
 /**
  * AuthService tells clients how to log in and who they are.
@@ -425,6 +502,18 @@ export const AuthService: GenService<{
     methodKind: "unary";
     input: typeof DeleteSessionRequestSchema;
     output: typeof DeleteSessionResponseSchema;
+  },
+  /**
+   * TestPermissions returns which of the actions the caller may do, on a
+   * service or, without one, anywhere: for clients to hide or disable what
+   * the caller may not do. The server checks every call all the same.
+   *
+   * @generated from rpc forge.v1.AuthService.TestPermissions
+   */
+  testPermissions: {
+    methodKind: "unary";
+    input: typeof TestPermissionsRequestSchema;
+    output: typeof TestPermissionsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_forge_v1_auth, 0);

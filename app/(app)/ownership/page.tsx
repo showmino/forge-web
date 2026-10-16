@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { useCanWrite } from "@/components/app-shell";
+import { usePermissions } from "@/components/app-shell";
 import { useApi } from "@/components/providers";
 import { NameLink, TextLink } from "@/components/ui/button";
 import { Empty, ErrorNote, Loading, PageHeader, Panel, Section, TableFrame, td, th, tr } from "@/components/ui/layout";
@@ -17,7 +17,6 @@ const row = "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-
 // Which GitHub team answers for each service, and what has no owner.
 export default function Ownership() {
   const api = useApi();
-  const canWrite = useCanWrite();
   const services = useQuery({ queryKey: ["services"], queryFn: () => listAllServices(api) });
   const teams = useQuery({ queryKey: ["teams"], queryFn: () => api.teams.listTeams({}).then((r) => r.teams) });
   const deployments = useQuery({
@@ -74,11 +73,7 @@ export default function Ownership() {
                           )}
                         </div>
                       </div>
-                      {canWrite ? (
-                        <TextLink href={`/services/${n.service}#settings`} className="text-[13px]" aria-label={`Change the owner of ${n.service}`}>
-                          Change owner
-                        </TextLink>
-                      ) : null}
+                      <ChangeOwner service={n.service} />
                     </li>
                   ))}
                 </ul>
@@ -142,5 +137,16 @@ export default function Ownership() {
         </>
       ) : null}
     </>
+  );
+}
+
+// ChangeOwner links to the settings of a service, for whoever may move it to
+// another team.
+function ChangeOwner({ service }: { service: string }) {
+  if (!usePermissions(service).can("service.update.team")) return null;
+  return (
+    <TextLink href={`/services/${service}#settings`} className="text-[13px]" aria-label={`Change the owner of ${service}`}>
+      Change owner
+    </TextLink>
   );
 }

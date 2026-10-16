@@ -8,7 +8,7 @@ import { ServiceCatalogService } from "@/gen/forge/v1/catalog_pb";
 import { Deployment_Health, Deployment_SyncStatus, DeployService } from "@/gen/forge/v1/deploy_pb";
 import { Environment_State, EnvironmentService } from "@/gen/forge/v1/environment_pb";
 import { OperationService } from "@/gen/forge/v1/operation_pb";
-import { renderWithApi, signIn } from "@/test/helpers";
+import { ADMIN, authAs, READER, renderWithApi, signIn } from "@/test/helpers";
 import Overview from "./(app)/page";
 
 // The overview is rendered against an in-memory Forge API with a day of
@@ -46,7 +46,7 @@ const request = (id: number, minutes: number, action: string, service: string, e
 function forge(w: World) {
   const running = { name: "operations/op_9f2c4a1b0c3d", kind: "deploy", target: "deployments/payments/staging", creator: "github:showmino/payments", createTime: ago(4) };
   return (router: ConnectRouter) => {
-    router.service(AuthService, { getStatus: () => ({ subject: "ana", permissions: w.writer ? ["services.read", "services.write"] : ["services.read"] }) });
+    router.service(AuthService, authAs(w.writer ? ADMIN : READER));
     router.service(ServiceCatalogService, {
       listServices: () => ({ services: w.quiet ? [] : [{ name: "services/payments" }, { name: "services/ledger" }, { name: "services/checkout-api" }] }),
     });

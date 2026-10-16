@@ -10,7 +10,7 @@ import { Environment_State, EnvironmentService } from "@/gen/forge/v1/environmen
 import { OperationService } from "@/gen/forge/v1/operation_pb";
 import { TeamService } from "@/gen/forge/v1/team_pb";
 import { TemplateParameter_Type, TemplateService } from "@/gen/forge/v1/template_pb";
-import { renderWithApi, signIn } from "@/test/helpers";
+import { ADMIN, authAs, READER, renderWithApi, signIn, type Caller } from "@/test/helpers";
 import CreateService from "./(app)/create/page";
 import TemplateCreate from "./(app)/templates/[name]/create/page";
 import Environments from "./(app)/environments/page";
@@ -43,6 +43,8 @@ const payments = {
 
 type World = {
   writer: boolean;
+  // Who calls, when not an admin (writer) or a reader.
+  caller?: Caller;
   production: Deployment_Health;
   calls: Record<string, unknown[]>;
   fail: Record<string, ConnectError>;
@@ -84,9 +86,8 @@ function forge(w: World) {
     if (w.fail[name]) throw w.fail[name];
   };
   return (router: ConnectRouter) => {
-    router.service(AuthService, {
-      getStatus: () => ({ subject: "ana", permissions: w.writer ? ["services.read", "services.write"] : ["services.read"] }),
-    });
+    const teamOf = (service: string) => (service === payments.name ? payments.ownerTeam : service === "services/ledger" ? "finance" : "");
+    router.service(AuthService, authAs(w.caller ?? (w.writer ? ADMIN : READER), teamOf));
     router.service(ServiceCatalogService, {
       getService: () => ({ service: payments }),
       listServices: () => ({ services: [payments, { name: "services/ledger", ownerTeam: "finance" }] }),
@@ -359,6 +360,41 @@ describe("who may act", () => {
       expect(screen.queryByRole("button", { name })).toBeNull();
     }
     expect(screen.queryByText("Actions")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Service settings" })).toBeNull();
+  });
+
+  it("shows a member of the service's team its work, but not an admin's", async () => {
+    // payments belongs to platform-engineering; this caller is in it, and no admin.
+    await openService(world({ caller: { teams: ["platform-engineering"] } }));
+    expect(await screen.findByRole("button", { name: "Deploy to staging" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: PROMOTE })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Roll back staging" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Preview env" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Extend pr-42" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Destroy pr-42" })).toBeTruthy();
+
+    click(screen.getByRole("button", { name: "Service settings" }));
+    expect(screen.getByRole("tab", { name: "Settings" }).getAttribute("aria-selected")).toBe("true");
+    // Moving the service to another team, its address and deleting it are an admin's.
+    const team = screen.getByLabelText("Owning team") as HTMLInputElement;
+    expect(team.readOnly).toBe(true);
+    expect(team.value).toBe("platform-engineering");
+    expect(screen.getByText("Only an admin can move a service to another team.")).toBeTruthy();
+    expect(screen.getByText("Only an admin can point the service at another repository.")).toBeTruthy();
+    expect(screen.queryByRole("region", { name: "Danger zone" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Delete service" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Change address" })).toBeNull();
+    // The rest of the settings are the team's.
+    expect((screen.getByLabelText("Contacts") as HTMLInputElement).readOnly).toBe(false);
+  });
+
+  it("shows a member of another team no actions on the service", async () => {
+    await openService(world({ caller: { teams: ["finance"] } }));
+    // Give the API time to answer what the caller may do.
+    await new Promise((r) => setTimeout(r, 50));
+    for (const name of ["Deploy to staging", PROMOTE, "Preview env", "Roll back staging", "Extend pr-42", "Destroy pr-42", "Service settings"]) {
+      expect(screen.queryByRole("button", { name })).toBeNull();
+    }
   });
 
   it("shows a writer the actions that make sense now", async () => {
@@ -1158,12 +1194,40 @@ describe("create a service", () => {
     await pickTemplate("go-grpc");
     next();
     expect(screen.queryByLabelText("port")).toBeNull();
-    expect(screen.getByText(/Only writers can create a service/)).toBeTruthy();
+    expect(await screen.findByText(/Only members of a team create services/)).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "ledger" } });
     await screen.findByRole("option", { name: /^finance/ });
     fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "finance" } });
+    expect(await screen.findByText(/You can only create services for teams you are in/)).toBeTruthy();
     toReview();
-    expect((screen.getByRole("button", { name: "Create service" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.queryByRole("button", { name: "Create service" })).toBeNull();
+    expect(w.calls.create).toBeUndefined();
+  });
+
+  it("refuses a team the caller is not in, and lists their own teams first", async () => {
+    const w = world({ caller: { teams: ["platform-engineering"] } });
+    renderWithApi(<CreateService />, forge(w));
+    await screen.findByRole("radio", { name: /^nextjs/ });
+    next();
+    fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "ledger" } });
+    const own = await screen.findByRole("option", { name: /^platform-engineering .*your team/ });
+    expect((screen.getAllByRole("option")[1] as HTMLOptionElement).value).toBe("platform-engineering");
+    expect(own).toBeTruthy();
+    expect(screen.queryByText(/Only members of a team create services/)).toBeNull();
+
+    fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "finance" } });
+    expect(
+      await screen.findByText("You can only create services for teams you are in. Ask platform-engineering to create it for finance."),
+    ).toBeTruthy();
+    toReview();
+    expect(screen.queryByRole("button", { name: "Create service" })).toBeNull();
+
+    fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "platform-engineering" } });
+    await waitFor(() => expect(screen.queryByText(/You can only create services for teams you are in/)).toBeNull());
+    toReview();
+    click(screen.getByRole("button", { name: "Create service" }));
+    await waitFor(() => expect(w.calls.create).toHaveLength(1));
+    expect(w.calls.create[0]).toMatchObject({ serviceId: "ledger", ownerTeam: "platform-engineering" });
   });
 });
 
@@ -1221,6 +1285,22 @@ describe("toasts", () => {
 });
 
 describe("the environments page", () => {
+  it("offers a preview's actions to its service's team only", async () => {
+    renderWithApi(<Environments />, forge(world({ caller: { teams: ["platform-engineering"] } })));
+    // pr-42 previews payments, which platform-engineering owns.
+    expect(await screen.findByRole("button", { name: "Extend pr-42" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Destroy pr-42" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Preview env" })).toBeTruthy();
+    cleanup();
+
+    renderWithApi(<Environments />, forge(world({ caller: { teams: ["finance"] } })));
+    expect(await screen.findByRole("button", { name: "Preview env" })).toBeTruthy();
+    await screen.findByRole("table", { name: "Previews" });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByRole("button", { name: "Extend pr-42" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Destroy pr-42" })).toBeNull();
+  });
+
   it("creates a preview of the service the writer picks", async () => {
     const w = world();
     renderWithApi(<Environments />, forge(w));

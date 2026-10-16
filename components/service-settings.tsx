@@ -42,13 +42,15 @@ export function changes(s: Service, next: Change): { paths: string[]; flags: str
 
 // ServiceSettings changes who owns a service and where it is in its life. The
 // etag of the service as the page read it goes along, so a change someone
-// else made meanwhile is not overwritten.
-export function ServiceSettings({ service }: { service: Service }) {
+// else made meanwhile is not overwritten. Moving a service to another team and
+// pointing it at another repo are an admin's: canMoveTeam and canChangeRepo
+// say whether the caller is one (the API decides all the same).
+export function ServiceSettings({ service, canMoveTeam = true, canChangeRepo = true }: { service: Service; canMoveTeam?: boolean; canChangeRepo?: boolean }) {
   // A saved change gives the service a new etag: the form starts again from it.
-  return <SettingsForm key={service.etag} service={service} />;
+  return <SettingsForm key={service.etag} service={service} canMoveTeam={canMoveTeam} canChangeRepo={canChangeRepo} />;
 }
 
-function SettingsForm({ service: s }: { service: Service }) {
+function SettingsForm({ service: s, canMoveTeam, canChangeRepo }: { service: Service; canMoveTeam: boolean; canChangeRepo: boolean }) {
   const api = useApi();
   const queries = useQueryClient();
   const toast = useToast();
@@ -94,7 +96,17 @@ function SettingsForm({ service: s }: { service: Service }) {
           <h2 className="type-heading">General</h2>
         </div>
         <form onSubmit={save} className="flex flex-col gap-4 px-4 pb-4">
-          {teams.error ? (
+          {!canMoveTeam ? (
+            <Field id="settings-team" label="Owning team" hint="Only an admin can move a service to another team.">
+              <input
+                id="settings-team"
+                className={`${inputClass} bg-surface-2 font-mono text-fg-2`}
+                value={s.ownerTeam || "No team"}
+                readOnly
+                aria-describedby="settings-team-note"
+              />
+            </Field>
+          ) : teams.error ? (
             <Field id="settings-team" label="Owning team" hint="The GitHub team that owns the service, by its name on GitHub.">
               <input id="settings-team" className={`${inputClass} font-mono`} value={team} onChange={(e) => setTeam(e.target.value)} aria-describedby="settings-team-note" />
             </Field>
@@ -143,7 +155,7 @@ function SettingsForm({ service: s }: { service: Service }) {
               ))}
             </select>
           </Field>
-          <Field id="settings-repo" label="Repository" hint={`Change it with forge service update ${id} --repo <url>.`}>
+          <Field id="settings-repo" label="Repository" hint={canChangeRepo ? `Change it with forge service update ${id} --repo <url>.` : "Only an admin can point the service at another repository."}>
             <input id="settings-repo" className={`${inputClass} bg-surface-2 font-mono text-fg-2`} value={s.repoUrl || "–"} readOnly aria-describedby="settings-repo-note" />
           </Field>
           <Cli command={command} />

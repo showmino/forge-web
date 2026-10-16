@@ -4,7 +4,7 @@ import { Code, ConnectError } from "@connectrpc/connect";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { useCanWrite } from "@/components/app-shell";
+import { usePermissions } from "@/components/app-shell";
 import { StepLog, type Step } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
 import { emptyRunForm, RunOptionsFields, runOptions, type RunForm } from "@/components/run-options";
@@ -197,7 +197,7 @@ function Reach({ env, open }: { env: string; open: boolean }) {
 export function CreateService({ initial, fixed }: { initial?: string | null; fixed?: string }) {
   const api = useApi();
   const queries = useQueryClient();
-  const canWrite = useCanWrite();
+  const canCreate = usePermissions().can("service.create");
   const toast = useToast();
   const templates = useQuery({
     queryKey: ["templates"],
@@ -216,6 +216,20 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     queryFn: () => api.teams.listTeams({}).then((r) => r.teams),
   });
   const [team, setTeam] = useState("");
+  // The caller's own teams come first in the list: those are the ones they may create for.
+  const status = useQuery({ queryKey: ["status"], queryFn: () => api.auth.getStatus({}), staleTime: 5 * 60_000 });
+  const mine = status.data?.teams ?? [];
+  const teamList = [...(teams.data ?? [])].sort((a, b) => Number(mine.includes(teamId(b.name))) - Number(mine.includes(teamId(a.name))));
+  // Whether the caller may create a service of the chosen team: a team's
+  // members create its services, an admin those of any team.
+  const forTeam = useQuery({
+    queryKey: ["can-team", team.trim()],
+    queryFn: () => api.auth.testPermissions({ ownerTeam: team.trim(), actions: ["service.create"] }),
+    enabled: !!team.trim(),
+    staleTime: 5 * 60_000,
+  });
+  const teamRefused = !!team.trim() && !!forTeam.data && !forTeam.data.allowed.includes("service.create");
+  const refusedNote = `You can only create services for teams you are in. Ask platform-engineering to create it for ${team.trim()}.`;
   const [params, setParams] = useState<Record<string, string>>({});
   // What was wrong with each input at the last press of Create, until it is edited.
   const [paramErrors, setParamErrors] = useState<Record<string, string>>({});
@@ -403,7 +417,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
       document.getElementById("service-name")?.focus();
       return false;
     }
-    if (!team.trim()) {
+    if (!team.trim() || teamRefused) {
       document.getElementById("service-team")?.focus();
       return false;
     }
@@ -581,7 +595,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
             : "Forge makes the repo from a template, starts its CI and adds it to the catalog."
         }
       />
-      {!canWrite ? <p className="text-fg-2">Only writers can create a service. Ask platform-engineering for access.</p> : null}
+      {!canCreate ? <p className="text-fg-2">Only members of a team create services. Ask platform-engineering to add you to one.</p> : null}
       {templates.isPending ? (
         <Loading what="templates" />
       ) : templates.error ? (
@@ -724,14 +738,14 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                         id="service-team"
                         label="Owner"
                         hint="The GitHub team that owns the service, by its name on GitHub."
-                        error={badTeam ? "Name the team that owns the service." : undefined}
+                        error={badTeam ? "Name the team that owns the service." : teamRefused ? refusedNote : undefined}
                       >
                         <input
                           id="service-team"
                           className={`${inputClass} font-mono`}
                           value={team}
                           onChange={(e) => setTeam(e.target.value)}
-                          aria-invalid={badTeam}
+                          aria-invalid={badTeam || teamRefused}
                           aria-describedby="service-team-note"
                           placeholder="platform-engineering"
                         />
@@ -742,25 +756,26 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                       id="service-team"
                       label={isFile ? "GitHub team" : "Owner"}
                       hint={isFile ? "The GitHub team the template gives access." : "The GitHub team that owns the service."}
-                      error={badTeam ? "Choose the team that owns the service." : undefined}
+                      error={badTeam ? "Choose the team that owns the service." : teamRefused ? refusedNote : undefined}
                     >
                       <select
                         id="service-team"
                         className={inputClass}
                         value={team}
                         onChange={(e) => setTeam(e.target.value)}
-                        aria-invalid={badTeam}
+                        aria-invalid={badTeam || teamRefused}
                         aria-describedby="service-team-note"
                         disabled={teams.isPending}
                       >
                         <option value="" disabled>
                           {teams.isPending ? "Loading the teams from GitHub" : "Choose a team"}
                         </option>
-                        {(teams.data ?? []).map((t) => {
+                        {teamList.map((t) => {
                           const slug = teamId(t.name);
+                          const label = t.displayName && t.displayName !== slug ? `${slug} (${t.displayName})` : slug;
                           return (
                             <option key={t.name} value={slug}>
-                              {t.displayName && t.displayName !== slug ? `${slug} (${t.displayName})` : slug}
+                              {mine.includes(slug) ? `${label} · your team` : label}
                             </option>
                           );
                         })}
@@ -896,7 +911,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                   Step {at + 1} of {stages.length}
                 </span>
                 {stage === "review" ? (
-                  <Button kind="primary" type="submit" disabled={busy || !canWrite || !template}>
+                  <Button kind="primary" type="submit" disabled={busy || !canCreate || teamRefused || !template}>
                     {busy ? "Creating" : isFile ? "Create pull request" : "Create service"}
                   </Button>
                 ) : (
