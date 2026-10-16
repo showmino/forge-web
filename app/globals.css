@@ -403,6 +403,9 @@
   overflow-x: auto;
   margin: 0 0 16px;
 }
+.doc-article .doc-code > pre {
+  padding-right: 52px;
+}
 .doc-article img {
   max-width: 100%;
   border-radius: 6px;
