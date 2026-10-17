@@ -64,6 +64,8 @@ type World = {
   opError?: { code: string; message: string };
   // The API's public domains, the default first.
   domains?: string[];
+  // The domain of the internal addresses; "" is an API too old to say.
+  internalDomain?: string;
   // Whether the API cuts versions: staging then runs a release candidate.
   versions: boolean;
 };
@@ -141,7 +143,10 @@ function forge(w: World) {
     router.service(DeployService, {
       listDomains: (req) => {
         record("listDomains", req);
-        return { domains: (w.domains ?? ["showmino.com", "deogratias.cloud", "forgegate.io"]).map((name, i) => ({ name, isDefault: i === 0 })) };
+        return {
+          domains: (w.domains ?? ["showmino.com", "deogratias.cloud", "forgegate.io"]).map((name, i) => ({ name, isDefault: i === 0 })),
+          internalDomain: w.internalDomain ?? "10.0.0.1.nip.io",
+        };
       },
       listDeployments: () => ({
         deployments: [
@@ -330,8 +335,9 @@ function forge(w: World) {
 const dialog = () => within(screen.getByRole("dialog"));
 
 // fillCreate gives the create form its two required answers: a name, and the owner picked from GitHub's teams.
-// The create form is a few steps: the template, the details, where it is
-// reached, how it runs, then a review with the Create button.
+// The create form is a few steps: the template, the name and owner (with who
+// can reach it), the template's inputs, how it runs, then a review with the
+// Create button.
 const next = () => fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 async function pickTemplate(id: string) {
   fireEvent.click(await screen.findByRole("radio", { name: new RegExp(`^${id}\\b`) }));
@@ -837,8 +843,8 @@ describe("create a service", () => {
     // The first step is the template, the first one chosen.
     expect(((await screen.findByRole("radio", { name: /^nextjs/ })) as HTMLInputElement).checked).toBe(true);
     const steps = within(screen.getByRole("navigation", { name: "Steps" }));
-    expect(steps.getAllByRole("button").map((b) => b.textContent)).toEqual(["1Template", "2Details", "3Visibility", "4Runtime", "5Review"]);
-    expect(steps.getByRole("button", { name: /Template/ }).getAttribute("aria-current")).toBe("step");
+    expect(steps.getAllByRole("button").map((b) => b.textContent)).toEqual(["1Template", "2Name and owner", "3Template inputs", "4How it runs", "5Review"]);
+    expect(steps.getByRole("button", { name: /^\d?Template$/ }).getAttribute("aria-current")).toBe("step");
     next();
     // The owner is a GitHub team, picked from the teams that exist; nobody types it.
     const owner = screen.getByLabelText("Owner") as HTMLSelectElement;
@@ -847,6 +853,7 @@ describe("create a service", () => {
     expect(screen.queryByLabelText("Owners")).toBeNull();
     fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "ledger" } });
     fireEvent.change(owner, { target: { value: "finance" } });
+    next();
     // A default is named, not filled in: left empty, the template applies it.
     expect((screen.getByLabelText("port") as HTMLInputElement).value).toBe("");
     expect(screen.getByText("3000").closest("span")!.parentElement!.textContent).toContain("Left empty, it is 3000.");
@@ -870,7 +877,9 @@ describe("create a service", () => {
     expect(review.getByText("ledger")).toBeTruthy();
     expect(review.getByText("finance")).toBeTruthy();
     expect(review.getByText("Public")).toBeTruthy();
-    expect(review.getByText("port=8080")).toBeTruthy();
+    expect(review.getByText("https://ledger-staging.showmino.com")).toBeTruthy();
+    expect(review.getByText("https://ledger.showmino.com")).toBeTruthy();
+    expect(review.getByText("8080")).toBeTruthy();
     expect(w.calls.create).toBeUndefined();
     click(screen.getByRole("button", { name: "Create service" }));
 
@@ -904,59 +913,70 @@ describe("create a service", () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
     await fillCreate("ledger");
+    next();
     fireEvent.change(screen.getByLabelText("port"), { target: { value: "8080" } });
     toReview();
     const steps = () => within(screen.getByRole("navigation", { name: "Steps" }));
-    click(steps().getByRole("button", { name: /Details/ }));
-    expect(steps().getByRole("button", { name: /Details/ }).getAttribute("aria-current")).toBe("step");
-    expect((screen.getByLabelText("Service name") as HTMLInputElement).value).toBe("ledger");
+    click(screen.getByRole("button", { name: "Edit template inputs" }));
+    expect(steps().getByRole("button", { name: /Template inputs/ }).getAttribute("aria-current")).toBe("step");
     expect((screen.getByLabelText("port") as HTMLInputElement).value).toBe("8080");
-    // A step ahead is only reached through the details being right.
+    click(steps().getByRole("button", { name: /Name and owner/ }));
+    expect((screen.getByLabelText("Service name") as HTMLInputElement).value).toBe("ledger");
+    // A step ahead is only reached through the name and owner being right.
     fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "Bad Name" } });
     click(steps().getByRole("button", { name: /Review/ }));
-    expect(steps().getByRole("button", { name: /Details/ }).getAttribute("aria-current")).toBe("step");
+    expect(steps().getByRole("button", { name: /Name and owner/ }).getAttribute("aria-current")).toBe("step");
     expect(screen.getByRole("alert").textContent).toContain("lowercase letters");
     click(screen.getByRole("button", { name: "Back" }));
-    expect(steps().getByRole("button", { name: /Template/ }).getAttribute("aria-current")).toBe("step");
+    expect(steps().getByRole("button", { name: /^\d?Template$/ }).getAttribute("aria-current")).toBe("step");
     expect(w.calls.create).toBeUndefined();
   });
 
-  it("makes a private service, from any service template", async () => {
+  it("makes an internal service, from any service template", async () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
-    // A file template makes no service: it has no visibility to choose.
+    // A file template makes no service: it has no reach or runtime to choose.
     await pickTemplate("landing-zone");
-    expect(within(screen.getByRole("navigation", { name: "Steps" })).queryByRole("button", { name: /Visibility/ })).toBeNull();
-    await fillCreate("intranet", "finance", "go-grpc");
+    expect(within(screen.getByRole("navigation", { name: "Steps" })).queryByRole("button", { name: /How it runs/ })).toBeNull();
     next();
-    const visibility = within(screen.getByRole("radiogroup", { name: "Visibility" }));
-    expect(visibility.getAllByRole("radio").map((r) => (r as HTMLInputElement).value)).toEqual(["public", "public-production", "private"]);
-    expect((visibility.getByRole("radio", { name: /^Public\b(?! production)/ }) as HTMLInputElement).checked).toBe(true);
-    click(visibility.getByRole("radio", { name: /^Private/ }));
+    expect(screen.queryByRole("radiogroup", { name: "Who can reach it" })).toBeNull();
+    click(screen.getByRole("button", { name: "Back" }));
+    await fillCreate("intranet", "finance", "go-grpc");
+    const reach = within(screen.getByRole("radiogroup", { name: "Who can reach it" }));
+    expect(reach.getAllByRole("radio").map((r) => (r as HTMLInputElement).value)).toEqual(["public", "internal-staging", "internal"]);
+    expect((reach.getByRole("radio", { name: "Public" }) as HTMLInputElement).checked).toBe(true);
+    click(reach.getByRole("radio", { name: "Internal" }));
     const command = screen.getByLabelText("The same from the terminal").textContent!;
     expect(command).toContain("--internal");
     expect(command).not.toContain("--internal-staging");
+    // Inside, the addresses are the cluster's own, over HTTP.
+    const addresses = within(screen.getByLabelText("Addresses"));
+    expect(addresses.getByText("http://intranet.staging.10.0.0.1.nip.io")).toBeTruthy();
+    expect(addresses.getByText("http://intranet.production.10.0.0.1.nip.io")).toBeTruthy();
     toReview();
-    expect(within(screen.getByRole("list", { name: "Review" })).getByText("Private")).toBeTruthy();
+    expect(within(screen.getByRole("list", { name: "Review" })).getByText("Internal")).toBeTruthy();
     click(screen.getByRole("button", { name: "Create service" }));
     await screen.findByRole("heading", { name: "intranet was created" });
     expect((w.calls.create[0] as { runOptions: object }).runOptions).toMatchObject({ networkOnly: true });
   });
 
-  it("makes a service with a public production and a private staging", async () => {
+  it("makes a service with a public production and an internal staging", async () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
     await fillCreate("shop", "finance", "go-grpc");
-    next();
-    const visibility = within(screen.getByRole("radiogroup", { name: "Visibility" }));
-    click(visibility.getByRole("radio", { name: /^Public production/ }));
+    const reach = within(screen.getByRole("radiogroup", { name: "Who can reach it" }));
+    click(reach.getByRole("radio", { name: "Internal staging" }));
     expect(screen.getByLabelText("The same from the terminal").textContent).toContain("--internal-staging");
+    expect(screen.getByText("http://shop.staging.10.0.0.1.nip.io")).toBeTruthy();
+    expect(screen.getByText("https://shop.showmino.com")).toBeTruthy();
     // Back to public: no flag at all.
-    click(visibility.getByRole("radio", { name: /^Public\b(?! production)/ }));
+    click(reach.getByRole("radio", { name: "Public" }));
     expect(screen.getByLabelText("The same from the terminal").textContent).not.toContain("--internal");
-    click(visibility.getByRole("radio", { name: /^Public production/ }));
+    click(reach.getByRole("radio", { name: "Internal staging" }));
     toReview();
-    expect(within(screen.getByRole("list", { name: "Review" })).getByText("Public production")).toBeTruthy();
+    const review = within(screen.getByRole("list", { name: "Review" }));
+    expect(review.getByText("Internal staging")).toBeTruthy();
+    expect(review.getByText("http://shop.staging.10.0.0.1.nip.io")).toBeTruthy();
     click(screen.getByRole("button", { name: "Create service" }));
     await screen.findByRole("heading", { name: "shop was created" });
     const sent = (w.calls.create[0] as { runOptions: { networkOnly?: boolean } }).runOptions;
@@ -968,7 +988,6 @@ describe("create a service", () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
     await fillCreate("gate", "finance", "go-grpc");
-    next();
     const domain = (await screen.findByLabelText("Domain")) as HTMLSelectElement;
     expect([...domain.options].map((o) => o.textContent)).toEqual(["showmino.com (default)", "deogratias.cloud", "forgegate.io"]);
     expect(domain.value).toBe("showmino.com");
@@ -977,16 +996,16 @@ describe("create a service", () => {
     expect(screen.getByLabelText("The same from the terminal").textContent).toContain("--domain forgegate.io");
     expect(screen.getByText("https://gate.forgegate.io")).toBeTruthy();
     expect(screen.getByText("https://gate-staging.forgegate.io")).toBeTruthy();
-    // A private service has no domain.
-    const visibility = within(screen.getByRole("radiogroup", { name: "Visibility" }));
-    click(visibility.getByRole("radio", { name: /^Private/ }));
+    // An internal service has no domain.
+    const reach = within(screen.getByRole("radiogroup", { name: "Who can reach it" }));
+    click(reach.getByRole("radio", { name: "Internal" }));
     expect(screen.queryByLabelText("Domain")).toBeNull();
     expect(screen.getByLabelText("The same from the terminal").textContent).not.toContain("--domain");
-    click(visibility.getByRole("radio", { name: /^Public production/ }));
+    click(reach.getByRole("radio", { name: "Internal staging" }));
     expect((screen.getByLabelText("Domain") as HTMLSelectElement).value).toBe("forgegate.io");
     expect(screen.queryByText("https://gate-staging.forgegate.io")).toBeNull();
     toReview();
-    expect(within(screen.getByRole("list", { name: "Review" })).getByText("gate.forgegate.io")).toBeTruthy();
+    expect(within(screen.getByRole("list", { name: "Review" })).getByText("https://gate.forgegate.io")).toBeTruthy();
     click(screen.getByRole("button", { name: "Create service" }));
     await screen.findByRole("heading", { name: "gate was created" });
     expect((w.calls.create[0] as { runOptions: object }).runOptions).toMatchObject({ domain: "forgegate.io", stagingNetworkOnly: true });
@@ -996,7 +1015,6 @@ describe("create a service", () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
     await fillCreate("ledger", "finance", "go-grpc");
-    next();
     await screen.findByLabelText("Domain");
     expect(screen.getByLabelText("The same from the terminal").textContent).not.toContain("--domain");
     toReview();
@@ -1005,17 +1023,26 @@ describe("create a service", () => {
     expect((w.calls.create[0] as { runOptions?: { domain?: string } }).runOptions?.domain ?? "").toBe("");
     cleanup();
 
-    // One domain is no choice; none (an internal-only API) shows nothing.
+    // One domain is no choice; none (an internal-only API) shows nothing,
+    // and every address is internal.
     for (const domains of [["showmino.com"], []]) {
       const v = world({ domains });
       renderWithApi(<CreateService />, forge(v));
       await fillCreate("solo", "finance", "go-grpc");
-      next();
       await waitFor(() => expect((v.calls.listDomains ?? []).length).toBe(1));
       await act(() => new Promise((r) => setTimeout(r, 0)));
       expect(screen.queryByLabelText("Domain")).toBeNull();
+      expect(screen.getByText(domains.length ? "https://solo.showmino.com" : "http://solo.production.10.0.0.1.nip.io")).toBeTruthy();
       cleanup();
     }
+  });
+
+  it("says where an internal service is reached even when the API does not name its internal domain", async () => {
+    const w = world({ internalDomain: "" });
+    renderWithApi(<CreateService />, forge(w));
+    await fillCreate("solo", "finance", "go-grpc");
+    click(within(screen.getByRole("radiogroup", { name: "Who can reach it" })).getByRole("radio", { name: "Internal" }));
+    expect(await screen.findByText("http://solo.production.<internal-domain>")).toBeTruthy();
   });
 
   it("sends the run options the template offers, and shows them as flags", async () => {
@@ -1099,13 +1126,15 @@ describe("create a service", () => {
     expect(tpl.tagName).toBe("INPUT");
     expect(tpl.readOnly).toBe(true);
     expect(tpl.value).toBe("landing-zone (v1.7.0)");
-    expect(within(screen.getByRole("navigation", { name: "Steps" })).getAllByRole("button").map((b) => b.textContent)).toEqual(["1Details", "2Review"]);
+    expect(within(screen.getByRole("navigation", { name: "Steps" })).getAllByRole("button").map((b) => b.textContent)).toEqual(["1Name and owner", "2Template inputs", "3Review"]);
     expect(screen.queryByRole("button", { name: "Back" })).toBeNull();
+    expect(screen.getByRole("link", { name: "Cancel" }).getAttribute("href")).toBe("/templates/landing-zone");
     expect(within(screen.getByRole("navigation", { name: "Breadcrumb" })).getByRole("link", { name: "Templates" }).getAttribute("href")).toBe("/templates");
     expect(within(screen.getByRole("navigation", { name: "Breadcrumb" })).getByRole("link", { name: "landing-zone" }).getAttribute("href")).toBe("/templates/landing-zone");
     fireEvent.change(screen.getByLabelText("Name"), { target: { value: "infosystems" } });
     await screen.findByRole("option", { name: /^finance/ });
     fireEvent.change(screen.getByLabelText("GitHub team"), { target: { value: "finance" } });
+    next();
     fireEvent.change(screen.getByLabelText("IP addresses needed"), { target: { value: "100" } });
     fireEvent.change(screen.getByLabelText("Cost center"), { target: { value: "60168" } });
     toReview();
@@ -1180,11 +1209,12 @@ describe("create a service", () => {
     // A template's card says what it asks for.
     expect((await screen.findByRole("radio", { name: /^opentofu/ })).closest("label")!.textContent).toContain("3 required inputs, 1 optional");
     await fillCreate("infra", "finance", "opentofu");
-    const inputs = within(screen.getByRole("group", { name: "opentofu inputs" }));
-    expect(inputs.getAllByText("Required")).toHaveLength(2);
-    // The optional ones wait behind a disclosure while there are required ones.
-    const optional = screen.getByLabelText("retries").closest("details")!;
-    expect(optional.open).toBe(false);
+    next();
+    // The required inputs come first, under their own heading, then the optional ones.
+    const required = within(screen.getByRole("region", { name: "Required" }));
+    expect(required.getByLabelText("state_bucket")).toBeTruthy();
+    expect(required.getByLabelText("size")).toBeTruthy();
+    expect(within(screen.getByRole("region", { name: "Optional" })).getByLabelText("retries")).toBeTruthy();
     // The command names every required input, with a placeholder until it is filled in.
     const command = () => screen.getByLabelText("The same from the terminal").textContent!;
     expect(command()).toContain("--set state_bucket=<state_bucket>");
@@ -1206,13 +1236,12 @@ describe("create a service", () => {
     expect(document.getElementById("param-size-note")!.textContent).toBe("Enter a whole number.");
     expect(screen.getByLabelText("size").getAttribute("aria-invalid")).toBe("true");
 
-    // A bad optional input opens the disclosure and takes the focus.
+    // A bad optional input takes the focus.
     fireEvent.change(screen.getByLabelText("state_bucket"), { target: { value: "forge-state" } });
     fireEvent.change(screen.getByLabelText("size"), { target: { value: "10" } });
     fireEvent.change(screen.getByLabelText("retries"), { target: { value: "x" } });
     next();
     expect(screen.getByText("One input needs fixing")).toBeTruthy();
-    expect(optional.open).toBe(true);
     expect(document.activeElement).toBe(screen.getByLabelText("retries"));
     expect(w.calls.create).toBeUndefined();
 
@@ -1232,6 +1261,7 @@ describe("create a service", () => {
     await fillCreate("infosystems", "finance", "landing-zone");
     expect(screen.getByLabelText("Name")).toBeTruthy();
     expect(screen.getByLabelText("GitHub team")).toBeTruthy();
+    next();
     // Inputs in the template's order, by label, the grouped ones under their heading.
     const tags = within(screen.getByRole("group", { name: "Tags" }));
     expect(tags.getByLabelText("Cost center")).toBeTruthy();
@@ -1251,7 +1281,7 @@ describe("create a service", () => {
     fireEvent.change(screen.getByLabelText("IP addresses needed"), { target: { value: "100" } });
     expect(screen.getByLabelText("The same from the terminal").textContent).toContain("--set environments=test");
     next();
-    // A pull request has no visibility or runtime: straight to the review.
+    // A pull request has no reach or runtime: straight to the review.
     click(screen.getByRole("button", { name: "Create pull request" }));
     expect(await screen.findByRole("heading", { name: "Pull request opened for infosystems" })).toBeTruthy();
     expect(screen.getByRole("link", { name: /pull\/4/ }).getAttribute("href")).toBe("https://github.com/showmino/landingzone/pull/4");
@@ -1263,12 +1293,11 @@ describe("create a service", () => {
     const w = world({ writer: false });
     renderWithApi(<CreateService />, forge(w));
     await screen.findByRole("radio", { name: /^nextjs/ });
-    next();
-    expect(screen.getByLabelText("port")).toBeTruthy();
-    click(screen.getByRole("button", { name: "Back" }));
+    const command = () => screen.getByLabelText("The same from the terminal").textContent!;
+    expect(command()).toContain("--set region=eu");
     await pickTemplate("go-grpc");
+    expect(command()).not.toContain("region");
     next();
-    expect(screen.queryByLabelText("port")).toBeNull();
     expect(await screen.findByText(/Only members of a team create services/)).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "ledger" } });
     await screen.findByRole("option", { name: /^finance/ });
