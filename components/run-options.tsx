@@ -95,16 +95,25 @@ export function runOptions(form: RunForm, offered: string[]): { options?: Init; 
   return { options: Object.keys(o).length ? o : undefined, flags };
 }
 
+// Option is one run option in the list, folded away until the writer opens
+// it; the right of its row says what it is set to.
 function Option({ title, hint, children }: { title: string; hint: string; children: ReactNode }) {
   return (
-    <details className="rounded-md border border-line px-3 py-2 open:pb-3">
-      <summary className="cursor-pointer text-[13.5px] font-medium">
-        {title} <span className="font-normal text-fg-3">{hint}</span>
+    <details className="group">
+      <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-2.5 px-4 py-3 [&::-webkit-details-marker]:hidden">
+        <span
+          aria-hidden
+          className="mr-0.5 size-[7px] shrink-0 -rotate-45 self-center border-r-[1.5px] border-b-[1.5px] border-fg-3 transition-transform group-open:rotate-45"
+        />
+        <span className="text-[14px] font-semibold">{title}</span>
+        <span className="w-full text-[13px] text-fg-3 sm:ml-auto sm:w-auto">{hint}</span>
       </summary>
-      <div className="mt-3 flex flex-col gap-3">{children}</div>
+      <div className="flex flex-col gap-3 px-4 pb-4 pl-[33px]">{children}</div>
     </details>
   );
 }
+
+const count = (n: number, one: string, many: string) => (n === 0 ? "None" : n === 1 ? `1 ${one}` : `${n} ${many}`);
 
 const small = `${inputClass} font-mono`;
 
@@ -115,24 +124,26 @@ export function RunOptionsFields({ offered, form, onChange }: { offered: string[
   const row = <K extends "env" | "secrets" | "jobs">(k: K, i: number, patch: Partial<RunForm[K][number]>) =>
     set(k, form[k].map((r, j) => (j === i ? { ...r, ...patch } : r)) as RunForm[K]);
   const drop = <K extends "env" | "secrets" | "jobs">(k: K, i: number) => set(k, form[k].filter((_, j) => j !== i) as RunForm[K]);
+  const replicas = form.replicas.trim();
+  const resources = [form.requestsCpu, form.requestsMemory, form.limitsCpu, form.limitsMemory].map((v) => v.trim());
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col divide-y divide-line overflow-hidden rounded-md border border-line bg-surface">
       {offered.includes("replicas") ? (
-        <Option title="Replicas" hint="production; staging runs one">
+        <Option title="Replicas" hint={`${replicas ? `${replicas} in production` : "The template's number in production"}, 1 in staging`}>
           <Field id="run-replicas" label="Pods in production" hint="1 to 10.">
             <input id="run-replicas" inputMode="numeric" className={small} value={form.replicas} onChange={(e) => set("replicas", e.target.value)} placeholder="1" />
           </Field>
         </Option>
       ) : null}
       {offered.includes("autoscaling") ? (
-        <Option title="Autoscaling" hint="production grows on CPU">
+        <Option title="Autoscaling" hint={form.autoscalingMax.trim() ? `Up to ${form.autoscalingMax.trim()} pods on CPU` : "Off"}>
           <Field id="run-autoscaling" label="Most pods" hint="More than the replicas, at most 10. Empty: no autoscaling.">
             <input id="run-autoscaling" inputMode="numeric" className={small} value={form.autoscalingMax} onChange={(e) => set("autoscalingMax", e.target.value)} />
           </Field>
         </Option>
       ) : null}
       {offered.includes("resources") ? (
-        <Option title="Resources" hint="CPU and memory per pod">
+        <Option title="Resources" hint={resources.some(Boolean) ? `${resources[0] || "default"} CPU, ${resources[1] || "default"} memory requested` : "The template's CPU and memory"}>
           <div className="grid grid-cols-2 gap-3">
             <Field id="run-req-cpu" label="CPU request">
               <input id="run-req-cpu" className={small} value={form.requestsCpu} onChange={(e) => set("requestsCpu", e.target.value)} placeholder="50m" />
@@ -150,7 +161,7 @@ export function RunOptionsFields({ offered, form, onChange }: { offered: string[
         </Option>
       ) : null}
       {offered.includes("env") ? (
-        <Option title="Environment variables" hint="plain values">
+        <Option title="Environment variables" hint={count(form.env.filter((e) => e.name.trim()).length, "variable", "variables")}>
           {form.env.map((e, i) => (
             <div key={i} className="grid grid-cols-[1fr_1fr_auto] items-end gap-2">
               <input aria-label={`Variable ${i + 1} name`} className={small} value={e.name} onChange={(ev) => row("env", i, { name: ev.target.value })} placeholder="LOG_LEVEL" />
@@ -168,7 +179,7 @@ export function RunOptionsFields({ offered, form, onChange }: { offered: string[
         </Option>
       ) : null}
       {offered.includes("secrets") ? (
-        <Option title="1Password secrets" hint="items as environment variables">
+        <Option title="1Password secrets" hint={count(form.secrets.filter((x) => x.name.trim()).length, "secret", "secrets")}>
           {form.secrets.map((s, i) => (
             <div key={i} className="flex flex-col gap-2 rounded-md bg-surface-2 p-2">
               <input aria-label={`Secret ${i + 1} name`} className={small} value={s.name} onChange={(ev) => row("secrets", i, { name: ev.target.value })} placeholder="stripe" />
@@ -189,7 +200,7 @@ export function RunOptionsFields({ offered, form, onChange }: { offered: string[
         </Option>
       ) : null}
       {offered.includes("jobs") ? (
-        <Option title="Cron jobs" hint="the service's image on a schedule">
+        <Option title="Cron jobs" hint={count(form.jobs.filter((j) => j.name.trim()).length, "job", "jobs")}>
           {form.jobs.map((j, i) => (
             <div key={i} className="flex flex-col gap-2 rounded-md bg-surface-2 p-2">
               <input aria-label={`Job ${i + 1} name`} className={small} value={j.name} onChange={(ev) => row("jobs", i, { name: ev.target.value })} placeholder="cleanup" />

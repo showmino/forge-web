@@ -3,12 +3,12 @@
 import { Code, ConnectError } from "@connectrpc/connect";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { usePermissions } from "@/components/app-shell";
 import { StepLog, type Step } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
 import { emptyRunForm, RunOptionsFields, runOptions, type RunForm } from "@/components/run-options";
-import { Addr, Button, TextLink } from "@/components/ui/button";
+import { Addr, Button, ButtonLink, TextLink } from "@/components/ui/button";
 import { CommandBlock } from "@/components/ui/cli";
 import { Field, inputClass } from "@/components/ui/field";
 import { Crumbs, ErrorNote, Loading, PageHeader, Panel } from "@/components/ui/layout";
@@ -150,45 +150,66 @@ function ParameterField({ p, own, error, onChange }: { p: TemplateParameter; own
 }
 
 // The steps of the form, in order. A file template makes no service, so it
-// has no visibility or runtime to choose; a fixed template is not a choice.
-type Stage = "template" | "details" | "visibility" | "runtime" | "review";
+// has no runtime to choose; a fixed template is not a choice.
+type Stage = "template" | "details" | "inputs" | "runtime" | "review";
 const stageNames: Record<Stage, string> = {
   template: "Template",
-  details: "Details",
-  visibility: "Visibility",
-  runtime: "Runtime",
+  details: "Name and owner",
+  inputs: "Template inputs",
+  runtime: "How it runs",
   review: "Review",
 };
 
-// Where a service is reached from. Private is the internal address, over HTTP:
-// forge.yaml's run.domain: none, or run.staging.public: false for staging alone.
-type Visibility = "public" | "public-production" | "private";
-const visibilities: { value: Visibility; title: string; text: string; staging: boolean; production: boolean }[] = [
-  { value: "public", title: "Public", text: "Staging and production are on the internet, over HTTPS.", staging: true, production: true },
+// Who can reach a service. Internal is the cluster's internal address, over
+// HTTP: forge.yaml's run.domain: none, or run.staging.public: false for
+// staging alone.
+type Reach = "public" | "internal-staging" | "internal";
+const reaches: { value: Reach; title: string; text: string }[] = [
+  { value: "public", title: "Public", text: "Staging and production both get a public HTTPS address." },
   {
-    value: "public-production",
-    title: "Public production",
-    text: "Production is on the internet. Staging stays on the private network, for testing before a release.",
-    staging: false,
-    production: true,
+    value: "internal-staging",
+    title: "Internal staging",
+    text: "Production is public. Staging is reachable only inside the cluster, over HTTP.",
   },
   {
-    value: "private",
-    title: "Private",
-    text: "Only on the private network, in staging and production: for internal tools and APIs other services call.",
-    staging: false,
-    production: false,
+    value: "internal",
+    title: "Internal",
+    text: "No public address. Both environments are reachable only inside the cluster, over HTTP.",
   },
 ];
+const ENVS = ["staging", "production"] as const;
+const sub = "text-[11.5px] font-semibold tracking-[.06em] text-fg-3 uppercase";
 
-function Reach({ env, open }: { env: string; open: boolean }) {
+// A short mark for a template's card: the part of its name that says what it is.
+function mark(id: string): string {
+  const known: Record<string, string> = { "go-grpc": "gRPC", nextjs: "WEB", opentofu: "IaC" };
+  return known[id] ?? (id.split("-").at(-1) ?? id).slice(0, 4).toUpperCase();
+}
+
+function Mark({ id }: { id: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded border border-line bg-surface-2 px-1.5 py-0.5 text-[11.5px] text-fg-2">
-      <span className={`size-1.5 rounded-full ${open ? "bg-info-dot" : "bg-fg-3"}`} aria-hidden />
-      {env}: {open ? "Internet" : "Private network"}
+    <span
+      aria-hidden
+      className="grid size-9 shrink-0 place-items-center rounded-md border border-line bg-surface-2 font-mono text-[12px] font-semibold text-fg-2"
+    >
+      {mark(id)}
     </span>
   );
 }
+
+function Check() {
+  return (
+    <svg viewBox="0 0 16 16" className="size-3" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3.5 8.5l3 3 6-7" />
+    </svg>
+  );
+}
+
+// The radio cards of the template and reach steps: the input is hidden, the
+// card shows the choice, and the keyboard focus rings the card.
+const card =
+  "relative flex cursor-pointer gap-3 rounded-md border border-line bg-surface hover:border-fg-3 has-[:checked]:border-ember has-[:checked]:bg-[color-mix(in_oklab,var(--ember)_5%,var(--surface))] has-[:checked]:shadow-[0_0_0_1px_var(--ember)] has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ember";
+const hiddenRadio = "pointer-events-none absolute opacity-0";
 
 // Create a service from a template: the API renders the template, creates the
 // repo, pushes the first commit and registers the service, and the page shows
@@ -231,24 +252,27 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   const teamRefused = !!team.trim() && !!forTeam.data && !forTeam.data.allowed.includes("service.create");
   const refusedNote = `You can only create services for teams you are in. Ask platform-engineering to create it for ${team.trim()}.`;
   const [params, setParams] = useState<Record<string, string>>({});
-  // What was wrong with each input at the last press of Create, until it is edited.
+  // What was wrong with each input at the last check, until it is edited.
   const [paramErrors, setParamErrors] = useState<Record<string, string>>({});
   // The run options as typed, per template: switching templates keeps each one's.
   const [runs, setRuns] = useState<Record<string, RunForm>>({});
-  const [visibility, setVisibility] = useState<Visibility>("public");
-  // The public domains the API offers, the default first. An API that predates
-  // the list, or offers none, gives no choice: the service gets the default.
+  const [reach, setReach] = useState<Reach>("public");
+  // The public domains the API offers, the default first, and the domain of
+  // the internal addresses. An API that predates the list gives no choice:
+  // the service gets the default.
   const domains = useQuery({
     queryKey: ["domains"],
-    queryFn: () => api.deploys.listDomains({}).then((r) => r.domains.map((d) => d.name)),
+    queryFn: () => api.deploys.listDomains({}).then((r) => ({ names: r.domains.map((d) => d.name), internal: r.internalDomain })),
     staleTime: 5 * 60_000,
     retry: false,
   });
-  const domainList = domains.data ?? [];
+  const domainList = domains.data?.names ?? [];
   const [domainPick, setDomainPick] = useState("");
   const defaultDomain = domainList[0] ?? "";
   const domain = domainList.includes(domainPick) ? domainPick : defaultDomain;
-  const choosesDomain = domainList.length > 1 && visibility !== "private";
+  const choosesDomain = domainList.length > 1 && reach !== "internal";
+  // An API with no public domain at all makes every service internal.
+  const nothingPublic = domains.isSuccess && domainList.length === 0;
   // A link that names the template starts at the details: the choice is made.
   const [stage, setStage] = useState<Stage>(fixed || initial ? "details" : "template");
   const [reached, setReached] = useState<Set<Stage>>(() => new Set([fixed || initial ? "details" : "template"]));
@@ -269,6 +293,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   const attempt = useRef<{ key: string; request: string } | null>(null);
 
   const template = templates.data?.find((t) => t.name === picked) ?? (fixed ? undefined : templates.data?.[0]);
+  const tplId = template ? templateId(template.name) : "";
   const own = (p: TemplateParameter) => params[`${template?.name}/${p.name}`];
   const run = (template && runs[template.name]) || emptyRunForm;
   const runAsked = runOptions(run, template?.options ?? []);
@@ -302,28 +327,33 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
       />
     );
   };
-  // Where it is reached: a file template makes no service, and an internal
-  // service has no public staging to keep internal.
-  const reach = isFile
+  // Where it is reached: a file template makes no service.
+  const reachRun = isFile
     ? { flags: [] as [string, string][], options: {} }
-    : visibility === "private"
+    : reach === "internal"
       ? { flags: [["--internal", ""]] as [string, string][], options: { networkOnly: true } }
-      : visibility === "public-production"
+      : reach === "internal-staging"
         ? { flags: [["--internal-staging", ""]] as [string, string][], options: { stagingNetworkOnly: true } }
         : { flags: [] as [string, string][], options: {} };
   // The default domain is left to the API, as forge.yaml leaves it.
   const ownDomain = !isFile && choosesDomain && domain !== defaultDomain;
   const address = ownDomain
-    ? { flags: [...reach.flags, ["--domain", domain]] as [string, string][], options: { ...reach.options, domain } }
-    : reach;
-  // Where the service will be reached, as forge-api works it out.
-  const hosts =
-    isFile || visibility === "private" || !domain
-      ? []
-      : [`${name}.${domain}`, ...(visibility === "public" ? [`${name}-staging.${domain}`] : [])];
+    ? { flags: [...reachRun.flags, ["--domain", domain]] as [string, string][], options: { ...reachRun.options, domain } }
+    : reachRun;
+  // Where the service will be reached in an environment, as forge-api works it
+  // out: <name>-staging.<domain> and <name>.<domain> in public, and
+  // <name>.<env>.<internal domain> inside. An API too old to name its internal
+  // domain gets a placeholder.
+  const addressOf = (env: (typeof ENVS)[number]) => {
+    const n = name || "<name>";
+    const inside = nothingPublic || reach === "internal" || (reach === "internal-staging" && env === "staging");
+    if (inside) return `http://${n}.${env}.${domains.data?.internal || "<internal-domain>"}`;
+    const d = domain || "<domain>";
+    return env === "staging" ? `https://${n}-staging.${d}` : `https://${n}.${d}`;
+  };
   // The command that does the same, flag by flag, as the form is filled in.
   const flags: [string, string][] = [
-    ["--template", template ? templateId(template.name) : "<template>"],
+    ["--template", tplId || "<template>"],
     ["--team", team.trim() || "<team>"],
     ...(template?.parameters ?? []).flatMap((p): [string, string][] => {
       const value = sent(p, own(p));
@@ -416,26 +446,15 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   const stages: Stage[] = [
     ...(fixed ? [] : (["template"] as const)),
     "details",
-    ...(template && !isFile ? (["visibility"] as const) : []),
+    "inputs",
     ...(template && !isFile && template.options.length > 0 ? (["runtime"] as const) : []),
     "review",
   ];
   const at = Math.max(0, stages.indexOf(stage));
 
-  // detailsOk checks the details, shows what is wrong and puts the focus on it.
+  // detailsOk checks the name and the owner, shows what is wrong and puts the focus on it.
   function detailsOk(): boolean {
     setChecked(true);
-    if (template) {
-      setParamErrors(Object.fromEntries(problems.map(([p, problem]) => [`${template.name}/${p.name}`, problem])));
-    }
-    if (problems.length > 0) {
-      const first = document.getElementById(`param-${problems[0][0].name}`);
-      const details = first?.closest("details");
-      if (details) details.open = true;
-      first?.focus();
-      toast(problems.length === 1 ? "One input needs fixing" : `${problems.length} inputs need fixing`);
-      return false;
-    }
     if (!SERVICE_NAME.test(name)) {
       document.getElementById("service-name")?.focus();
       return false;
@@ -447,12 +466,36 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     return true;
   }
 
+  // inputsOk checks the template's inputs the same way.
+  function inputsOk(): boolean {
+    if (template) {
+      setParamErrors(Object.fromEntries(problems.map(([p, problem]) => [`${template.name}/${p.name}`, problem])));
+    }
+    if (problems.length > 0) {
+      document.getElementById(`param-${problems[0][0].name}`)?.focus();
+      toast(problems.length === 1 ? "One input needs fixing" : `${problems.length} inputs need fixing`);
+      return false;
+    }
+    return true;
+  }
+
+  const checks: [Stage, () => boolean][] = [
+    ["details", detailsOk],
+    ["inputs", inputsOk],
+  ];
+
+  // go moves to a step. Nothing past a step is reached while that step is
+  // wrong: the writer lands on the first one that is.
   function go(target: Stage) {
     const to = stages.indexOf(target);
-    const details = stages.indexOf("details");
-    // Nothing past the details is reached while they are wrong.
-    const ok = !(to > details && at <= details) || detailsOk();
-    const landing = ok ? target : "details";
+    let landing = target;
+    for (const [s, ok] of checks) {
+      const i = stages.indexOf(s);
+      if (to > i && at <= i && !ok()) {
+        landing = s;
+        break;
+      }
+    }
     if (landing !== stage) moved.current = true;
     setStage(landing);
     setReached((r) => new Set(r).add(landing));
@@ -464,9 +507,12 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
       go(stages[at + 1]);
       return;
     }
-    if (!detailsOk()) {
-      go("details");
-      return;
+    for (const [s, ok] of checks) {
+      if (!ok()) {
+        moved.current = true;
+        setStage(s);
+        return;
+      }
     }
     if (!busy) void create();
   }
@@ -478,7 +524,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
         <PageHeader
           title={`Pull request opened for ${name}`}
           lead={`It adds ${ch.files.length === 1 ? "one file" : `${ch.files.length} files`} to ${ch.repoUrl.replace("https://github.com/", "")}. Review and merge it there.`}
-          cli={`forge create ${name} --template ${template ? templateId(template.name) : "<template>"}`}
+          cli={`forge create ${name} --template ${tplId || "<template>"}`}
         />
         <Panel>
           <StepLog steps={steps} />
@@ -515,96 +561,76 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     );
   }
 
-  const chosen = visibilities.find((v) => v.value === visibility)!;
-  const setInputs = (template?.parameters ?? []).flatMap((p) => {
-    const value = sent(p, own(p));
-    return value === undefined ? [] : [`${p.name}=${value}`];
-  });
-  const summary: [Stage, string, ReactNode][] = [
-    ...(template
+  const chosen = reaches.find((r) => r.value === reach)!;
+  const mono = (v: string) => <span className="font-mono">{v}</span>;
+  // The review: one block per step, each with the way back to it.
+  const review: [Stage, string, [string, ReactNode][]][] = [
+    ...(template && !fixed
       ? ([
           [
             "template",
             "Template",
-            <>
-              <span className="font-mono">{templateId(template.name)}</span> <span className="text-fg-3">{template.version}</span>
-            </>,
+            [
+              [
+                "Template",
+                <>
+                  {mono(tplId)} <span className="text-fg-3">{template.version}</span>
+                </>,
+              ],
+            ],
           ],
-        ] as [Stage, string, ReactNode][])
+        ] as [Stage, string, [string, ReactNode][]][])
       : []),
-    ["details", isFile ? "Name" : "Service name", <span key="name" className="font-mono">{name}</span>],
-    ["details", isFile ? "GitHub team" : "Owner", <span key="team" className="font-mono">{team.trim()}</span>],
     [
       "details",
-      "Inputs",
-      setInputs.length > 0 ? (
-        <span className="flex flex-wrap gap-x-3 gap-y-1 font-mono text-[12.5px]">
-          {setInputs.map((v) => (
-            <span key={v}>{v}</span>
-          ))}
-        </span>
-      ) : (
-        <span className="text-fg-2">The template&apos;s defaults</span>
-      ),
+      "Name and owner",
+      [
+        ["Name", mono(name)],
+        [isFile ? "GitHub team" : "Owner", team.trim()],
+        ...(isFile
+          ? []
+          : ([
+              ["Reach", chosen.title],
+              ["Staging", mono(addressOf("staging"))],
+              ["Production", mono(addressOf("production"))],
+            ] as [string, ReactNode][])),
+      ],
     ],
-    ...(stages.includes("visibility")
-      ? ([
-          [
-            "visibility",
-            "Visibility",
-            <>
-              <span className="font-medium">{chosen.title}</span>
-              <span className="mt-1 flex flex-wrap gap-1.5">
-                <Reach env="Staging" open={chosen.staging} />
-                <Reach env="Production" open={chosen.production} />
-              </span>
-              {hosts.length > 0 ? (
-                <span className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[12.5px]">
-                  {hosts.map((h) => (
-                    <span key={h}>{h}</span>
-                  ))}
-                </span>
-              ) : null}
-            </>,
-          ],
-        ] as [Stage, string, ReactNode][])
-      : []),
+    [
+      "inputs",
+      "Template inputs",
+      (template?.parameters ?? []).length > 0
+        ? (template?.parameters ?? []).map((p): [string, ReactNode] => {
+            const value = sent(p, own(p));
+            return [p.label || p.name, value === undefined ? <span className="text-fg-2">The template&apos;s default</span> : mono(value)];
+          })
+        : [["Inputs", "None"]],
+    ],
     ...(stages.includes("runtime")
       ? ([
           [
             "runtime",
-            "Runtime",
-            runAsked.flags.length > 0 ? (
-              <span className="flex flex-col gap-0.5 font-mono text-[12.5px]">
-                {runAsked.flags.map(([f, v], i) => (
-                  <span key={i}>{`${f} ${v}`.trim()}</span>
-                ))}
-              </span>
-            ) : (
-              <span className="text-fg-2">The template&apos;s defaults</span>
-            ),
+            "How it runs",
+            [
+              [
+                "Options",
+                runAsked.flags.length > 0 ? (
+                  <span className="flex flex-col gap-0.5 font-mono text-[12.5px]">
+                    {runAsked.flags.map(([f, v], i) => (
+                      <span key={i}>{`${f} ${v}`.trim()}</span>
+                    ))}
+                  </span>
+                ) : (
+                  <span className="text-fg-2">The template&apos;s defaults</span>
+                ),
+              ],
+            ],
           ],
-        ] as [Stage, string, ReactNode][])
+        ] as [Stage, string, [string, ReactNode][]][])
       : []),
   ];
 
-  const titles: Record<Stage, [string, string]> = {
-    template: ["Choose a template", "What Forge makes the service from. Each is a tagged release of the templates repo."],
-    details: [
-      isFile ? "Details" : "Name and owner",
-      isFile
-        ? "The name goes into the file names; the template's inputs fill in the rest."
-        : "The name becomes the repo and the service; the owner is the GitHub team that answers for it.",
-    ],
-    visibility: ["Visibility", "Who can reach the service, in staging and in production."],
-    runtime: ["How it runs", "Optional. The template's defaults apply to anything left empty; change it later in forge.yaml."],
-    review: [
-      "Review",
-      isFile
-        ? "Nothing is made until you press the button: then Forge renders the files and opens the pull request."
-        : "Nothing is made until you press the button: then Forge creates the repo, starts its CI and adds it to the catalog.",
-    ],
-  };
+  const cancel = fixed ? `/templates/${fixed}` : "/";
 
   return (
     <>
@@ -634,31 +660,34 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
         <ErrorNote error={new Error(`There is no template ${fixed} in the newest release. See the templates for the ones there are.`)} />
       ) : (
         <form onSubmit={submit} className="flex flex-col gap-6" noValidate>
-          <nav aria-label="Steps" className="overflow-x-auto">
-            <ol className="flex min-w-max items-center gap-1">
+          <nav aria-label="Steps">
+            <ol className="flex gap-1.5 sm:gap-2">
               {stages.map((s, i) => {
                 const current = i === at;
                 const done = i < at;
                 return (
-                  <li key={s} className="flex items-center gap-1">
-                    {i > 0 ? <span aria-hidden className={`h-px w-6 ${i <= at ? "bg-ember" : "bg-line-strong"}`} /> : null}
+                  <li key={s} className={current ? "min-w-0 flex-auto sm:flex-1" : "flex-none sm:min-w-0 sm:flex-1"}>
                     <button
                       type="button"
                       aria-current={current ? "step" : undefined}
                       disabled={!current && i > at && !reached.has(s)}
                       onClick={() => go(s)}
-                      className={`flex items-center gap-2 rounded-md px-2 py-1 type-small font-medium enabled:cursor-pointer enabled:hover:bg-surface-2 disabled:cursor-not-allowed ${
-                        current ? "text-fg" : done ? "text-fg-2" : "text-fg-3"
+                      className={`group flex w-full items-center gap-2.5 border-t-[3px] px-1.5 py-2.5 text-left enabled:cursor-pointer disabled:cursor-not-allowed sm:px-3 ${
+                        current ? "border-ember text-fg" : done ? "border-fg-2 text-fg-2" : "border-line text-fg-3"
                       }`}
                     >
                       <span
-                        className={`grid size-6 place-items-center rounded-full border text-[12px] tabular-nums ${
-                          current ? "border-ember bg-ember text-ember-on" : done ? "border-ember text-ember-ink" : "border-line-strong"
+                        className={`grid size-[22px] shrink-0 place-items-center rounded-full border-[1.5px] text-[12px] font-semibold tabular-nums ${
+                          current ? "border-ember bg-ember text-ember-on" : done ? "border-fg-2 bg-fg-2 text-bg" : "border-current"
                         }`}
                       >
-                        {i + 1}
+                        {done ? <Check /> : i + 1}
                       </span>
-                      <span>{stageNames[s]}</span>
+                      <span
+                        className={`truncate text-[13px] font-medium group-enabled:group-hover:underline ${current ? "" : "sr-only sm:not-sr-only"}`}
+                      >
+                        {stageNames[s]}
+                      </span>
                     </button>
                   </li>
                 );
@@ -666,78 +695,76 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
             </ol>
           </nav>
 
-          <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="flex min-w-0 flex-col gap-5">
-              <div className="flex flex-col gap-1">
-                <h2 ref={heading} tabIndex={-1} className="type-heading outline-none">
-                  {titles[stage][0]}
+          <div className="grid items-start gap-8 min-[1080px]:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="flex min-w-0 max-w-[720px] flex-col gap-5">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[12.5px] text-fg-3">
+                  Step {at + 1} of {stages.length}
+                </span>
+                <h2 ref={heading} tabIndex={-1} className="font-display text-[22px] font-bold outline-none [font-stretch:112%]">
+                  {stageNames[stage]}
                 </h2>
-                <p className="max-w-[62ch] text-fg-2">{titles[stage][1]}</p>
               </div>
 
               {stage === "template" ? (
-                <fieldset className="grid gap-3 sm:grid-cols-2">
+                <fieldset className="flex min-w-0 flex-col gap-3">
                   <legend className="sr-only">Template</legend>
-                  {templates.data.map((t) => {
-                    const file = t.type === "file";
-                    const optionalCount = t.parameters.filter((p) => !p.required).length;
-                    return (
-                      <label
-                        key={t.name}
-                        className="flex cursor-pointer gap-3 rounded-md border border-line bg-surface p-4 hover:border-line-strong has-[:checked]:border-ember has-[:checked]:bg-ember-soft has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ember"
-                      >
-                        <input
-                          type="radio"
-                          name="template"
-                          value={t.name}
-                          checked={template?.name === t.name}
-                          onChange={() => setPicked(t.name)}
-                          aria-labelledby={`tpl-${templateId(t.name)}`}
-                          aria-describedby={`tpl-${templateId(t.name)}-about`}
-                          className="mt-1 size-4 shrink-0 accent-ember"
-                        />
-                        <span className="flex min-w-0 flex-col gap-1">
-                          <span className="flex flex-wrap items-center gap-2">
-                            <span id={`tpl-${templateId(t.name)}`} className="font-mono text-[13.5px] font-semibold">
-                              {templateId(t.name)}
+                  <p className="text-[13.5px] text-fg-2">
+                    The template sets the language, CI and deploy config. You can&apos;t change it after the service is created.
+                  </p>
+                  <div className="grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(260px,1fr))]">
+                    {templates.data.map((t) => {
+                      const id = templateId(t.name);
+                      const file = t.type === "file";
+                      const optionalCount = t.parameters.filter((p) => !p.required).length;
+                      return (
+                        <label key={t.name} className={`${card} p-4`}>
+                          <input
+                            type="radio"
+                            name="template"
+                            value={t.name}
+                            checked={template?.name === t.name}
+                            onChange={() => setPicked(t.name)}
+                            aria-labelledby={`tpl-${id}`}
+                            aria-describedby={`tpl-${id}-about`}
+                            className={hiddenRadio}
+                          />
+                          <Mark id={id} />
+                          <span className="flex min-w-0 flex-col gap-1">
+                            <span className="flex flex-wrap items-baseline gap-2">
+                              <span id={`tpl-${id}`} className="font-mono text-[14px] font-semibold">
+                                {id}
+                              </span>
+                              <span className="font-mono text-[12px] tabular-nums text-fg-3">{t.version}</span>
                             </span>
-                            <span className="text-[12px] tabular-nums text-fg-3">{t.version}</span>
-                            <span className="ml-auto rounded border border-line px-1.5 text-[11px] font-medium text-fg-2">
-                              {file ? "Pull request" : "New repo"}
+                            <span id={`tpl-${id}-about`} className="flex flex-col gap-1">
+                              {t.title ? <span className="text-[13px] font-semibold">{t.title}</span> : null}
+                              <span className="text-[13px] text-fg-2">{t.description}</span>
+                              {file ? <span className="text-[13px] text-fg-2">Opens a pull request in {t.targetRepo}; no repo is made.</span> : null}
+                              <span className="text-[12px] text-fg-3">
+                                {paramSummary(t.parameters)}
+                                {optionalCount > 0 ? `, ${optionalCount} optional` : ""} · {file ? "Pull request" : "New repo"}
+                              </span>
                             </span>
                           </span>
-                          <span id={`tpl-${templateId(t.name)}-about`} className="flex flex-col gap-1">
-                            {t.title ? <span className="type-small font-semibold">{t.title}</span> : null}
-                            <span className="type-small text-fg-2">{t.description}</span>
-                            {file ? <span className="type-small text-fg-2">Opens a pull request in {t.targetRepo}; no repo is made.</span> : null}
-                            <span className="text-[12px] text-fg-3">
-                              {paramSummary(t.parameters)}
-                              {optionalCount > 0 ? `, ${optionalCount} optional` : ""}
-                            </span>
-                          </span>
-                        </span>
-                      </label>
-                    );
-                  })}
+                        </label>
+                      );
+                    })}
+                  </div>
                 </fieldset>
               ) : null}
 
               {stage === "details" ? (
-                <div className="flex flex-col gap-4">
+                <div className="flex max-w-[520px] flex-col gap-5">
                   {fixed ? (
                     <Field id="service-template" label="Template" hint={template ? template.title || template.description : undefined}>
                       <input
                         id="service-template"
                         className={`${inputClass} font-mono`}
                         readOnly
-                        value={template ? `${templateId(template.name)} (${template.version})` : fixed}
+                        value={template ? `${tplId} (${template.version})` : fixed}
                       />
                     </Field>
-                  ) : template ? (
-                    <p className="flex flex-wrap items-center gap-2 type-small text-fg-2">
-                      From the template <span className="font-mono text-fg">{templateId(template.name)}</span>
-                      <span className="tabular-nums text-fg-3">{template.version}</span>
-                    </p>
                   ) : null}
                   <Field
                     id="service-name"
@@ -745,7 +772,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                     hint={
                       isFile
                         ? "Lowercase letters, digits and hyphens. The template puts it in the file names."
-                        : "Lowercase letters, digits and hyphens. This becomes the repo name."
+                        : "Lowercase letters, digits and hyphens. This becomes the repo name and the catalog name."
                     }
                     error={badName ? "Use lowercase letters, digits and hyphens only, at most 63." : undefined}
                   >
@@ -758,6 +785,8 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                       aria-invalid={badName}
                       aria-describedby="service-name-note"
                       placeholder="payments-api"
+                      autoComplete="off"
+                      spellCheck={false}
                     />
                   </Field>
                   {teams.error ? (
@@ -812,124 +841,164 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                       </select>
                     </Field>
                   )}
-                  {template && template.parameters.length > 0 && isFile ? (
-                    <div key={template.name} className="flex min-w-0 max-w-[420px] flex-col gap-4">
-                      {groups.map((g) =>
-                        g ? (
-                          <fieldset key={g} className="flex flex-col gap-4 rounded-md border border-line p-4">
-                            <legend className="-ml-1.5 px-1.5 type-small font-semibold">{g}</legend>
-                            {template.parameters.filter((p) => p.group === g).map(field)}
-                          </fieldset>
-                        ) : (
-                          template.parameters.filter((p) => !p.group).map(field)
-                        ),
-                      )}
-                    </div>
-                  ) : template && template.parameters.length > 0 ? (
-                    <fieldset key={template.name} className="flex min-w-0 max-w-[420px] flex-col gap-4 rounded-md border border-line p-4">
-                      <legend className="-ml-1.5 px-1.5 type-small font-semibold">
-                        <span className="font-mono">{templateId(template.name)}</span> inputs
-                      </legend>
-                      {required.map(field)}
-                      {optional.length > 0 ? (
-                        <details open={required.length === 0}>
-                          <summary className="cursor-pointer type-small font-medium text-fg-2">
-                            Optional <span className="tabular-nums text-fg-3">{optional.length}</span>
-                          </summary>
-                          <div className="flex flex-col gap-4 pt-3">{optional.map(field)}</div>
-                        </details>
+                  {template && !isFile ? (
+                    <fieldset className="flex min-w-0 flex-col gap-3">
+                      <legend className="mb-1.5 text-[13px] font-medium">Who can reach it</legend>
+                      <div role="radiogroup" aria-label="Who can reach it" className="flex flex-col gap-2">
+                        {reaches.map((r) => (
+                          <label
+                            key={r.value}
+                            className={`${card} px-4 py-3 before:absolute before:top-[15px] before:left-4 before:size-3.5 before:rounded-full before:border-[1.5px] before:border-line-strong before:bg-surface before:content-[''] has-[:checked]:before:border-[4.5px] has-[:checked]:before:border-ember`}
+                          >
+                            <input
+                              type="radio"
+                              name="reach"
+                              value={r.value}
+                              checked={reach === r.value}
+                              onChange={() => setReach(r.value)}
+                              aria-labelledby={`reach-${r.value}`}
+                              aria-describedby={`reach-${r.value}-about`}
+                              className={hiddenRadio}
+                            />
+                            <span className="flex flex-col gap-0.5 pl-[26px] text-[13px]">
+                              <b id={`reach-${r.value}`} className="text-[14px] font-semibold">
+                                {r.title}
+                              </b>
+                              <span id={`reach-${r.value}-about`} className="text-fg-2">
+                                {r.text}
+                              </span>
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                      {choosesDomain ? (
+                        <Field id="service-domain" label="Domain" hint="The domain the public addresses are under. Ask platform-engineering for another.">
+                          <select id="service-domain" className={inputClass} value={domain} onChange={(e) => setDomainPick(e.target.value)} aria-describedby="service-domain-note">
+                            {domainList.map((d) => (
+                              <option key={d} value={d}>
+                                {d === defaultDomain ? `${d} (default)` : d}
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
                       ) : null}
+                      <dl aria-label="Addresses" className="flex flex-col gap-1 rounded-md bg-surface-2 px-3 py-2.5 text-[12.5px]">
+                        {ENVS.map((env) => (
+                          <div key={env} className="flex min-w-0 gap-2.5">
+                            <dt className="w-[74px] shrink-0 text-fg-3">{env}</dt>
+                            <dd className="font-mono [overflow-wrap:anywhere]">{addressOf(env)}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                      <span className="text-[12px] text-fg-3">
+                        Change it later in forge.yaml (<span className="font-mono">run.domain</span> and{" "}
+                        <span className="font-mono">run.staging.public</span>).
+                      </span>
                     </fieldset>
                   ) : null}
                 </div>
               ) : null}
 
-              {stage === "visibility" ? (
-                <div className="flex flex-col gap-3">
-                  <div role="radiogroup" aria-label="Visibility" className="flex flex-col gap-3">
-                    {visibilities.map((v) => (
-                      <label
-                        key={v.value}
-                        className="flex cursor-pointer gap-3 rounded-md border border-line bg-surface p-4 hover:border-line-strong has-[:checked]:border-ember has-[:checked]:bg-ember-soft has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ember"
-                      >
-                        <input
-                          type="radio"
-                          name="visibility"
-                          value={v.value}
-                          checked={visibility === v.value}
-                          onChange={() => setVisibility(v.value)}
-                          aria-labelledby={`visibility-${v.value}`}
-                          aria-describedby={`visibility-${v.value}-about`}
-                          className="mt-1 size-4 shrink-0 accent-ember"
-                        />
-                        <span className="flex min-w-0 flex-col gap-1.5">
-                          <span id={`visibility-${v.value}`} className="font-semibold">
-                            {v.title}
-                          </span>
-                          <span id={`visibility-${v.value}-about`} className="type-small text-fg-2">
-                            {v.text}
-                          </span>
-                          <span className="flex flex-wrap gap-1.5">
-                            <Reach env="Staging" open={v.staging} />
-                            <Reach env="Production" open={v.production} />
-                          </span>
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                  {choosesDomain ? (
-                    <Field id="service-domain" label="Domain" hint="The domain the service is reached under. Ask platform-engineering for another.">
-                      <select
-                        id="service-domain"
-                        className={inputClass}
-                        value={domain}
-                        onChange={(e) => setDomainPick(e.target.value)}
-                        aria-describedby="service-domain-note service-domain-hosts"
-                      >
-                        {domainList.map((d) => (
-                          <option key={d} value={d}>
-                            {d === defaultDomain ? `${d} (default)` : d}
-                          </option>
-                        ))}
-                      </select>
-                    </Field>
-                  ) : null}
-                  {hosts.length > 0 ? (
-                    <p id="service-domain-hosts" className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[12.5px] text-fg-2">
-                      <span>Reached at</span>
-                      {hosts.map((h) => (
-                        <span key={h} className="font-mono text-fg">
-                          https://{h}
-                        </span>
-                      ))}
+              {stage === "inputs" && template ? (
+                template.parameters.length === 0 ? (
+                  <div className="rounded-md border border-dashed border-line-strong p-5">
+                    <b>
+                      <span className="font-mono">{tplId}</span> has no inputs.
+                    </b>
+                    <p className="mt-1 text-fg-2">
+                      Nothing to fill in here. Continue to {stages.includes("runtime") ? "choose how it runs" : "the review"}.
                     </p>
-                  ) : null}
-                  <p className="max-w-[62ch] text-[12.5px] text-fg-3">
-                    The private network is the cluster&apos;s internal address, over HTTP. Change it later in forge.yaml:{" "}
-                    <span className="font-mono">run.domain</span> and <span className="font-mono">run.staging.public</span>.
-                  </p>
-                </div>
+                  </div>
+                ) : isFile ? (
+                  <div key={template.name} className="flex min-w-0 max-w-[520px] flex-col gap-5">
+                    {groups.map((g) =>
+                      g ? (
+                        <fieldset key={g} className="flex flex-col gap-4 rounded-md border border-line p-4">
+                          <legend className="-ml-1.5 px-1.5 type-small font-semibold">{g}</legend>
+                          {template.parameters.filter((p) => p.group === g).map(field)}
+                        </fieldset>
+                      ) : (
+                        template.parameters.filter((p) => !p.group).map(field)
+                      ),
+                    )}
+                  </div>
+                ) : (
+                  <div key={template.name} className="flex min-w-0 max-w-[520px] flex-col gap-5">
+                    {required.length > 0 ? (
+                      <section aria-labelledby="inputs-required" className="flex flex-col gap-4">
+                        <h3 id="inputs-required" className={sub}>
+                          Required
+                        </h3>
+                        {required.map(field)}
+                      </section>
+                    ) : (
+                      <p className="text-fg-2">
+                        <span className="font-mono">{tplId}</span> needs nothing from you. The optional inputs below already have sensible defaults.
+                      </p>
+                    )}
+                    {optional.length > 0 ? (
+                      <section aria-labelledby="inputs-optional" className="flex flex-col gap-4">
+                        <h3 id="inputs-optional" className={sub}>
+                          Optional
+                        </h3>
+                        {optional.map(field)}
+                      </section>
+                    ) : null}
+                  </div>
+                )
               ) : null}
 
               {stage === "runtime" && template ? (
-                <RunOptionsFields offered={template.options} form={run} onChange={(f) => setRuns((all) => ({ ...all, [template.name]: f }))} />
+                <>
+                  <p className="text-[13.5px] text-fg-2">Everything here is optional and has a default. Change any of it later in forge.yaml.</p>
+                  <RunOptionsFields offered={template.options} form={run} onChange={(f) => setRuns((all) => ({ ...all, [template.name]: f }))} />
+                </>
               ) : null}
 
               {stage === "review" ? (
                 <div className="flex flex-col gap-4">
-                  <Panel>
-                    <ul aria-label="Review" className="divide-y divide-line">
-                      {summary.map(([s, label, value]) => (
-                        <li key={label} className="grid grid-cols-[120px_minmax(0,1fr)_auto] items-start gap-4 px-4 py-3 text-[13.5px]">
-                          <span className="text-fg-3">{label}</span>
-                          <span className="flex min-w-0 flex-col break-words">{value}</span>
-                          <Button kind="quiet" size="sm" aria-label={`Change ${label.toLowerCase()}`} onClick={() => go(s)}>
-                            Change
+                  <ul aria-label="Review" className="flex flex-col gap-4">
+                    {review.map(([s, title, rows]) => (
+                      <li key={title} className="rounded-md border border-line bg-surface p-4">
+                        <div className="mb-3 flex items-center gap-3">
+                          <h3 className="text-[14px] font-semibold">{title}</h3>
+                          <Button kind="quiet" size="sm" className="ml-auto" aria-label={`Edit ${title.toLowerCase()}`} onClick={() => go(s)}>
+                            Edit
                           </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  </Panel>
+                        </div>
+                        <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-[13.5px]">
+                          {rows.map(([label, value]) => (
+                            <Fragment key={label}>
+                              <dt className="text-fg-3">{label}</dt>
+                              <dd className="min-w-0 [overflow-wrap:anywhere]">{value}</dd>
+                            </Fragment>
+                          ))}
+                        </dl>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="px-0.5">
+                    <h3 className="text-[14px] font-semibold">What happens next</h3>
+                    <ol className="mt-2 flex list-decimal flex-col gap-1 pl-5 text-[13.5px] text-fg-2">
+                      {isFile ? (
+                        <>
+                          <li>
+                            Forge renders <span className="font-mono">{tplId}</span> and opens a pull request in{" "}
+                            <span className="font-mono">{template?.targetRepo}</span>.
+                          </li>
+                          <li>Nothing changes until someone reviews and merges it.</li>
+                        </>
+                      ) : (
+                        <>
+                          <li>
+                            Forge creates <span className="font-mono">github.com/showmino/{name}</span> from <span className="font-mono">{tplId}</span>.
+                          </li>
+                          <li>CI builds the first image and deploys it to staging.</li>
+                          <li>The service appears in the catalog. Production waits for your first promote.</li>
+                        </>
+                      )}
+                    </ol>
+                  </div>
                   {steps.length > 0 ? (
                     <Panel>
                       <StepLog steps={steps} />
@@ -952,7 +1021,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                 </div>
               ) : null}
 
-              <div className="flex items-center gap-2 border-t border-line pt-4">
+              <div className="flex items-center justify-between gap-3 border-t border-line pt-4">
                 {at > 0 ? (
                   <Button
                     onClick={() => {
@@ -963,26 +1032,39 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                   >
                     Back
                   </Button>
-                ) : null}
-                <span className="ml-auto text-[12.5px] tabular-nums text-fg-3">
-                  Step {at + 1} of {stages.length}
-                </span>
+                ) : (
+                  <ButtonLink kind="quiet" href={cancel}>
+                    Cancel
+                  </ButtonLink>
+                )}
                 {stage === "review" ? (
-                  <Button kind="primary" type="submit" disabled={busy || !canCreate || teamRefused || !template}>
+                  <Button kind="primary" type="submit" className="ml-auto" disabled={busy || !canCreate || teamRefused || !template}>
                     {busy ? "Creating" : isFile ? "Create pull request" : "Create service"}
                   </Button>
                 ) : (
-                  <Button kind="primary" type="submit" disabled={!template}>
+                  <Button kind="primary" type="submit" className="ml-auto" disabled={!template}>
                     Continue
                   </Button>
                 )}
               </div>
             </div>
 
-            <aside className="flex min-w-0 flex-col gap-1.5 lg:sticky lg:top-6">
-              <span className="text-[12px] text-fg-3">From the terminal</span>
-              <CommandBlock command={`forge create ${name || "<name>"}`} flags={flags} />
-              <span className="text-[12px] text-fg-3">It follows the form as you fill it in.</span>
+            <aside className="min-w-0 min-[1080px]:sticky min-[1080px]:top-[76px]">
+              <Panel className="flex flex-col gap-4 p-4">
+                <div className="flex min-w-0 items-center gap-3">
+                  {tplId ? <Mark id={tplId} /> : null}
+                  <div className="min-w-0">
+                    <div className="truncate font-mono font-semibold">{name || "<name>"}</div>
+                    <div className="truncate text-[12.5px] text-fg-3">
+                      {tplId || "<template>"} · {team.trim() || "No owner yet"}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-[13px] font-medium">From the terminal</span>
+                  <CommandBlock command={`forge create ${name || "<name>"}`} flags={flags} />
+                </div>
+              </Panel>
             </aside>
           </div>
         </form>
@@ -990,3 +1072,4 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     </>
   );
 }
+

@@ -416,6 +416,134 @@ tr.group td{background:var(--surface-2);font-size:11.5px;letter-spacing:.06em;te
 .field-err:empty{display:none}
 .input[aria-invalid="true"]{border-color:var(--bad-dot)}
 
+/* ---------- Overview ---------- */
+.hlegend{display:inline-flex;flex-wrap:wrap;gap:4px 12px;margin-left:auto;font-size:12px;color:var(--fg-2)}
+.hlegend span{display:inline-flex;align-items:center;gap:5px}
+.hlegend i{width:8px;height:8px;border-radius:2px;background:var(--line-strong)}
+.hlegend i{border-radius:50%}.hlegend i.ok{background:var(--ok-dot)} .hlegend i.warn{background:var(--warn-dot)} .hlegend i.bad{background:var(--bad-dot);border-radius:1.5px} .hlegend i.neutral{background:transparent;border:1.5px solid var(--fg-3)}
+.hmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:var(--s2)}
+.htile{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);text-decoration:none;color:var(--fg);min-width:0}
+.htile.hot.warn{border-color:color-mix(in oklab,var(--warn-dot) 55%,var(--line));background:color-mix(in oklab,var(--warn-bg) 55%,var(--surface))}
+.htile.hot.bad{border-color:color-mix(in oklab,var(--bad-dot) 50%,var(--line));background:color-mix(in oklab,var(--bad-bg) 55%,var(--surface))}
+.htile-n{display:flex;align-items:baseline;gap:8px;font-size:13px;font-weight:500;min-width:0}
+.htile-n .mono{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tier{font-size:10.5px;font-weight:600;color:var(--fg-3);font-family:var(--font-mono);margin-left:auto}
+.htile-s{display:flex;gap:6px;flex-wrap:wrap}
+.hchip{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:11px;color:var(--fg-2);padding:1px 7px 1px 6px;border-radius:999px;background:var(--surface-2)}
+.hchip b{font-weight:600;font-family:var(--font-ui);font-size:11.5px}
+.hchip.warn b{color:var(--warn-fg)} .hchip.bad b{color:var(--bad-fg)}
+.hdot{width:7px;height:7px;border-radius:50%;background:var(--ok-dot);flex:none}
+.hchip.warn .hdot{background:var(--warn-dot)} .hchip.bad .hdot{background:var(--bad-dot);border-radius:1.5px}
+.hchip.neutral .hdot{background:transparent;border:1.5px solid var(--fg-3)}
+@media (hover:hover) and (pointer:fine){.htile:hover{border-color:var(--fg-3)}}
+@media (max-width:560px){.hmap{grid-template-columns:repeat(2,minmax(0,1fr))}.htile{padding:9px 10px}.htile-s{gap:4px}}
+.ov-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:var(--s5);align-items:start}
+.ov-main,.ov-side{display:flex;flex-direction:column;gap:var(--s6,32px);min-width:0}
+@media (max-width:1080px){.ov-grid{grid-template-columns:minmax(0,1fr)}}
+.deliv{display:flex;flex-direction:column;gap:var(--s3);padding-top:var(--s4)}
+.deliv-top{display:flex;align-items:flex-end;gap:var(--s3)}
+.deliv-top>div{display:flex;align-items:baseline;gap:8px}
+.deliv-top .hlegend{margin-bottom:4px}
+.dchart{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:4px;height:76px;align-items:end;border-bottom:1px solid var(--line)}
+.dbar{position:relative;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%;padding:0 2px;cursor:default}
+.dbar i{display:block;width:100%;max-width:14px;margin:0 auto}
+.dbar i:first-child{border-radius:4px 4px 0 0}
+.dbar .o{background:var(--ok-dot)} .dbar .f{background:var(--bad-dot)}
+.dbar .zero{height:2px;background:var(--line-strong);border-radius:1px}
+@media (hover:hover) and (pointer:fine){.dbar:hover{background:var(--surface-2);border-radius:4px 4px 0 0}
+  .dbar:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);font-size:12px;padding:4px 8px;border-radius:var(--r-sm);white-space:nowrap;z-index:5;pointer-events:none}
+  .dbar:nth-child(-n+3):hover::after{left:0;transform:none}.dbar:nth-last-child(-n+3):hover::after{left:auto;right:0;transform:none}}
+.dchart-x{display:flex;justify-content:space-between;font-size:11.5px;color:var(--fg-3);margin-top:-6px}
+.metrics{margin:var(--s2) 0 0;display:flex;flex-direction:column}
+.metrics>div{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s3);padding:9px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.metrics dt{font-size:13px;color:var(--fg-2)}
+.metrics dd{margin:0;display:flex;align-items:baseline;gap:10px}
+.metrics dd .num{font-weight:600;font-size:14px}
+.trend{display:inline-flex;align-items:center;gap:3px;font-size:12px}
+.trend.good{color:var(--ok-fg)} .trend.bad{color:var(--bad-fg)}
+.sev.ok{background:var(--ok-dot)}
+
+/* ---------- Create a service ---------- */
+.stepper{list-style:none;margin:0;padding:0;display:flex;gap:var(--s2);flex-wrap:wrap;counter-reset:st}
+.stepper li{flex:1 1 0;min-width:0}
+.stepper li>*{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:0;border-top:3px solid var(--line);background:transparent;font:inherit;text-align:left;color:var(--fg-3)}
+.stepper li.done>*{border-top-color:var(--fg-2);color:var(--fg-2)}
+.stepper li.current>*{border-top-color:var(--ember);color:var(--fg)}
+.stepper button{cursor:pointer}
+@media (hover:hover) and (pointer:fine){.stepper button:hover .st-l{text-decoration:underline}}
+.st-n{width:22px;height:22px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:600;border:1.5px solid currentColor}
+.stepper li.current .st-n{background:var(--ember);border-color:var(--ember);color:var(--ember-on)}
+.stepper li.done .st-n{background:var(--fg-2);border-color:var(--fg-2);color:var(--bg)}
+.st-l{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cw{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:var(--s6);align-items:start}
+.cw-main{display:flex;flex-direction:column;gap:var(--s5);min-width:0;max-width:720px}
+.cw-step-h{display:flex;flex-direction:column;gap:2px}
+.cw-step-h span{font-size:12.5px}
+.cw-step-h h2{margin:0;font-family:var(--font-display);font-stretch:112%;font-size:22px;font-weight:700;outline:none}
+.cw-fields{display:flex;flex-direction:column;gap:var(--s5);max-width:520px}
+.cw-fs{border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:var(--s3);min-width:0}
+.cw-legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.cw-label{font-size:13px;font-weight:500;padding:0;margin-bottom:6px}
+.cw-help{margin:0;color:var(--fg-2);font-size:13.5px}
+.cw-fs>.hint{font-size:12px;color:var(--fg-3)}
+.cw-sub{margin:var(--s2) 0 -6px;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);font-weight:600}
+.cw-sub:first-child{margin-top:0}
+.req{margin-left:8px;font-size:11px;font-weight:500;color:var(--fg-3)}
+.cw-foot{display:flex;justify-content:space-between;gap:var(--s3);padding-top:var(--s4);border-top:1px solid var(--line)}
+.cw-foot .btn-primary{margin-left:auto}
+.cw-side{position:sticky;top:76px}
+.cw-sum{display:flex;flex-direction:column;gap:var(--s4);padding-top:var(--s4)}
+.cw-sum-h{display:flex;align-items:center;gap:var(--s3);min-width:0}
+.cw-sum-h>div{min-width:0}.cw-sum-h .mono{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cw-empty{padding:var(--s5);border:1px dashed var(--line-strong);border-radius:var(--r-md)}
+.cw-empty p{margin:4px 0 0}
+.tpl-pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:var(--s3)}
+.tpl-opt,.access-opt{position:relative;display:flex;gap:var(--s3);padding:var(--s4);border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);cursor:pointer}
+.tpl-opt input,.access-opt input{position:absolute;opacity:0;pointer-events:none}
+.tpl-opt:has(input:checked),.access-opt:has(input:checked){border-color:var(--ember);box-shadow:0 0 0 1px var(--ember);background:color-mix(in oklab,var(--ember) 5%,var(--surface))}
+.tpl-opt:has(input:focus-visible),.access-opt:has(input:focus-visible){outline:2px solid var(--ember);outline-offset:2px}
+@media (hover:hover) and (pointer:fine){.tpl-opt:hover,.access-opt:hover{border-color:var(--fg-3)}}
+.tpl-opt .tpl-mark{flex:none}
+.tpl-opt-b{display:flex;flex-direction:column;gap:4px;min-width:0}
+.tpl-opt-h{display:flex;gap:8px;align-items:baseline;font-weight:600;font-size:14px}
+.tpl-opt-h .faint{font-weight:400;font-size:12px;font-family:var(--font-mono)}
+.tpl-opt-d{font-size:13px;color:var(--fg-2)}
+.tpl-opt-f{font-size:12px;color:var(--fg-3)}
+.access-pick{display:flex;flex-direction:column;gap:var(--s2)}
+.access-opt{padding:12px var(--s4)}
+.access-opt>span{display:flex;flex-direction:column;gap:2px;font-size:13px;padding-left:26px}
+.access-opt>span b{font-size:14px;font-weight:600}
+.access-opt::before{content:"";position:absolute;left:var(--s4);top:15px;width:14px;height:14px;border-radius:50%;border:1.5px solid var(--line-strong);background:var(--surface)}
+.access-opt:has(input:checked)::before{border:4.5px solid var(--ember)}
+.addr-prev{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:var(--r-md);background:var(--surface-2);font-size:12.5px}
+.addr-prev div{display:flex;gap:10px;min-width:0}.addr-prev .faint{width:74px;flex:none}
+.addr-prev .mono{overflow-wrap:anywhere}
+.run-list{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);overflow:hidden}
+.run-sec+.run-sec{border-top:1px solid var(--line)}
+.run-sec summary{display:flex;align-items:baseline;gap:10px;padding:12px var(--s4);cursor:pointer;list-style:none;flex-wrap:wrap}
+.run-sec summary::-webkit-details-marker{display:none}
+.run-sec summary::before{content:"";width:7px;height:7px;border-right:1.5px solid var(--fg-3);border-bottom:1.5px solid var(--fg-3);transform:rotate(-45deg);margin-right:2px;transition:transform .15s;align-self:center}
+.run-sec[open] summary::before{transform:rotate(45deg)}
+.run-t{font-weight:600;font-size:14px}
+.run-s{font-size:13px;color:var(--fg-3);margin-left:auto}
+.run-b{padding:0 var(--s4) var(--s4) calc(var(--s4) + 17px);display:flex;flex-direction:column;gap:var(--s3)}
+.cw-grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s3)}
+.kv-rows{display:flex;flex-direction:column;gap:var(--s2)}
+.kv-row{display:grid;gap:var(--s2);align-items:start}
+.kv-cell{display:flex;flex-direction:column;gap:4px;min-width:0}
+.kv-row .icon-btn{margin-top:2px}
+.rv{display:flex;flex-direction:column;gap:var(--s4)}
+.rv-blk{border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);padding:var(--s4)}
+.rv-h{display:flex;align-items:center;gap:var(--s3);margin-bottom:var(--s3)}
+.rv-h h3,.rv-what h3{margin:0;font-size:14px;font-weight:600}
+.rv-h .btn,.rv-h .faint{margin-left:auto}
+.rv .kv dd{overflow-wrap:anywhere}
+.yaml{margin:0;font-family:var(--font-mono);font-size:12.5px;line-height:1.65;background:var(--surface-2);border-radius:var(--r-sm);padding:12px 14px;overflow-x:auto}
+.rv-what{padding:0 2px}
+.rv-what ol{margin:8px 0 0;padding-left:20px;color:var(--fg-2);font-size:13.5px;display:flex;flex-direction:column;gap:4px}
+@media (max-width:1080px){.cw{grid-template-columns:minmax(0,1fr)}.cw-side{position:static}.cw-side .preview-cli{max-height:120px;overflow:auto}}
+@media (max-width:700px){.stepper{flex-wrap:nowrap;gap:6px}.st-l{display:none}.stepper li.current .st-l{display:block}.stepper li{flex:0 0 auto}.stepper li.current{flex:1 1 auto;min-width:0}.stepper li>*{padding:10px 6px}.cw-grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.kv-row{grid-template-columns:minmax(0,1fr) auto!important}.kv-row .kv-cell:nth-child(n+2){grid-column:1}.kv-row .icon-btn{grid-column:2;grid-row:1}.run-s{margin-left:0;width:100%}}
+
 /* ---------- TechDocs ---------- */
 .doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:var(--s4)}
 .doc-card{padding:var(--s4) var(--s5);display:flex;flex-direction:column;gap:var(--s2);text-decoration:none;color:inherit}
@@ -603,9 +731,9 @@ var D={
     {name:"feat-ledger-v2",kind:"preview",svc:"ledger",by:"priya.nair",ttl:168,left:146,status:"healthy"}
   ],
   templates:[
-    {name:"go-grpc",mark:"gRPC",title:"Go gRPC service",desc:"ConnectRPC service with buf, health checks and graceful shutdown.",baked:["CI","OTel","SLO","Dockerfile","Argo CD app"],uses:4,ver:"v2.3.0",
-      params:[{key:"proto_package",label:"Proto package",type:"text",required:true,ph:"acme.payouts.v1",pattern:"^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$",hint:"Dotted lowercase package for the .proto files."},
-              {key:"port",label:"gRPC port",type:"number",def:"8080"}]},
+    {name:"go-grpc",mark:"gRPC",title:"Go gRPC service",desc:"ConnectRPC service with buf, health checks and graceful shutdown.",baked:["CI","OTel","SLO","Dockerfile","Argo CD app"],uses:4,ver:"v1.7.0",
+      params:[{key:"goModule",label:"Go module",type:"text",ph:"github.com/showmino/<name>",hint:"Go module path. Left empty, the template works it out from the repo."},
+              {key:"port",label:"Port",type:"number",ph:"8080",hint:"Port the server listens on. Left empty, it is 8080."}]},
     {name:"go-http",mark:"HTTP",title:"Go HTTP API",desc:"chi router, OpenAPI spec, structured logging and request tracing.",baked:["CI","OTel","SLO","Dockerfile","Argo CD app"],uses:2,ver:"v1.9.1",
       params:[{key:"base_path",label:"Base path",type:"text",required:true,def:"/api",pattern:"^/[a-z0-9/_-]*$",hint:"Every route is served under this path."},
               {key:"auth",label:"Authentication",type:"select",options:["oidc","api-key","none"],def:"oidc"}]},
@@ -696,6 +824,7 @@ function header(o){
 var I={
   plus:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
   ship:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h11M11 6l6 6-6 6"/><path d="M20 4v16"/></svg>',
+  down:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6"/></svg>',
   gear:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   x:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   ok:'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
@@ -707,26 +836,50 @@ function plural(n,w){return n+" "+w+(n===1?"":"s");}
 var V={};
 var ui={depFilter:"all",catTeam:"all",catQuery:"",svcTab:"overview",auditQuery:"",docQuery:"",docPage:0};
 
+/* Delivery history for the last 14 days, oldest first: production deploys that succeeded and failed. */
+var DELIVERY={ok:[6,7,5,0,0,8,6,9,7,6,0,0,7,5],fail:[1,0,1,0,0,0,1,0,2,0,0,0,0,2],lead:["2 h 40 min","3 h 55 min"],restore:["24 min","1 h 10 min"]};
+function ovDay(back){var d=new Date();d.setDate(d.getDate()-back);return d;}
+function ovDeployChart(){
+  var n=DELIVERY.ok.length,max=Math.max.apply(null,DELIVERY.ok.map(function(v,i){return v+DELIVERY.fail[i];})),H=72;
+  var bars=DELIVERY.ok.map(function(ok,i){var f=DELIVERY.fail[i],d=ovDay(n-1-i),lbl=i===n-1?"Today":d.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"});
+    var tip=lbl+": "+(ok+f?plural(ok+f,"deploy")+(f?", "+f+" failed":""):"no deploys");
+    return '<div class="dbar" data-tip="'+esc(tip)+'">'+(ok+f?'':'<i class="zero"></i>')+(f?'<i class="f" style="height:'+Math.max(3,Math.round(f/max*H))+'px"></i>':'')+(ok?'<i class="o" style="height:'+Math.round(ok/max*H)+'px"></i>':'')+'</div>';}).join("");
+  var tot=0,fl=0;DELIVERY.ok.forEach(function(v,i){tot+=v+DELIVERY.fail[i];fl+=DELIVERY.fail[i];});
+  return {html:'<div class="dchart" role="img" aria-label="Production deploys per day over the last 14 days: '+tot+' deploys, '+fl+' failed.">'+bars+'</div><div class="dchart-x"><span>'+ovDay(n-1).toLocaleDateString(undefined,{day:"numeric",month:"short"})+'</span><span>Today</span></div>',total:tot,failed:fl};
+}
 V.overview=function(){
-  var today=D.deploys.filter(function(d){return d.today;});
-  var finished=today.filter(function(d){return d.state==="succeeded"||d.state==="failed";});
-  var failed=today.filter(function(d){return d.state==="failed";}).length;
-  var previews=D.envs.filter(function(e){return e.kind==="preview";});
   var running=D.deploys.filter(function(d){return d.state==="running";})[0];
-  var attention=[
-    {sev:"bad",t:'<span class="mono">checkout-api</span> failed verification in production',s:"Error rate 4.1% above the 2% gate. Rolled back to 5d20c9e.",href:"#service-checkout-api",a:"Open"},
-    {sev:"bad",t:'<span class="mono">search-indexer</span> build is failing',s:"pip resolver: no matching opensearch-py>=3",href:"#deployments",a:"View"},
-    {sev:"warn",t:'Preview <span class="mono">pr-388</span> expires in 2 hours',s:"checkout-api · created by jonas.weber",href:"#environments",a:"Extend"},
-    {sev:"warn",t:'<span class="mono">storefront-assets</span> drifted from its definition',s:"2 attributes changed outside Forge",href:"#resources",a:"Review"}
-  ];
-  if(D.approvals.length)attention.splice(1,0,{sev:"warn",t:plural(D.approvals.length,"deploy")+' waiting for approval',s:"Blocking "+D.approvals.map(function(a){return a.svc;}).join(" and ")+" from reaching production",href:"#rules",a:"Review"});
-  if(unowned().length)attention.push({sev:"warn",t:plural(unowned().length,"resource")+' with no owner',s:"Ownership at "+coverage().pct+"%, against a "+OWNER_TARGET+"% target",href:"#ownership",a:"Assign"});
-  var h=header({title:"Overview",lede:"What is shipping, what is broken and what needs you, in staging and production.",cli:"forge deploy history --since 24h",actions:'<a class="btn" href="#environments">'+I.plus+'Preview env</a><a class="btn btn-primary" href="#templates">'+I.plus+'Create service</a>'});
-  h+='<div class="stats">'+
-    '<div class="stat"><span class="stat-v num">'+D.services.length+'</span><span class="stat-l">Services in the catalog</span></div>'+
-    '<div class="stat"><span class="stat-v num">'+today.length+'</span><span class="stat-l">Deploys today</span></div>'+
-    '<div class="stat"><span class="stat-v num">'+failed+'<small> of '+finished.length+'</small></span><span class="stat-l">Finished deploys that failed</span></div>'+
-    '<div class="stat"><span class="stat-v num">'+previews.length+'</span><span class="stat-l">Preview environments live</span></div></div>';
+  var bad=function(env){return D.services.filter(function(s){var st=s.env[env][3];return st==="degraded"||st==="failing";});};
+  var prodBad=bad("production"),stagBad=bad("staging");
+  var hr=new Date().getHours(),greet=hr<12?"Good morning":hr<18?"Good afternoon":"Good evening";
+  var parts=[];
+  parts.push(prodBad.length?'Production has '+plural(prodBad.length,"service")+' in trouble':'Production is healthy');
+  if(D.approvals.length)parts.push(plural(D.approvals.length,"deploy")+' waiting for your approval');
+  var sentence=parts.join(", and ")+".";
+  var h=header({title:greet+", Showmino",lede:sentence,cli:"forge status",actions:'<a class="btn" href="#environments">'+I.plus+'Preview env</a><a class="btn btn-primary" href="#create" data-action="create">'+I.plus+'Create service</a>'});
+
+  /* Health map: every service in staging and production */
+  var order=D.services.slice().sort(function(a,b){var r=function(s){var p=s.env.production[3],st=s.env.staging[3];return p==="failing"?0:p==="degraded"?1:st==="failing"||st==="degraded"?2:p==="none"?4:3;};return r(a)-r(b)||a.name.localeCompare(b.name);});
+  var chip=function(s,env){var st=s.env[env][3],m=SVC_PILL[st]||SVC_PILL.healthy;return '<span class="hchip '+m[0]+'"><span class="hdot"></span>'+(env==="production"?"prod":"stg")+(st!=="healthy"&&st!=="none"?' <b>'+m[1].toLowerCase()+'</b>':'')+'<span class="sr">: '+m[1]+'</span></span>';};
+  var healthy=D.services.filter(function(s){return s.env.production[3]==="healthy";}).length,deployed=D.services.filter(function(s){return s.env.production[3]!=="none";}).length;
+  h+='<section class="section"><div class="section-h"><h2>Right now</h2><span class="faint">'+healthy+' of '+deployed+' services healthy in production</span><span class="hlegend"><span><i class="ok"></i>Healthy</span><span><i class="warn"></i>Degraded</span><span><i class="bad"></i>Failing</span><span><i class="neutral"></i>Not deployed</span></span></div>'+
+    '<div class="hmap">'+order.map(function(s){var p=s.env.production[3],st=s.env.staging[3],hot=p==="failing"||st==="failing"?"bad":p==="degraded"||st==="degraded"?"warn":"";
+      return '<a class="htile'+(hot?" hot "+hot:"")+'" href="#service-'+s.name+'"><span class="htile-n"><span class="mono">'+s.name+'</span>'+(s.tier?'<span class="tier">T'+s.tier+'</span>':'')+'</span><span class="htile-s">'+chip(s,"staging")+chip(s,"production")+'</span></a>';}).join("")+
+    '</div></section>';
+
+  /* Needs you */
+  var needs=[];
+  D.approvals.forEach(function(a){needs.push('<div class="row"><span class="sev warn"></span><div style="min-width:0"><div class="row-t"><span class="mono">'+a.svc+'</span> <span class="mono ahead">'+a.ref+'</span> <span class="faint">→ production</span></div><div class="row-s">Waiting for approval · requested by '+esc(a.by)+' '+a.when+'</div></div><div class="ph-actions"><button class="btn btn-sm btn-ghost" data-action="approval" data-id="'+a.id+'" data-ok="0">Reject</button><button class="btn btn-sm btn-primary" data-action="approval" data-id="'+a.id+'" data-ok="1">Approve</button></div></div>');});
+  [{sev:"bad",t:'<span class="mono">checkout-api</span> failed verification in production',s:"Error rate 4.1% above the 2% gate. Rolled back to 5d20c9e.",href:"#service-checkout-api",a:"Open"},
+   {sev:"bad",t:'<span class="mono">search-indexer</span> build is failing in staging',s:"pip resolver: no matching opensearch-py>=3",href:"#deployments",a:"View"},
+   {sev:"warn",t:'Preview <span class="mono">pr-388</span> expires in 2 hours',s:"checkout-api · created by jonas.weber",href:"#environments",a:"Extend"},
+   {sev:"warn",t:'<span class="mono">storefront-assets</span> drifted from its definition',s:"2 attributes changed outside Forge",href:"#resources",a:"Review"}].forEach(function(a){
+    needs.push('<div class="row"><span class="sev '+a.sev+'"></span><div style="min-width:0"><div class="row-t">'+a.t+'</div><div class="row-s">'+esc(a.s)+'</div></div><a class="btn btn-sm" href="'+a.href+'">'+a.a+'</a></div>');});
+  if(unowned().length)needs.push('<div class="row"><span class="sev warn"></span><div style="min-width:0"><div class="row-t">'+plural(unowned().length,"resource")+' with no owner</div><div class="row-s">Ownership at '+coverage().pct+'%, against a '+OWNER_TARGET+'% target</div></div><a class="btn btn-sm" href="#ownership">Assign</a></div>');
+
+  var ch=ovDeployChart(),cfr=Math.round(ch.failed/ch.total*100);
+  h+='<div class="ov-grid"><div class="ov-main">';
+  h+='<section class="section"><div class="section-h"><h2>Needs you</h2><span class="faint num">'+needs.length+'</span></div><div class="panel list">'+needs.join("")+'</div></section>';
   if(running){
     h+='<section class="section"><div class="section-h"><h2>In flight</h2><a href="#deployments">All deployments</a></div><div class="panel flight">'+
       '<div class="flight-top"><span class="flight-title">'+running.svc+' <span class="faint">→</span> '+running.env+'</span>'+pill(DEP_PILL,running.state)+'<span class="tag">'+running.ref+'</span><button class="btn btn-sm" style="margin-left:auto" data-action="toast" data-msg="Watching '+running.op+'" data-code="forge op watch '+running.op+'">Watch</button></div>'+
@@ -735,12 +888,18 @@ V.overview=function(){
       '<div class="flight-log">01:33:02  build    <em>ok</em>   image ghcr.io/acme/payments:9c1e2fa  (sha256:4be1…)\n01:34:10  test     <em>ok</em>   412 passed, 0 failed\n01:35:01  plan     <em>ok</em>   no infra changes\n01:35:20  <b>sync     …    argo cd: 2 of 3 pods ready (rolling)</b></div>'+
       '</div></section>';
   }
-  h+='<div class="grid-2"><section class="section"><div class="section-h"><h2>Needs attention</h2><span class="faint num">'+attention.length+'</span></div><div class="panel list">';
-  attention.forEach(function(a){h+='<div class="row"><span class="sev '+a.sev+'"></span><div style="min-width:0"><div class="row-t">'+a.t+'</div><div class="row-s">'+esc(a.s)+'</div></div><a class="btn btn-sm" href="'+a.href+'">'+a.a+'</a></div>';});
-  h+='</div></section><section class="section"><div class="section-h"><h2>Recent deploys</h2><a href="#deployments">History</a></div><div class="panel list">';
+  h+='</div><div class="ov-side">';
+  h+='<section class="section"><div class="section-h"><h2>Delivery</h2><span class="faint">Production, last 14 days</span></div><div class="panel"><div class="panel-b deliv">'+
+    '<div class="deliv-top"><div><span class="stat-v num">'+ch.total+'</span><span class="stat-l">Deploys</span></div><span class="hlegend"><span><i class="ok"></i>Succeeded</span><span><i class="bad"></i>Failed</span></span></div>'+ch.html+
+    '<dl class="metrics">'+
+      '<div><dt>Change failure rate</dt><dd><span class="num">'+cfr+'%</span><span class="trend good">'+I.down+'Down from 14%</span></dd></div>'+
+      '<div><dt>Lead time to production</dt><dd><span class="num">'+DELIVERY.lead[0]+'</span><span class="trend good">'+I.down+'Was '+DELIVERY.lead[1]+'</span></dd></div>'+
+      '<div><dt>Time to restore</dt><dd><span class="num">'+DELIVERY.restore[0]+'</span><span class="trend good">'+I.down+'Was '+DELIVERY.restore[1]+'</span></dd></div>'+
+    '</dl></div></div></section>';
+  h+='<section class="section"><div class="section-h"><h2>Recent deploys</h2><a href="#deployments">History</a></div><div class="panel list">';
   D.deploys.filter(function(d){return d.state!=="running";}).slice(0,5).forEach(function(d){
-    h+='<div class="row">'+mini(d)+'<div style="min-width:0"><div class="row-t"><span class="mono">'+d.svc+'</span> <span class="faint">'+d.ref+' → '+d.env+'</span></div><div class="row-s">'+(d.note?esc(d.note)+' · ':'')+d.when+'</div></div>'+pill(DEP_PILL,d.state)+'</div>';});
-  h+='</div></section></div>';
+    h+='<div class="row">'+'<span class="sev '+(d.state==="failed"?"bad":d.state==="succeeded"?"ok":"")+'"></span><div style="min-width:0"><div class="row-t"><span class="mono">'+d.svc+'</span> <span class="faint">→ '+d.env+'</span></div><div class="row-s">'+(d.note?esc(d.note)+' · ':'')+d.when+'</div></div>'+pill(DEP_PILL,d.state)+'</div>';});
+  h+='</div></section></div></div>';
   return h;
 };
 
@@ -763,7 +922,7 @@ V.catalog=function(){
   var teams=["all"];D.services.forEach(function(s){if(teams.indexOf(s.team)<0)teams.push(s.team);});
   var q=ui.catQuery.toLowerCase();
   var rows=D.services.filter(function(s){return (ui.catTeam==="all"||s.team===ui.catTeam)&&(!q||(s.name+" "+s.owner+" "+s.team+" "+s.desc).toLowerCase().indexOf(q)>=0);});
-  var h=header({title:"Services",lede:"Every service in the catalog, and how its environments are doing.",cli:"forge service list"+(ui.catTeam!=="all"?" --team "+ui.catTeam:""),actions:'<button class="btn" data-action="toast" data-msg="Reads forge.yaml from the repo" data-code="forge service register">Register existing</button><a class="btn btn-primary" href="#templates">'+I.plus+'Create service</a>'});
+  var h=header({title:"Services",lede:"Every service in the catalog, and how its environments are doing.",cli:"forge service list"+(ui.catTeam!=="all"?" --team "+ui.catTeam:""),actions:'<button class="btn" data-action="toast" data-msg="Reads forge.yaml from the repo" data-code="forge service register">Register existing</button><a class="btn btn-primary" href="#create" data-action="create">'+I.plus+'Create service</a>'});
   h+='<div class="toolbar"><label class="sr" for="cat-q">Filter services</label><input id="cat-q" class="input filter" placeholder="Name or team" value="'+esc(ui.catQuery)+'">';
   teams.forEach(function(t){var n=t==="all"?D.services.length:D.services.filter(function(s){return s.team===t;}).length;h+='<button class="chip" data-action="team" data-team="'+t+'" aria-pressed="'+(ui.catTeam===t)+'">'+(t==="all"?"All teams":t)+'<span class="n">'+n+'</span></button>';});
   h+='</div><div class="table-wrap"><table><thead><tr><th>Service</th><th>Team</th><th>Lifecycle</th><th>Staging</th><th>Production</th><th class="hide-sm">Golden path</th><th>Updated</th></tr></thead><tbody>';
@@ -873,6 +1032,175 @@ V.environments=function(){
   h+='</tbody></table></div></section>';
   return h;
 };
+
+/* ---------------- Create a service: step by step ---------------- */
+var CR_STEPS=[["tpl","Template"],["basics","Name and owner"],["inputs","Template inputs"],["run","How it runs"],["review","Review"]];
+var CR_TEAMS=["platform-engineering","billing","commerce","risk","growth","discovery","mobile"];
+var CR_ACCESS=[
+  ["public","Public","Staging and production both get a public HTTPS address."],
+  ["internal-staging","Internal staging","Production is public. Staging is reachable only inside the cluster, over HTTP."],
+  ["internal","Internal","No public address. Both environments are reachable only inside the cluster, over HTTP."]];
+var CR;
+function crReset(tpl){
+  CR={step:tpl?1:0,max:tpl?1:0,tpl:tpl||"go-grpc",name:"",team:"",access:"public",inputs:{},errors:{},
+    run:{replicas:"2",auto:false,min:"2",max:"6",cpuTarget:"70",cpu:"250m",mem:"256Mi",env:[],secrets:[],crons:[]}};
+  crDefaults();
+}
+function crDefaults(){CR.inputs={};(tplOf(CR.tpl).params||[]).forEach(function(p){CR.inputs[p.key]=p.type==="bool"?!!p.def:(p.def||"");});}
+function crName(){return CR.name||"<name>";}
+function crAddr(env){
+  var internal=CR.access==="internal"||(CR.access==="internal-staging"&&env==="staging");
+  return internal?"http://"+crName()+"."+env+".svc.cluster.local":"https://"+crName()+"."+env+NIP;
+}
+function crCli(){
+  var t=tplOf(CR.tpl),r=CR.run,a=['forge create '+crName(),'--template '+CR.tpl,'--team '+(CR.team||"<team>")];
+  if(CR.access==="internal")a.push("--internal");
+  if(CR.access==="internal-staging")a.push("--internal-staging");
+  (t.params||[]).forEach(function(p){var v=CR.inputs[p.key];if(p.required||String(v)!==String(p.def===undefined?"":p.def))if(v!==""&&v!==undefined)a.push("--set "+p.key+"="+v);});
+  if(r.replicas!=="2")a.push("--replicas "+r.replicas);
+  if(r.auto)a.push("--autoscale "+r.min+"-"+r.max+"@"+r.cpuTarget+"%");
+  if(r.cpu!=="250m"||r.mem!=="256Mi")a.push("--resources cpu="+r.cpu+",memory="+r.mem);
+  r.env.forEach(function(e){if(e[0])a.push("--env "+e[0]+"="+e[1]);});
+  r.secrets.forEach(function(e){if(e[0])a.push("--secret "+e[0]+"="+e[1]);});
+  r.crons.forEach(function(e){if(e[0])a.push('--cron "'+e[0]+'='+e[1]+'"');});
+  return a;
+}
+function crCliHtml(){var a=crCli();return '<span class="p">$</span> '+esc(a[0])+a.slice(1).map(function(x){var i=x.indexOf(" ");return ' \\\n    <span class="f">'+esc(x.slice(0,i))+'</span>'+esc(x.slice(i));}).join("");}
+function crYaml(){
+  var t=tplOf(CR.tpl),r=CR.run,y=["name: "+crName(),"team: "+(CR.team||"<team>"),"template: "+t.name+"@"+t.ver];
+  var ins=(t.params||[]).filter(function(p){return CR.inputs[p.key]!==""&&CR.inputs[p.key]!==undefined;});
+  if(ins.length){y.push("inputs:");ins.forEach(function(p){y.push("  "+p.key+": "+CR.inputs[p.key]);});}
+  y.push("run:");
+  if(CR.access==="internal")y.push("  domain: internal");
+  if(CR.access==="internal-staging")y.push("  staging:","    public: false");
+  y.push("  replicas: "+r.replicas);
+  if(r.auto)y.push("  autoscaling:","    min: "+r.min,"    max: "+r.max,"    cpu: "+r.cpuTarget+"%");
+  y.push("  resources:","    cpu: "+r.cpu,"    memory: "+r.mem);
+  var env=r.env.filter(function(e){return e[0];}),sec=r.secrets.filter(function(e){return e[0];}),cr=r.crons.filter(function(e){return e[0];});
+  if(env.length){y.push("  env:");env.forEach(function(e){y.push("    "+e[0]+": \""+e[1]+"\"");});}
+  if(sec.length){y.push("  secrets:");sec.forEach(function(e){y.push("    "+e[0]+": "+e[1]);});}
+  if(cr.length){y.push("  cron:");cr.forEach(function(e){y.push("    - name: "+e[0],"      schedule: \""+e[1]+"\"","      command: "+e[2]);});}
+  return y.join("\n");
+}
+function crErr(id){var m=CR.errors[id];return '<span class="field-err" id="'+id+'-err" role="status">'+(m?esc(m):"")+'</span>';}
+function crInv(id){return CR.errors[id]?' aria-invalid="true"':'';}
+function crInput(id,path,val,o){o=o||{};
+  return '<input class="input'+(o.mono?" mono":"")+'" id="'+id+'" data-cr="'+path+'" value="'+esc(val)+'"'+(o.ph?' placeholder="'+esc(o.ph)+'"':'')+(o.num?' type="number" min="'+(o.min||1)+'" inputmode="numeric"':'')+' autocomplete="off" spellcheck="false" aria-describedby="'+id+'-err"'+crInv(id)+(o.label?' aria-label="'+esc(o.label)+'"':'')+'>';}
+function crSelect(id,path,val,opts){return '<select class="select" id="'+id+'" data-cr="'+path+'">'+opts.map(function(o){var v=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return '<option value="'+esc(v)+'"'+(v===val?" selected":"")+'>'+esc(l)+'</option>';}).join("")+'</select>';}
+
+function crStepTpl(){
+  return '<fieldset class="cw-fs"><legend class="cw-legend">Pick a template</legend><p class="cw-help">The template sets the language, CI, tracing and deploy config. You can\'t change it after the service is created.</p><div class="tpl-pick" role="radiogroup">'+
+    D.templates.map(function(t){return '<label class="tpl-opt"><input type="radio" name="cw-tpl" value="'+t.name+'"'+(t.name===CR.tpl?" checked":"")+'><span class="tpl-mark">'+t.mark+'</span><span class="tpl-opt-b"><span class="tpl-opt-h"><span class="mono">'+t.name+'</span><span class="faint">'+t.ver+'</span></span><span class="tpl-opt-d">'+esc(t.desc)+'</span><span class="tpl-opt-f">'+paramSummary(t)+(t.kind?' · '+t.kind:'')+'</span></span></label>';}).join("")+
+    '</div></fieldset>';
+}
+function crStepBasics(){
+  return '<div class="cw-fields"><div class="field"><label for="cw-name">Service name</label>'+crInput("cw-name","name",CR.name,{mono:true,ph:"payments-api"})+'<span class="hint">Lowercase letters, digits and hyphens. This becomes the repo name and the catalog name.</span>'+crErr("cw-name")+'</div>'+
+    '<div class="field"><label for="cw-team">Owner</label>'+crSelect("cw-team","team",CR.team,[["","Choose a team"]].concat(CR_TEAMS))+'<span class="hint">The GitHub team that owns the service and gets its alerts.</span>'+crErr("cw-team")+'</div>'+
+    '<fieldset class="cw-fs"><legend class="cw-label">Who can reach it</legend><div class="access-pick">'+
+    CR_ACCESS.map(function(a){return '<label class="access-opt"><input type="radio" name="cw-access" value="'+a[0]+'"'+(CR.access===a[0]?" checked":"")+'><span><b>'+a[1]+'</b><span class="muted">'+a[2]+'</span></span></label>';}).join("")+
+    '</div><div class="addr-prev" id="cw-addr"></div><span class="hint">Change it later in forge.yaml (run.domain and run.staging.public).</span></fieldset></div>';
+}
+function crAddrHtml(){return ENVS.map(function(e){return '<div><span class="faint">'+e+'</span><span class="mono">'+esc(crAddr(e))+'</span></div>';}).join("");}
+function crStepInputs(){
+  var t=tplOf(CR.tpl),ps=t.params||[];
+  if(!ps.length)return '<div class="cw-empty"><b><span class="mono">'+t.name+'</span> has no inputs.</b><p class="muted">Nothing to fill in here. Continue to choose how it runs.</p></div>';
+  var f=function(p){var id="cw-p-"+p.key,v=CR.inputs[p.key];
+    if(p.type==="bool")return '<label class="check"><input type="checkbox" id="'+id+'" data-cr="inputs.'+p.key+'"'+(v?" checked":"")+'><span>'+esc(p.label)+(p.hint?'<br><span class="faint" style="font-size:12.5px">'+esc(p.hint)+'</span>':'')+'</span></label>';
+    var ctl=p.type==="select"?crSelect(id,"inputs."+p.key,v,p.options):crInput(id,"inputs."+p.key,v,{mono:p.type!=="number",num:p.type==="number",ph:p.ph});
+    return '<div class="field"><label for="'+id+'">'+esc(p.label)+(p.required?'<span class="req">Required</span>':'')+'</label>'+ctl+(p.hint?'<span class="hint">'+esc(p.hint)+'</span>':'')+crErr(id)+'</div>';};
+  var req=ps.filter(function(p){return p.required;}),opt=ps.filter(function(p){return !p.required;});
+  return '<div class="cw-fields">'+(req.length?'<h3 class="cw-sub">Required</h3>'+req.map(f).join(""):'<p class="muted" style="margin:0"><span class="mono">'+t.name+'</span> needs nothing from you. The optional inputs below already have sensible defaults.</p>')+
+    (opt.length?'<h3 class="cw-sub">Optional</h3>'+opt.map(f).join(""):'')+'</div>';
+}
+function crRows(kind,cols){
+  var rows=CR.run[kind];
+  return '<div class="kv-rows">'+(rows.length?rows.map(function(r,i){return '<div class="kv-row" style="grid-template-columns:'+cols.map(function(c){return c[2]||"1fr";}).join(" ")+' auto">'+cols.map(function(c,j){var id="cw-"+kind+"-"+i+"-"+j;return '<div class="kv-cell">'+crInput(id,"run."+kind+"."+i+"."+j,r[j],{mono:true,ph:c[1],label:c[0]+" "+(i+1)})+crErr(id)+'</div>';}).join("")+'<button type="button" class="icon-btn" data-action="cw-del" data-kind="'+kind+'" data-i="'+i+'" aria-label="Remove row '+(i+1)+'">'+I.x+'</button></div>';}).join(""):'<p class="faint" style="margin:0;font-size:13px">None yet.</p>')+
+    '<div><button type="button" class="btn btn-sm" data-action="cw-add" data-kind="'+kind+'">'+I.plus+'Add</button></div></div>';
+}
+function crStepRun(){
+  var r=CR.run;
+  var sec=function(id,title,sum,body){return '<details class="run-sec" data-sec="'+id+'"'+(CR.open&&CR.open[id]?" open":"")+'><summary><span class="run-t">'+title+'</span><span class="run-s" id="cw-sum-'+id+'">'+sum+'</span></summary><div class="run-b">'+body+'</div></details>';};
+  return '<p class="cw-help">Everything here is optional and has a default. Change any of it later in forge.yaml.</p><div class="run-list">'+
+    sec("replicas","Replicas",crSum("replicas"),'<div class="field" style="max-width:200px"><label for="cw-rep">Production replicas</label>'+crInput("cw-rep","run.replicas",r.replicas,{num:true})+crErr("cw-rep")+'</div><span class="hint">Staging always runs one.</span>')+
+    sec("auto","Autoscaling",crSum("auto"),'<label class="check"><input type="checkbox" id="cw-auto" data-cr="run.auto"'+(r.auto?" checked":"")+'><span>Grow production on CPU</span></label><div class="cw-grid3"><div class="field"><label for="cw-min">Minimum</label>'+crInput("cw-min","run.min",r.min,{num:true})+crErr("cw-min")+'</div><div class="field"><label for="cw-max">Maximum</label>'+crInput("cw-max","run.max",r.max,{num:true})+crErr("cw-max")+'</div><div class="field"><label for="cw-cpu-t">CPU target %</label>'+crInput("cw-cpu-t","run.cpuTarget",r.cpuTarget,{num:true})+crErr("cw-cpu-t")+'</div></div>')+
+    sec("res","Resources",crSum("res"),'<div class="cw-grid3"><div class="field"><label for="cw-cpu">CPU per pod</label>'+crSelect("cw-cpu","run.cpu",r.cpu,["100m","250m","500m","1"])+'</div><div class="field"><label for="cw-mem">Memory per pod</label>'+crSelect("cw-mem","run.mem",r.mem,["128Mi","256Mi","512Mi","1Gi","2Gi"])+'</div></div>')+
+    sec("env","Environment variables",crSum("env"),'<p class="cw-help">Plain values. Use 1Password secrets for anything sensitive.</p>'+crRows("env",[["Name","LOG_LEVEL","minmax(0,1fr)"],["Value","info","minmax(0,1.3fr)"]]))+
+    sec("secrets","1Password secrets",crSum("secrets"),'<p class="cw-help">Each 1Password item becomes an environment variable. Forge never stores the value.</p>'+crRows("secrets",[["Variable","DATABASE_URL","minmax(0,1fr)"],["1Password reference","op://payments/db/url","minmax(0,1.5fr)"]]))+
+    sec("crons","Cron jobs",crSum("crons"),'<p class="cw-help">Runs the service\'s own image on a schedule.</p>'+crRows("crons",[["Name","nightly-sync","minmax(0,1fr)"],["Schedule","0 3 * * *","minmax(0,0.9fr)"],["Command","./bin/sync","minmax(0,1.1fr)"]]))+
+    '</div>';
+}
+function crSum(id){var r=CR.run,n=function(k){return r[k].filter(function(e){return e[0];}).length;};
+  return id==="replicas"?plural(+r.replicas||0,"replica")+" in production, 1 in staging":id==="auto"?(r.auto?r.min+" to "+r.max+" pods at "+r.cpuTarget+"% CPU":"Off"):id==="res"?r.cpu+" CPU, "+r.mem+" per pod":id==="env"?(n("env")?plural(n("env"),"variable"):"None"):id==="secrets"?(n("secrets")?plural(n("secrets"),"secret"):"None"):(n("crons")?plural(n("crons"),"job"):"None");}
+function crStepReview(){
+  var t=tplOf(CR.tpl),acc=CR_ACCESS.filter(function(a){return a[0]===CR.access;})[0];
+  var ins=(t.params||[]).map(function(p){var v=CR.inputs[p.key];return p.label+": "+(v===""||v===undefined?"default":v===true?"on":v===false?"off":v);});
+  var blk=function(step,title,rows){return '<div class="rv-blk"><div class="rv-h"><h3>'+title+'</h3><button type="button" class="btn btn-sm btn-ghost" data-action="cw-go" data-step="'+step+'">Edit</button></div><dl class="kv">'+rows.map(function(r){return '<dt>'+r[0]+'</dt><dd>'+r[1]+'</dd>';}).join("")+'</dl></div>';};
+  return '<div class="rv">'+
+    blk(0,"Template",[["Template",'<span class="mono">'+t.name+'</span> '+t.ver]])+
+    blk(1,"Name and owner",[["Name",'<span class="mono">'+esc(CR.name)+'</span>'],["Owner",esc(CR.team)],["Reach",acc[1]],["Staging",'<span class="mono">'+esc(crAddr("staging"))+'</span>'],["Production",'<span class="mono">'+esc(crAddr("production"))+'</span>']])+
+    blk(2,"Template inputs",ins.length?ins.map(function(x){var i=x.indexOf(": ");return [esc(x.slice(0,i)),'<span class="mono">'+esc(x.slice(i+2))+'</span>'];}):[["Inputs","None"]])+
+    blk(3,"How it runs",[["Replicas",crSum("replicas")],["Autoscaling",crSum("auto")],["Resources",crSum("res")],["Variables",crSum("env")],["Secrets",crSum("secrets")],["Cron jobs",crSum("crons")]])+
+    '<div class="rv-blk"><div class="rv-h"><h3>forge.yaml</h3><span class="faint" style="font-size:12.5px">Committed to the new repo</span></div><pre class="yaml">'+esc(crYaml())+'</pre></div>'+
+    '<div class="rv-what"><h3>What happens next</h3><ol><li>Forge creates <span class="mono">github.com/showmino/'+esc(CR.name)+'</span> from <span class="mono">'+t.name+'</span>.</li><li>CI builds the first image and deploys it to staging.</li><li>The service appears in the catalog. Production waits for your first promote.</li></ol></div></div>';
+}
+V.create=function(){
+  if(!CR)crReset();
+  var st=CR_STEPS[CR.step][0],last=CR.step===CR_STEPS.length-1;
+  var h=header({crumbs:'<nav class="crumbs" aria-label="Breadcrumb"><a href="#catalog">Services</a><span>/</span><span>New</span></nav>',title:"Create a service",lede:"Forge makes the repo from a template, starts its CI and adds it to the catalog."});
+  h+='<ol class="stepper">'+CR_STEPS.map(function(s,i){var state=i<CR.step?"done":i===CR.step?"current":"todo",can=i<=CR.max&&i!==CR.step;
+    return '<li class="'+state+'">'+(can?'<button data-action="cw-go" data-step="'+i+'">':'<span'+(i===CR.step?' aria-current="step"':'')+'>')+'<span class="st-n">'+(state==="done"?I.ok:(i+1))+'</span><span class="st-l">'+s[1]+'</span>'+(can?'</button>':'</span>')+'</li>';}).join("")+'</ol>';
+  var body=st==="tpl"?crStepTpl():st==="basics"?crStepBasics():st==="inputs"?crStepInputs():st==="run"?crStepRun():crStepReview();
+  h+='<div class="cw"><form class="cw-main" id="cw-form" novalidate><div class="cw-step-h"><span class="faint">Step '+(CR.step+1)+' of '+CR_STEPS.length+'</span><h2 tabindex="-1" id="cw-title">'+CR_STEPS[CR.step][1]+'</h2></div>'+body+
+    '<div class="cw-foot">'+(CR.step?'<button type="button" class="btn" data-action="cw-back">Back</button>':'<a class="btn btn-ghost" href="#catalog">Cancel</a>')+'<button type="submit" class="btn btn-primary" id="cw-go" data-action="'+(last?"cw-create":"cw-next")+'">'+(last?I.plus+"Create service":"Continue")+'</button></div></form>'+
+    '<aside class="cw-side"><div class="panel"><div class="panel-b cw-sum"><div class="cw-sum-h"><span class="tpl-mark">'+tplOf(CR.tpl).mark+'</span><div><div class="mono" id="cw-s-name" style="font-weight:600">'+esc(crName())+'</div><div class="faint" style="font-size:12.5px">'+CR.tpl+' · <span id="cw-s-team">'+esc(CR.team||"No owner yet")+'</span></div></div></div>'+
+    '<div class="field"><span class="cw-label">From the terminal</span><div class="preview-cli" id="cw-cli">'+crCliHtml()+'</div></div></div></div></aside></div>';
+  return h;
+};
+function crLive(){
+  var c=document.getElementById("cw-cli");if(!c)return;c.innerHTML=crCliHtml();
+  document.getElementById("cw-s-name").textContent=crName();document.getElementById("cw-s-team").textContent=CR.team||"No owner yet";
+  var a=document.getElementById("cw-addr");if(a)a.innerHTML=crAddrHtml();
+  ["replicas","auto","res","env","secrets","crons"].forEach(function(k){var e=document.getElementById("cw-sum-"+k);if(e)e.textContent=crSum(k);});
+}
+function crSet(path,v){var p=path.split("."),o=CR;for(var i=0;i<p.length-1;i++)o=o[p[i]];o[p[p.length-1]]=v;}
+function crValidate(step){
+  var e={},st=CR_STEPS[step][0],r=CR.run,isInt=function(v){return /^\d+$/.test(v)&&+v>=1;};
+  if(st==="basics"){
+    if(!CR.name)e["cw-name"]="Give the service a name.";
+    else if(!/^[a-z][a-z0-9-]{1,38}[a-z0-9]$/.test(CR.name))e["cw-name"]="Use 3 to 40 lowercase letters, digits and hyphens, starting with a letter.";
+    else if(svc(CR.name))e["cw-name"]=CR.name+" already exists in the catalog.";
+    if(!CR.team)e["cw-team"]="Choose the team that owns it.";
+  }
+  if(st==="inputs")(tplOf(CR.tpl).params||[]).forEach(function(p){var m=paramError(p,String(CR.inputs[p.key]===undefined?"":CR.inputs[p.key]).trim());if(m)e["cw-p-"+p.key]=m;});
+  if(st==="run"){
+    if(!isInt(r.replicas))e["cw-rep"]="Enter a whole number of 1 or more.";
+    if(r.auto){if(!isInt(r.min))e["cw-min"]="Whole number, 1 or more.";if(!isInt(r.max))e["cw-max"]="Whole number, 1 or more.";else if(isInt(r.min)&&+r.max<+r.min)e["cw-max"]="Must be at least the minimum.";if(!(+r.cpuTarget>=10&&+r.cpuTarget<=95))e["cw-cpu-t"]="Between 10 and 95.";}
+    r.env.forEach(function(x,i){if(!/^[A-Z_][A-Z0-9_]*$/.test(x[0]))e["cw-env-"+i+"-0"]="Uppercase letters, digits and underscores.";});
+    r.secrets.forEach(function(x,i){if(!/^[A-Z_][A-Z0-9_]*$/.test(x[0]))e["cw-secrets-"+i+"-0"]="Uppercase letters, digits and underscores.";if(!/^op:\/\/[^/]+\/[^/]+\/.+/.test(x[1]))e["cw-secrets-"+i+"-1"]="Use op://vault/item/field.";});
+    r.crons.forEach(function(x,i){if(!/^[a-z][a-z0-9-]*$/.test(x[0]))e["cw-crons-"+i+"-0"]="Lowercase letters, digits and hyphens.";if(!/^\S+( \S+){4}$/.test(x[1]))e["cw-crons-"+i+"-1"]="Five cron fields.";if(!x[2])e["cw-crons-"+i+"-2"]="What should it run?";});
+  }
+  CR.errors=e;return !Object.keys(e).length;
+}
+function crRender(focusTitle){
+  var open={};document.querySelectorAll(".run-sec").forEach(function(d){open[d.dataset.sec]=d.open;});CR.open=Object.assign(CR.open||{},open);
+  render();
+  var bad=Object.keys(CR.errors)[0];
+  if(bad){var el=document.getElementById(bad);if(el){var d=el.closest("details");if(d)d.open=true;el.focus();}}
+  else if(focusTitle){var t=document.getElementById("cw-title");if(t)t.focus();window.scrollTo(0,0);}
+}
+function crGo(step){
+  if(step>CR.step){for(var s=CR.step;s<step;s++)if(!crValidate(s)){CR.step=s;crRender();return;}}
+  CR.errors={};CR.step=step;CR.max=Math.max(CR.max,step);crRender(true);
+}
+function crCreate(){
+  for(var s=0;s<CR_STEPS.length-1;s++)if(!crValidate(s)){CR.step=s;crRender();toast("Fix this step before creating the service");return;}
+  var t=tplOf(CR.tpl),name=CR.name;
+  D.services.unshift({name:name,live:true,team:CR.team,owner:CR.team,life:"Experimental",tpl:t.name,lang:"—",tier:null,status:"creating",desc:t.title+" created from "+t.name+".",
+    env:{staging:["—","Creating","—","creating"],production:["—","Not deployed yet","—","none"]},updated:"Now",registered:"just now",deps:[],res:[],checks:null,slo:null,repo:"github.com/showmino/"+name});
+  D.audit.unshift({t:"Now",actor:"deogratias-saidi",verb:"service create",res:"services/"+name,ctx:"—",ok:true});
+  document.getElementById("nav-svc").textContent=D.services.length;
+  var cmd=crCli().join(" ");CR=null;location.hash="#service-"+name;toast("Creating "+name+". The repo and first build are on their way.",cmd);
+}
 
 V.templates=function(){
   var h=header({title:"Templates",lede:"Golden paths owned by the platform team. CI, tracing and deploy config come with every new service.",cli:"forge template list",actions:'<button class="btn" data-action="toast" data-msg="Template lint passed" data-code="forge template lint ./templates">Lint templates</button>'});
@@ -1103,7 +1431,7 @@ function setRail(min){
 (function(){var v=null;try{v=localStorage.getItem("forge-rail");}catch(e){}setRail(v!=="full");})();
 function route(){
   var h=(location.hash||"#overview").slice(1);
-  var key=h.indexOf("service-")===0?"catalog":h.indexOf("docs-")===0?"docs":h;
+  var key=h.indexOf("service-")===0||h==="create"?"catalog":h.indexOf("docs-")===0?"docs":h;
   if(!V[h]&&h.indexOf("service-")!==0&&h.indexOf("docs-")!==0){h="overview";key="overview";}
   document.querySelectorAll("#nav a").forEach(function(a){if(a.dataset.r===key)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
   return h;
@@ -1116,6 +1444,7 @@ function render(){
   pendingDocPage=false;
   var html=h.indexOf("service-")===0?V.service(h.slice(8)):h.indexOf("docs-")===0?V.docreader(h.slice(5)):V[h]();
   view.innerHTML=html;
+  if(h==="create")crLive();
   if(h!==lastRoute){window.scrollTo(0,0);app.classList.remove("nav-open");}
   lastRoute=h;
 }
@@ -1280,7 +1609,13 @@ document.addEventListener("click",function(e){
     case "team":ui.catTeam=el.dataset.team;render();break;
     case "depf":ui.depFilter=el.dataset.f;render();break;
     case "svctab":ui.svcTab=el.dataset.tab;render();var t=view.querySelector('[data-tab="'+ui.svcTab+'"]');if(t)t.focus();break;
-    case "create":createDrawer(el.dataset.tpl);break;
+    case "create":e.preventDefault();crReset(el.dataset.tpl);if(location.hash==="#create")render();else location.hash="#create";break;
+    case "cw-next":e.preventDefault();crGo(CR.step+1);break;
+    case "cw-back":crGo(CR.step-1);break;
+    case "cw-go":crGo(+el.dataset.step);break;
+    case "cw-create":e.preventDefault();crCreate();break;
+    case "cw-add":var rk=el.dataset.kind;CR.run[rk].push(rk==="crons"?["","",""]:["",""]);CR.open=CR.open||{};CR.open[rk]=true;crRender();var nr=document.getElementById("cw-"+rk+"-"+(CR.run[rk].length-1)+"-0");if(nr)nr.focus();break;
+    case "cw-del":CR.run[el.dataset.kind].splice(+el.dataset.i,1);CR.errors={};crRender();break;
     case "docpage":ui.docPage=+el.dataset.i;render();window.scrollTo(0,0);break;
     case "docpage-link":ui.docPage=+el.dataset.i;pendingDocPage=true;if(location.hash===el.getAttribute("href")){e.preventDefault();render();window.scrollTo(0,0);}break;
     case "toc":var hs=document.querySelectorAll("#doc-article h2");if(hs[+el.dataset.i])hs[+el.dataset.i].scrollIntoView({behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"});break;
@@ -1321,6 +1656,7 @@ document.addEventListener("click",function(e){
 });
 document.addEventListener("input",function(e){
   var id=e.target.id;
+  if(e.target.dataset&&e.target.dataset.cr&&CR){var t=e.target;crSet(t.dataset.cr,t.type==="checkbox"?t.checked:t.dataset.cr==="name"?t.value.trim().toLowerCase():t.value);if(CR.errors[id]){delete CR.errors[id];t.removeAttribute("aria-invalid");var fe=document.getElementById(id+"-err");if(fe)fe.textContent="";}crLive();return;}
   if(id==="cat-q"){ui.catQuery=e.target.value;render();var c=document.getElementById("cat-q");c.focus();c.setSelectionRange(c.value.length,c.value.length);}
   else if(id==="doc-q"){ui.docQuery=e.target.value;render();var dq=document.getElementById("doc-q");dq.focus();dq.setSelectionRange(dq.value.length,dq.value.length);}
   else if(id==="audit-q"){ui.auditQuery=e.target.value;render();var q=document.getElementById("audit-q");q.focus();q.setSelectionRange(q.value.length,q.value.length);}
@@ -1330,8 +1666,8 @@ document.addEventListener("input",function(e){
   else if(id==="ds-in"){document.getElementById("ds-go").disabled=e.target.value!==document.getElementById("ds-go").dataset.env;}
   else if(id&&id.indexOf("cr-")===0){e.target.removeAttribute("aria-invalid");var fe=document.getElementById(id+"-err");if(fe)fe.textContent="";updateCreate();}
 });
-document.addEventListener("change",function(e){if(e.target.id==="ho-env"||e.target.id==="ho-dnsok"){hostCheck();return;}if(e.target.id==="doc-sel"){ui.docPage=+e.target.value;render();window.scrollTo(0,0);return;}if(e.target.id&&e.target.id.indexOf("cr-")===0)updateCreate();});
-document.addEventListener("submit",function(e){e.preventDefault();});
+document.addEventListener("change",function(e){if(CR&&e.target.name==="cw-tpl"){CR.tpl=e.target.value;crDefaults();CR.max=Math.min(CR.max,1);crRender();var r=document.querySelector('input[name="cw-tpl"]:checked');if(r)r.focus();return;}if(CR&&e.target.name==="cw-access"){CR.access=e.target.value;crLive();return;}if(CR&&e.target.dataset&&e.target.dataset.cr){var t=e.target;crSet(t.dataset.cr,t.type==="checkbox"?t.checked:t.value);if(CR.errors[t.id]){delete CR.errors[t.id];t.removeAttribute("aria-invalid");var fe=document.getElementById(t.id+"-err");if(fe)fe.textContent="";}crLive();return;}if(e.target.id==="ho-env"||e.target.id==="ho-dnsok"){hostCheck();return;}if(e.target.id==="doc-sel"){ui.docPage=+e.target.value;render();window.scrollTo(0,0);return;}if(e.target.id&&e.target.id.indexOf("cr-")===0)updateCreate();});
+document.addEventListener("submit",function(e){e.preventDefault();if(e.target.id==="cw-form"){var g=document.getElementById("cw-go");if(g)g.click();}});
 document.addEventListener("keydown",function(e){
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();if(document.getElementById("pal-in"))closeLayer();else openPalette();return;}
   if(e.key==="Escape"&&layer.innerHTML){closeLayer();return;}
