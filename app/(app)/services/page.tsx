@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { usePermissions } from "@/components/app-shell";
 import { useApi } from "@/components/providers";
@@ -19,6 +20,7 @@ const chipOff = "border-line bg-surface text-fg-2 hover:border-fg-3 hover:text-f
 // The catalog: every service, who owns it, and how staging and production are doing.
 export default function Catalog() {
   const api = useApi();
+  const router = useRouter();
   const services = useQuery({ queryKey: ["services"], queryFn: () => listAllServices(api) });
   const deployments = useQuery({
     queryKey: ["deployments"],
@@ -115,11 +117,19 @@ export default function Catalog() {
               ) : null}
               {shown.map((s) => {
                 const id = serviceId(s.name);
+                const href = `/services/${id}`;
                 return (
-                  <tr key={s.name} className={tr}>
+                  <tr
+                    key={s.name}
+                    className={`${tr} cursor-pointer`}
+                    onClick={(e) => {
+                      if ((e.target as HTMLElement).closest("a, button")) return;
+                      router.push(href);
+                    }}
+                  >
                     <td className={td}>
                       <div className="flex min-w-0 flex-col gap-px">
-                        <NameLink href={`/services/${id}`}>{id}</NameLink>
+                        <NameLink href={href}>{id}</NameLink>
                         {s.displayName && s.displayName !== id ? (
                           <span className="text-[12.5px] text-fg-3">{s.displayName}</span>
                         ) : null}

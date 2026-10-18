@@ -196,6 +196,7 @@ beforeEach(() => {
   nav.params = {};
   nav.pathname = "/";
   nav.replace.mockClear();
+  nav.router.push.mockClear();
   signIn();
 });
 afterEach(cleanup);
@@ -210,6 +211,13 @@ describe("the catalog", () => {
     expect(within(row("payments")).getByText("12 min ago")).toBeTruthy();
     // A service that was never deployed says so in both columns.
     expect(within(row("ledger")).getAllByText("Not deployed")).toHaveLength(2);
+  });
+
+  it("goes to the service when its row is clicked, not only its name", async () => {
+    renderWithApi(<Catalog />, forge);
+    await screen.findByRole("link", { name: "payments" });
+    fireEvent.click(row("payments"));
+    expect(nav.router.push).toHaveBeenCalledWith("/services/payments");
   });
 
   it("filters by name or team", async () => {
