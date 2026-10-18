@@ -202,46 +202,41 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("the catalog", () => {
-  it("lists every service with how staging and production are doing", async () => {
+  it("lists every service, trouble first, with what is wrong", async () => {
     renderWithApi(<Catalog />, forge);
     const name = await screen.findByRole("link", { name: "payments" });
     expect(name.getAttribute("href")).toBe("/services/payments");
-    await waitFor(() => expect(within(row("payments")).getByText("Healthy")).toBeTruthy());
-    expect(within(row("payments")).getByText("Degraded")).toBeTruthy();
-    expect(within(row("payments")).getByText("12 min ago")).toBeTruthy();
-    // A service that was never deployed says so in both columns.
-    expect(within(row("ledger")).getAllByText("Not deployed")).toHaveLength(2);
+    // production is degraded: that outranks ledger, which was never deployed.
+    await waitFor(() => expect(within(name).getByText("Degraded in production")).toBeTruthy());
+    expect(within(name).getByText("12 min ago")).toBeTruthy();
+    expect(within(name).getByText("platform-engineering")).toBeTruthy();
+    const links = screen.getAllByRole("link");
+    expect(links.map((l) => l.getAttribute("aria-label"))).toEqual(["payments", "ledger"]);
+    expect(within(screen.getByRole("link", { name: "ledger" })).getByText("Not deployed")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^Needs attention/ }).textContent).toContain("1");
   });
 
-  it("goes to the service when its row is clicked, not only its name", async () => {
+  it("filters by name or team, and names the command that does the same", async () => {
     renderWithApi(<Catalog />, forge);
     await screen.findByRole("link", { name: "payments" });
-    fireEvent.click(row("payments"));
-    expect(nav.router.push).toHaveBeenCalledWith("/services/payments");
-  });
-
-  it("filters by name or team", async () => {
-    renderWithApi(<Catalog />, forge);
-    await screen.findByRole("link", { name: "payments" });
-    fireEvent.change(screen.getByPlaceholderText("Name or team"), { target: { value: "finance" } });
+    expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge service list");
+    fireEvent.change(screen.getByPlaceholderText("Find a service"), { target: { value: "finance" } });
     expect(screen.queryByRole("link", { name: "payments" })).toBeNull();
     expect(screen.getByRole("link", { name: "ledger" })).toBeTruthy();
-    fireEvent.change(screen.getByPlaceholderText("Name or team"), { target: { value: "zzz" } });
+    fireEvent.change(screen.getByPlaceholderText("Find a service"), { target: { value: "zzz" } });
     expect(screen.getByText(/No services match/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+    expect(screen.getByRole("link", { name: "payments" })).toBeTruthy();
   });
 
-  it("filters by team with a chip, and names the command that does the same", async () => {
+  it("shows only what needs attention when that tab is picked", async () => {
     renderWithApi(<Catalog />, forge);
     await screen.findByRole("link", { name: "payments" });
-    const cli = () => screen.getByTitle("Same action from the terminal").textContent;
-    expect(cli()).toContain("forge service list");
-    fireEvent.click(screen.getByRole("button", { name: /^finance/ }));
-    expect(screen.queryByRole("link", { name: "payments" })).toBeNull();
-    expect(screen.getByRole("link", { name: "ledger" })).toBeTruthy();
-    expect(cli()).toContain("forge service list --team finance");
-    expect(screen.getByText("1 service shown.")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: /^All teams/ }));
+    fireEvent.click(screen.getByRole("button", { name: /^Needs attention/ }));
     expect(screen.getByRole("link", { name: "payments" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "ledger" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /^All/ }));
+    expect(screen.getByRole("link", { name: "ledger" })).toBeTruthy();
   });
 
   it("says how to make the first service when there is none", async () => {

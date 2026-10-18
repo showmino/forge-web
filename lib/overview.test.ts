@@ -5,7 +5,7 @@ import { AuditEventSchema } from "@/gen/forge/v1/audit_pb";
 import { Deployment_Health, Deployment_SyncStatus, DeploymentSchema } from "@/gen/forge/v1/deploy_pb";
 import { Environment_State, EnvironmentSchema } from "@/gen/forge/v1/environment_pb";
 import { OperationSchema } from "@/gen/forge/v1/operation_pb";
-import { attention, dayStats, pipelineOf, recentDeploys, segment, shipping, stageOf, STAGES } from "./overview";
+import { attention, dayStats, pipelineOf, recentDeploys, segment, severity, shipping, stageOf, STAGES, worse } from "./overview";
 
 const NOW = new Date(2026, 9, 11, 15, 0, 0);
 const ago = (minutes: number) => timestampFromDate(new Date(NOW.getTime() - minutes * 60_000));
@@ -95,6 +95,30 @@ describe("the day in the audit log", () => {
     ]);
     expect(recent[1].note).toBe("Argo CD did not report the application healthy in 10m0s");
     expect(recent[0].note).toBe("");
+  });
+});
+
+describe("how urgently a deployment needs a look", () => {
+  const dep = (over: object) => create(DeploymentSchema, { commit: "abc1234", health: Deployment_Health.HEALTHY, sync: Deployment_SyncStatus.SYNCED, ...over });
+
+  it("grades a deployment", () => {
+    expect(severity(undefined)).toBe("none");
+    expect(severity(dep({ commit: "" }))).toBe("none");
+    // Missing with no commit is never deployed, not broken: nothing to miss yet.
+    expect(severity(dep({ commit: "", health: Deployment_Health.MISSING }))).toBe("none");
+    expect(severity(dep({}))).toBe("ok");
+    expect(severity(dep({ health: Deployment_Health.PROGRESSING }))).toBe("ok");
+    expect(severity(dep({ sync: Deployment_SyncStatus.OUT_OF_SYNC, health: Deployment_Health.PROGRESSING }))).toBe("ok");
+    expect(severity(dep({ sync: Deployment_SyncStatus.OUT_OF_SYNC }))).toBe("warn");
+    expect(severity(dep({ health: Deployment_Health.DEGRADED }))).toBe("bad");
+    expect(severity(dep({ health: Deployment_Health.MISSING }))).toBe("bad");
+  });
+
+  it("picks the worse of two grades", () => {
+    expect(worse("ok", "bad")).toBe("bad");
+    expect(worse("warn", "none")).toBe("warn");
+    expect(worse("none", "ok")).toBe("ok");
+    expect(worse("ok", "ok")).toBe("ok");
   });
 });
 

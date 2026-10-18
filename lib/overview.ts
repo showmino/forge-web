@@ -139,6 +139,23 @@ export function dayStats(events: AuditEvent[], now = new Date()): DayStats {
   return stats;
 }
 
+// How urgently a deployment needs a look: the same classification attention()
+// gives each deployment, collapsed to one grade instead of a list of reasons.
+export type Severity = "bad" | "warn" | "ok" | "none";
+
+export function severity(d: Deployment | undefined): Severity {
+  if (!d || !d.commit) return "none"; // never deployed there
+  if (d.health === Deployment_Health.DEGRADED || d.health === Deployment_Health.MISSING) return "bad";
+  if (d.sync === Deployment_SyncStatus.OUT_OF_SYNC && d.health !== Deployment_Health.PROGRESSING) return "warn";
+  return "ok";
+}
+
+// severityRank orders grades from most to least urgent: bad, then warn, then ok, then none.
+export const SEVERITY_RANK: Record<Severity, number> = { bad: 0, warn: 1, ok: 2, none: 3 };
+export function worse(a: Severity, b: Severity): Severity {
+  return SEVERITY_RANK[a] <= SEVERITY_RANK[b] ? a : b;
+}
+
 // Something a person should look at, most urgent first.
 export type Attention = {
   key: string;
