@@ -7,7 +7,7 @@ import { StepLog, type Step, useOperation } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
 import { ExtendDialog } from "@/components/service-actions";
 import { Button, ButtonLink, Icon, TextLink } from "@/components/ui/button";
-import { ErrorNote, Loading, PageHeader, Panel, Section } from "@/components/ui/layout";
+import { ErrorNote, Loading, PageHeader, Panel, Widget } from "@/components/ui/layout";
 import { MiniLine, StageLine, Stats } from "@/components/ui/pipeline";
 import { StatusBadge, Tag } from "@/components/ui/status";
 import type { Environment } from "@/gen/forge/v1/environment_pb";
@@ -86,54 +86,52 @@ export default function Overview() {
       />
 
       {running.data && running.data.length > 0 ? (
-        <Section title="In flight" action={<TextLink href="/operations">All operations</TextLink>}>
-          {running.data.slice(0, 3).map((op) => (
-            <Flight key={op.name} op={op} onLanded={landed} />
-          ))}
-          {running.data.length > 3 ? (
-            <p className="text-[13px] text-fg-3">
-              And {running.data.length - 3} more. <TextLink href="/operations">See them all</TextLink>
-            </p>
-          ) : null}
-        </Section>
+        <Widget title="In flight" link={{ href: "/operations", label: "All operations" }}>
+          <div className="flex flex-col gap-4">
+            {running.data.slice(0, 3).map((op) => (
+              <Flight key={op.name} op={op} onLanded={landed} />
+            ))}
+            {running.data.length > 3 ? (
+              <p className="text-[13px] text-fg-3">
+                And {running.data.length - 3} more. <TextLink href="/operations">See them all</TextLink>
+              </p>
+            ) : null}
+          </div>
+        </Widget>
       ) : null}
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 min-[1081px]:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-        <Section title="Needs attention" note={broken || deployments.isPending ? undefined : needs.length}>
+        <Widget title="Needs attention" note={broken || deployments.isPending ? undefined : needs.length}>
           {broken ? (
             <ErrorNote error={broken} />
           ) : deployments.isPending || environments.isPending || audit.isPending ? (
             <Loading what="what needs attention" />
           ) : needs.length === 0 ? (
-            <Panel className="p-6 text-center text-[13.5px] text-fg-2">Nothing needs you right now.</Panel>
+            <p className="py-6 text-center text-[13.5px] text-fg-2">Nothing needs you right now.</p>
           ) : (
-            <Panel>
-              <ul aria-label="Needs attention">
-                {needs.map((a) => (
-                  <AttentionRow key={a.key} item={a} onExtend={setExtending} />
-                ))}
-              </ul>
-            </Panel>
+            <ul aria-label="Needs attention">
+              {needs.map((a) => (
+                <AttentionRow key={a.key} item={a} onExtend={setExtending} />
+              ))}
+            </ul>
           )}
-        </Section>
+        </Widget>
 
-        <Section title="Recent deploys" action={<TextLink href="/audit">History</TextLink>}>
+        <Widget title="Recent deploys" link={{ href: "/audit", label: "History" }}>
           {audit.error ? (
             <ErrorNote error={audit.error} />
           ) : audit.isPending ? (
             <Loading what="recent deploys" />
           ) : recent.length === 0 ? (
-            <Panel className="p-6 text-center text-[13.5px] text-fg-2">No deploy has ended in the last 24 hours.</Panel>
+            <p className="py-6 text-center text-[13.5px] text-fg-2">No deploy has ended in the last 24 hours.</p>
           ) : (
-            <Panel>
-              <ul aria-label="Recent deploys">
-                {recent.slice(0, 6).map((r) => (
-                  <RecentRow key={r.key} deploy={r} />
-                ))}
-              </ul>
-            </Panel>
+            <ul aria-label="Recent deploys">
+              {recent.slice(0, 6).map((r) => (
+                <RecentRow key={r.key} deploy={r} />
+              ))}
+            </ul>
           )}
-        </Section>
+        </Widget>
       </div>
 
       {extending ? (
@@ -150,7 +148,7 @@ export default function Overview() {
   );
 }
 
-const row = "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-t border-line px-4 py-[11px] first:border-t-0";
+const row = "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-t border-line py-[11px] first:border-t-0";
 
 function AttentionRow({ item, onExtend }: { item: Attention; onExtend: (e: Environment) => void }) {
   // Only a preview is extended from here; its service decides who may.

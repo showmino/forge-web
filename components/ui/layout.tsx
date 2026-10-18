@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { errorText } from "@/lib/api";
+import { TextLink } from "./button";
 import { Cli } from "./cli";
 import { Glyph } from "./status";
 
@@ -74,6 +75,37 @@ export function Section({
 // Panel sits on a 1px line with a faint shadow. Only dialogs float.
 export function Panel({ children, className = "" }: { children: ReactNode; className?: string }) {
   return <div className={`min-w-0 rounded-lg border border-line bg-surface shadow-1 ${className}`}>{children}</div>;
+}
+
+// Widget is a self-contained card: title (and an optional note or a link to
+// the full page) inside the same border as its content. For a dashboard of
+// several at-a-glance summaries side by side, where Section's title floating
+// above a separate Panel would read as more than one thing per summary.
+export function Widget({
+  title,
+  note,
+  link,
+  children,
+}: {
+  title: string;
+  note?: ReactNode;
+  link?: { href: string; label: string };
+  children: ReactNode;
+}) {
+  return (
+    <section className="flex min-w-0 flex-col rounded-lg border border-line bg-surface shadow-1">
+      <div className="flex flex-wrap items-baseline gap-3 px-6 pt-4 pb-3">
+        <h2 className="type-heading">{title}</h2>
+        {note !== undefined ? <span className="text-[13px] text-fg-3 tabular-nums">{note}</span> : null}
+        {link ? (
+          <TextLink href={link.href} className="ml-auto text-[12.5px] text-fg-2">
+            {link.label}
+          </TextLink>
+        ) : null}
+      </div>
+      <div className="min-w-0 px-6 pb-6">{children}</div>
+    </section>
+  );
 }
 
 // TableFrame scrolls sideways on its own when the screen is narrow; the page never does.
