@@ -1,33 +1,54 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { usePermissions } from "@/components/app-shell";
 import { useApi } from "@/components/providers";
-import { ButtonLink, Icon, NameLink } from "@/components/ui/button";
-import { Empty, ErrorNote, Loading, PageHeader, TableFrame, td, th, tr } from "@/components/ui/layout";
-import { Life, StatusBadge } from "@/components/ui/status";
-import type { Deployment } from "@/gen/forge/v1/deploy_pb";
+import { ButtonLink, Icon } from "@/components/ui/button";
+import { Empty, ErrorNote, Loading, PageHeader } from "@/components/ui/layout";
+import { Deployment_Health, type Deployment } from "@/gen/forge/v1/deploy_pb";
 import { listAllServices, serviceId } from "@/lib/api";
 import { when } from "@/lib/format";
-import { deploymentStatus } from "@/lib/status";
+import { SEVERITY_RANK, severity, worse, type Severity } from "@/lib/overview";
 
-const chip =
-  "cursor-pointer rounded-full border px-[11px] py-1 text-[13px] aria-pressed:border-fg aria-pressed:bg-fg aria-pressed:text-bg";
-const chipOff = "border-line bg-surface text-fg-2 hover:border-fg-3 hover:text-fg";
+type View = "all" | "attention";
+
+const dotColor: Record<Severity, string> = {
+  bad: "bg-bad-dot",
+  warn: "bg-warn-dot",
+  ok: "bg-ok-dot",
+  none: "bg-transparent shadow-[inset_0_0_0_1.5px_var(--fg-3)]",
+};
+const noteColor: Record<"bad" | "warn" | "muted", string> = { bad: "text-bad-fg", warn: "text-warn-fg", muted: "text-fg-3" };
+
+// What a row says under the name: the worse environment's trouble, in
+// production before staging, or that it was never deployed. Nothing when
+// both environments are healthy.
+function note(prod: Deployment | undefined, prodSev: Severity, staging: Deployment | undefined, stagingSev: Severity) {
+  const trouble = (d: Deployment | undefined, env: string) => ({
+    text: `${d?.health === Deployment_Health.MISSING ? "Not running" : "Degraded"} in ${env}`,
+    tone: "bad" as const,
+  });
+  const stale = (env: string) => ({ text: `Out of sync in ${env}`, tone: "warn" as const });
+  if (prodSev === "bad") return trouble(prod, "production");
+  if (stagingSev === "bad") return trouble(staging, "staging");
+  if (prodSev === "warn") return stale("production");
+  if (stagingSev === "warn") return stale("staging");
+  if (prodSev === "none") return { text: "Not deployed", tone: "muted" as const };
+  return null;
+}
 
 // The catalog: every service, who owns it, and how staging and production are doing.
 export default function Catalog() {
   const api = useApi();
-  const router = useRouter();
   const services = useQuery({ queryKey: ["services"], queryFn: () => listAllServices(api) });
   const deployments = useQuery({
     queryKey: ["deployments"],
     queryFn: () => api.deploys.listDeployments({}).then((r) => r.deployments),
   });
-  const [filter, setFilter] = useState("");
-  const [team, setTeam] = useState("");
+  const [query, setQuery] = useState("");
+  const [view, setView] = useState<View>("all");
   const canCreate = usePermissions().can("service.create");
 
   const byEnv = useMemo(() => {
@@ -36,22 +57,31 @@ export default function Catalog() {
     return m;
   }, [deployments.data]);
 
-  const all = services.data ?? [];
-  const teams = [...new Set(all.map((s) => s.ownerTeam).filter(Boolean))].sort();
-  const needle = filter.trim().toLowerCase();
-  const shown = all.filter(
-    (s) =>
-      (!team || s.ownerTeam === team) &&
-      (!needle || `${serviceId(s.name)} ${s.displayName} ${s.ownerTeam} ${s.owners.join(" ")}`.toLowerCase().includes(needle)),
-  );
+  // services.data ?? [] would make a new array every render; memoize so rows below doesn't recompute for nothing.
+  const all = useMemo(() => services.data ?? [], [services.data]);
+  // Loading shows every service as fine rather than flash "not deployed" for all of them.
+  const pending = deployments.isPending;
+  const rows = useMemo(() => {
+    return all.map((s) => {
+      const id = serviceId(s.name);
+      const prod = byEnv.get(`${s.name}/production`);
+      const staging = byEnv.get(`${s.name}/staging`);
+      const prodSev = pending ? "ok" : severity(prod);
+      const stagingSev = pending ? "ok" : severity(staging);
+      return { s, id, hot: worse(prodSev, stagingSev), note: note(prod, prodSev, staging, stagingSev) };
+    });
+  }, [all, byEnv, pending]);
+  const hot = rows.filter((r) => r.hot === "bad" || r.hot === "warn").length;
+
+  const needle = query.trim().toLowerCase();
+  const shown = rows
+    .filter((r) => !needle || `${r.id} ${r.s.displayName} ${r.s.ownerTeam} ${r.s.owners.join(" ")}`.toLowerCase().includes(needle))
+    .filter((r) => view === "all" || r.hot === "bad" || r.hot === "warn")
+    .sort((a, b) => SEVERITY_RANK[a.hot] - SEVERITY_RANK[b.hot] || a.id.localeCompare(b.id));
 
   return (
     <>
-      <PageHeader
-        title="Services"
-        lead="Every service in the catalog, and how its environments are doing."
-        cli={team ? `forge service list --team ${team}` : "forge service list"}
-      >
+      <PageHeader title="Services" lead="Everything you run, and whether it is healthy." cli="forge service list">
         {canCreate ? (
           <ButtonLink kind="primary" href="/create">
             <Icon name="plus" />
@@ -68,97 +98,76 @@ export default function Catalog() {
         <Empty>No services yet. {canCreate ? "Create the first one from a template." : "Members of a team create one from a template."}</Empty>
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-2">
-            <label htmlFor="service-filter" className="sr-only">
-              Filter services
-            </label>
-            <input
-              id="service-filter"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              placeholder="Name or team"
-              className="w-full max-w-[260px] rounded-md border border-line-strong bg-surface px-2.5 py-[7px] text-[13.5px] text-fg placeholder:text-fg-3"
-            />
-            <button type="button" className={`${chip} ${team ? chipOff : ""}`} aria-pressed={!team} onClick={() => setTeam("")}>
-              All teams <span className="font-mono text-[11.5px] opacity-80">{all.length}</span>
-            </button>
-            {teams.map((t) => (
+          {deployments.error ? <ErrorNote error={deployments.error} /> : null}
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div role="group" aria-label="Show" className="flex gap-6">
               <button
-                key={t}
                 type="button"
-                className={`${chip} ${team === t ? "" : chipOff}`}
-                aria-pressed={team === t}
-                onClick={() => setTeam(team === t ? "" : t)}
+                className={`border-b-2 py-1.5 text-[14px] ${view === "all" ? "border-fg text-fg" : "border-transparent text-fg-3 hover:text-fg"}`}
+                aria-pressed={view === "all"}
+                onClick={() => setView("all")}
               >
-                {t}{" "}
-                <span className="font-mono text-[11.5px] opacity-80">{all.filter((s) => s.ownerTeam === t).length}</span>
+                All <span className="ml-1 text-[12px] text-fg-3">{all.length}</span>
               </button>
-            ))}
+              <button
+                type="button"
+                className={`border-b-2 py-1.5 text-[14px] ${view === "attention" ? "border-fg text-fg" : "border-transparent text-fg-3 hover:text-fg"}`}
+                aria-pressed={view === "attention"}
+                onClick={() => setView("attention")}
+              >
+                Needs attention <span className={`ml-1 text-[12px] ${hot ? "font-semibold text-bad-fg" : "text-fg-3"}`}>{hot}</span>
+              </button>
+            </div>
+            <label className="flex-1 min-[861px]:flex-none">
+              <span className="sr-only">Find a service</span>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Find a service"
+                className="w-full rounded-md border border-line-strong bg-surface px-2.5 py-[7px] text-[13.5px] text-fg placeholder:text-fg-3 min-[861px]:w-[240px]"
+              />
+            </label>
           </div>
 
-          <TableFrame label="Services">
-            <thead>
-              <tr>
-                <th className={th}>Service</th>
-                <th className={th}>Team</th>
-                <th className={th}>Lifecycle</th>
-                <th className={th}>Staging</th>
-                <th className={th}>Production</th>
-                <th className={th}>Updated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className={`${td} text-fg-3`}>
-                    No services match. Clear the filter or pick another team.
-                  </td>
-                </tr>
-              ) : null}
-              {shown.map((s) => {
-                const id = serviceId(s.name);
-                const href = `/services/${id}`;
-                return (
-                  <tr
-                    key={s.name}
-                    className={`${tr} cursor-pointer`}
-                    onClick={(e) => {
-                      if ((e.target as HTMLElement).closest("a, button")) return;
-                      router.push(href);
-                    }}
+          {shown.length === 0 ? (
+            <p className="text-fg-2">
+              No services match.{" "}
+              <button
+                type="button"
+                className="cursor-pointer text-ember-ink underline"
+                onClick={() => {
+                  setQuery("");
+                  setView("all");
+                }}
+              >
+                Clear
+              </button>
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2.5">
+              {shown.map(({ s, id, hot: rowHot, note: rowNote }) => (
+                <li key={s.name}>
+                  <Link
+                    href={`/services/${id}`}
+                    aria-label={id}
+                    className="grid min-h-[68px] grid-cols-[8px_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 rounded-lg border border-line bg-surface px-5 py-[18px] no-underline shadow-1 transition-colors hover:border-line-strong min-[861px]:grid-cols-[8px_190px_minmax(0,1fr)_170px_96px]"
                   >
-                    <td className={td}>
-                      <div className="flex min-w-0 flex-col gap-px">
-                        <NameLink href={href}>{id}</NameLink>
-                        {s.displayName && s.displayName !== id ? (
-                          <span className="text-[12.5px] text-fg-3">{s.displayName}</span>
-                        ) : null}
-                      </div>
-                    </td>
-                    <td className={td}>{s.ownerTeam || "–"}</td>
-                    <td className={td}>
-                      <Life lifecycle={s.lifecycle} />
-                    </td>
-                    {(["staging", "production"] as const).map((env) => (
-                      <td key={env} className={td}>
-                        {deployments.isPending ? (
-                          <span className="text-fg-3">…</span>
-                        ) : deployments.error ? (
-                          <span className="text-fg-3">Not known</span>
-                        ) : (
-                          <StatusBadge status={deploymentStatus(byEnv.get(`${s.name}/${env}`))} />
-                        )}
-                      </td>
-                    ))}
-                    <td className={`${td} text-fg-3`}>{when(s.updateTime)}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </TableFrame>
-          <p className="text-[12.5px] text-fg-3">
-            {shown.length} {shown.length === 1 ? "service" : "services"} shown.
-          </p>
+                    <span aria-hidden="true" className={`h-2 w-2 rounded-full ${dotColor[rowHot]}`} />
+                    <span className="col-start-2 truncate font-mono text-[15.5px] font-semibold">{id}</span>
+                    <span className="col-span-2 col-start-2 row-start-2 min-w-0 truncate min-[861px]:col-span-1 min-[861px]:col-start-3 min-[861px]:row-start-1">
+                      {rowNote ? (
+                        <span className={`text-[12.5px] font-medium ${noteColor[rowNote.tone]}`}>{rowNote.text}</span>
+                      ) : s.displayName && s.displayName !== id ? (
+                        <span className="text-[13.5px] text-fg-3">{s.displayName}</span>
+                      ) : null}
+                    </span>
+                    <span className="col-start-3 row-start-1 hidden truncate text-[13px] text-fg-2 min-[861px]:col-start-4 min-[861px]:block">{s.ownerTeam || "–"}</span>
+                    <span className="col-start-3 row-start-1 whitespace-nowrap text-right text-[13px] text-fg-3 min-[861px]:col-start-5">{when(s.updateTime)}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       )}
     </>
