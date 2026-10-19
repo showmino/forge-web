@@ -4,9 +4,10 @@ import { Code } from "@connectrpc/connect";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useApi } from "@/components/providers";
-import { Empty, ErrorNote, Loading, PageHeader } from "@/components/ui/layout";
+import { NameLink } from "@/components/ui/button";
+import { Empty, ErrorNote, Loading, PageHeader, Panel, TableFrame, td, th, tr } from "@/components/ui/layout";
 import { Marked } from "@/components/ui/marked";
 import type { DocSearchResult } from "@/gen/forge/v1/docs_pb";
 import { isCode, serviceId } from "@/lib/api";
@@ -47,7 +48,7 @@ export default function Docs() {
     <>
       <PageHeader
         title="Docs"
-        lead="Docs live in each service's repo, next to the code, under docs/. Forge reads them from the default branch: a change shows here within a minute of its merge."
+        lead="Every service's documentation in one place, read straight from its repo: what it does, how to run it, what to do when it breaks."
         cli={searching ? `forge docs search ${query}` : "forge docs list"}
       />
       {sets.isPending ? (
@@ -76,32 +77,51 @@ export default function Docs() {
             />
           </div>
           {searching ? <SearchResults query={query} result={found} /> : null}
+          {searching ? null : <HowDocsWork />}
           {searching && shown.length > 0 ? <h2 className="type-heading mt-2">Services</h2> : null}
           {shown.length === 0 ? (
             searching ? null : <p className="text-fg-3">No docs match. Clear the search.</p>
           ) : (
-            <ul aria-label="Docs" className="grid grid-cols-[repeat(auto-fill,minmax(270px,1fr))] gap-4">
-              {shown.map((d) => {
-                const id = serviceId(d.service);
-                return (
-                  <li key={d.service}>
-                    <Link
-                      href={docHref(id, START)}
-                      className="flex h-full flex-col gap-2 rounded-lg border border-line bg-surface px-5 py-4 text-fg no-underline shadow-1 hover:border-line-strong"
-                    >
-                      <span className="font-mono text-[14.5px] font-semibold">{id}</span>
-                      <span className="mt-auto flex flex-wrap gap-x-4 gap-y-1 pt-2 text-[12.5px] text-fg-3">
-                        <span>
-                          {d.pageCount} {d.pageCount === 1 ? "page" : "pages"}
-                        </span>
-                        {d.ownerTeam ? <span>{d.ownerTeam}</span> : null}
-                        <span>Changed {when(d.changeTime)}</span>
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+            <>
+              <TableFrame label="Docs">
+                <thead>
+                  <tr>
+                    <th className={th}>Service</th>
+                    <th className={th}>Team</th>
+                    <th className={th}>Pages</th>
+                    <th className={th}>Changed</th>
+                    <th className={`${th} relative`}>
+                      <span className="sr-only">Read</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shown.map((d) => {
+                    const id = serviceId(d.service);
+                    return (
+                      <tr key={d.service} className={tr}>
+                        <td className={td}>
+                          <NameLink href={docHref(id, START)}>{id}</NameLink>
+                        </td>
+                        <td className={`${td} text-fg-2`}>{d.ownerTeam || "–"}</td>
+                        <td className={`${td} text-fg-2`}>{d.pageCount}</td>
+                        <td className={`${td} text-fg-2`}>{when(d.changeTime)}</td>
+                        <td className={`${td} w-0 text-right`}>
+                          <Link href={docHref(id, START)} className="text-[13px] text-info-fg no-underline hover:underline" aria-label={`Read the docs of ${id}`}>
+                            Read →
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </TableFrame>
+              <p className="text-[12.5px] text-fg-3">
+                {shown.length === sets.data.length
+                  ? `${sets.data.length} ${sets.data.length === 1 ? "service has" : "services have"} docs.`
+                  : `${shown.length} of ${sets.data.length} services with docs shown.`}
+              </p>
+            </>
           )}
         </>
       )}
@@ -175,5 +195,48 @@ function SearchResults({
         </p>
       ) : null}
     </section>
+  );
+}
+
+// HowDocsWork says, in three steps, how a service gets docs here.
+function HowDocsWork() {
+  const code = "font-mono text-[12.5px] text-fg";
+  const steps: [title: string, body: ReactNode][] = [
+    [
+      "Write",
+      <>
+        Markdown under <span className={code}>docs/</span> in the service&apos;s repo, next to the code.{" "}
+        <span className={code}>docs/index.md</span> is the start page. Tables, code, images and{" "}
+        <span className={code}>mermaid</span> diagrams work.
+      </>,
+    ],
+    [
+      "Merge",
+      <>Forge reads the default branch as it is: a merged change shows here, and in search, within a minute. Nothing to build or publish.</>,
+    ],
+    [
+      "Check",
+      <>
+        <span className={code}>forge docs lint</span> in the repo finds broken links and missing pages before a push. A{" "}
+        <span className={code}>docs:</span> list in forge.yaml sets the order and titles.
+      </>,
+    ],
+  ];
+  return (
+    <Panel className="p-0">
+      <section aria-label="How docs work" className="grid grid-cols-1 min-[861px]:grid-cols-3">
+        {steps.map(([title, body], i) => (
+          <div key={title} className="flex gap-3 border-line px-5 py-4 [&:not(:first-child)]:border-t min-[861px]:[&:not(:first-child)]:border-l min-[861px]:[&:not(:first-child)]:border-t-0">
+            <span aria-hidden="true" className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ember-soft font-mono text-[12px] font-semibold text-ember-ink">
+              {i + 1}
+            </span>
+            <div className="flex min-w-0 flex-col gap-1">
+              <h2 className="type-body-strong">{title}</h2>
+              <p className="text-[13px] leading-[1.55] text-fg-2">{body}</p>
+            </div>
+          </div>
+        ))}
+      </section>
+    </Panel>
   );
 }
