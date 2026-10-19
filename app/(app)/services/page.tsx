@@ -1,26 +1,53 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { usePermissions } from "@/components/app-shell";
 import { useApi } from "@/components/providers";
-import { ButtonLink, Icon } from "@/components/ui/button";
-import { Empty, ErrorNote, Loading, PageHeader } from "@/components/ui/layout";
+import { ButtonLink, Icon, NameLink } from "@/components/ui/button";
+import { Empty, ErrorNote, Loading, PageHeader, TableFrame, td, th, tr } from "@/components/ui/layout";
 import { Life, StatusBadge } from "@/components/ui/status";
-import type { Deployment } from "@/gen/forge/v1/deploy_pb";
+import { Deployment_Health, type Deployment } from "@/gen/forge/v1/deploy_pb";
 import { listAllServices, serviceId } from "@/lib/api";
 import { when } from "@/lib/format";
-import { SEVERITY_RANK, severity, worse } from "@/lib/overview";
+import { SEVERITY_RANK, severity, worse, type Severity } from "@/lib/overview";
 import { deploymentStatus } from "@/lib/status";
 
 type View = "all" | "attention";
 
-const grid = "min-[861px]:grid-cols-[minmax(0,1.3fr)_130px_120px_120px_150px_100px]";
+const statusText: Record<Severity, string> = {
+  bad: "text-bad-fg font-medium",
+  warn: "text-warn-fg font-medium",
+  ok: "text-fg-2 font-medium",
+  none: "text-fg-3",
+};
+
+// The status column: the worse environment's trouble, in production before
+// staging, that it was never deployed, or that it is healthy.
+function statusOf(
+  prod: Deployment | undefined,
+  prodSev: Severity,
+  staging: Deployment | undefined,
+  stagingSev: Severity,
+): { text: string; tone: Severity } {
+  const trouble = (d: Deployment | undefined, env: string) => ({
+    text: `${d?.health === Deployment_Health.MISSING ? "Not running" : "Degraded"} in ${env}`,
+    tone: "bad" as const,
+  });
+  const stale = (env: string) => ({ text: `Out of sync in ${env}`, tone: "warn" as const });
+  if (prodSev === "bad") return trouble(prod, "production");
+  if (stagingSev === "bad") return trouble(staging, "staging");
+  if (prodSev === "warn") return stale("production");
+  if (stagingSev === "warn") return stale("staging");
+  if (prodSev === "none") return { text: "Not deployed", tone: "none" };
+  return { text: "Healthy", tone: "ok" };
+}
 
 // The catalog: every service, who owns it, and how staging and production are doing.
 export default function Catalog() {
   const api = useApi();
+  const router = useRouter();
   const services = useQuery({ queryKey: ["services"], queryFn: () => listAllServices(api) });
   const deployments = useQuery({
     queryKey: ["deployments"],
@@ -47,7 +74,7 @@ export default function Catalog() {
       const staging = byEnv.get(`${s.name}/staging`);
       const prodSev = pending ? "ok" : severity(prod);
       const stagingSev = pending ? "ok" : severity(staging);
-      return { s, id, prod, staging, hot: worse(prodSev, stagingSev) };
+      return { s, id, prod, staging, hot: worse(prodSev, stagingSev), status: statusOf(prod, prodSev, staging, stagingSev) };
     });
   }, [all, byEnv, pending]);
   const hot = rows.filter((r) => r.hot === "bad" || r.hot === "warn").length;
@@ -123,39 +150,53 @@ export default function Catalog() {
               </button>
             </p>
           ) : (
-            <>
-              <div aria-hidden="true" className={`hidden gap-x-4 px-5 text-[11.5px] font-semibold uppercase tracking-wide text-fg-3 min-[861px]:grid ${grid}`}>
-                <span>Name</span>
-                <span>Lifecycle</span>
-                <span>Staging</span>
-                <span>Production</span>
-                <span>Team</span>
-                <span className="text-right">Updated</span>
-              </div>
-              <ul className="flex flex-col gap-2.5">
-                {shown.map(({ s, id, prod, staging }) => (
-                  <li key={s.name}>
-                    <Link
-                      href={`/services/${id}`}
-                      aria-label={id}
-                      className={`grid min-h-[72px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 rounded-lg border border-line bg-surface px-5 py-[18px] no-underline shadow-1 transition-colors hover:border-line-strong ${grid}`}
+            <TableFrame label="Services">
+              <thead>
+                <tr>
+                  <th className={th}>Service</th>
+                  <th className={th}>Status</th>
+                  <th className={th}>Lifecycle</th>
+                  <th className={th}>Staging</th>
+                  <th className={th}>Production</th>
+                  <th className={th}>Team</th>
+                  <th className={th}>Updated</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shown.map(({ s, id, prod, staging, status: rowStatus }) => {
+                  const href = `/services/${id}`;
+                  return (
+                    <tr
+                      key={s.name}
+                      className={`${tr} cursor-pointer`}
+                      onClick={(e) => {
+                        if ((e.target as HTMLElement).closest("a, button")) return;
+                        router.push(href);
+                      }}
                     >
-                      <span className="col-start-1 row-start-1 flex min-w-0 flex-col gap-0.5">
-                        <span className="truncate font-mono text-[15.5px] font-semibold">{id}</span>
-                        {s.displayName && s.displayName !== id ? <span className="truncate text-[13px] text-fg-3">{s.displayName}</span> : null}
-                      </span>
-                      <span className="col-span-2 col-start-1 row-start-2 flex flex-wrap items-center gap-x-4 gap-y-1 min-[861px]:contents">
+                      <td className={td}>
+                        <div className="flex min-w-0 flex-col gap-px">
+                          <NameLink href={href}>{id}</NameLink>
+                          {s.displayName && s.displayName !== id ? <span className="text-[12.5px] text-fg-3">{s.displayName}</span> : null}
+                        </div>
+                      </td>
+                      <td className={`${td} text-[13px] ${statusText[rowStatus.tone]}`}>{rowStatus.text}</td>
+                      <td className={td}>
                         <Life lifecycle={s.lifecycle} />
+                      </td>
+                      <td className={td}>
                         <StatusBadge status={deploymentStatus(staging)} />
+                      </td>
+                      <td className={td}>
                         <StatusBadge status={deploymentStatus(prod)} />
-                        <span className="truncate text-[13px] text-fg-2">{s.ownerTeam || "–"}</span>
-                      </span>
-                      <span className="col-start-2 row-start-1 whitespace-nowrap text-right text-[13px] text-fg-3 min-[861px]:col-start-6">{when(s.updateTime)}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </>
+                      </td>
+                      <td className={td}>{s.ownerTeam || "–"}</td>
+                      <td className={`${td} text-fg-3`}>{when(s.updateTime)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </TableFrame>
           )}
         </>
       )}
