@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { diagramSource, docHref, docPathOf, type HastNode, headingsOf, marked, pageTree, resolve, searchTerms, stripFrontMatter } from "./docs";
+import { diagramSource, plainLine, docHref, docPathOf, type HastNode, headingsOf, marked, pageTree, resolve, searchTerms, stripFrontMatter } from "./docs";
 
 describe("the side menu", () => {
   it("groups pages by folder, in the order of the pages", () => {
@@ -114,5 +114,20 @@ describe("diagrams", () => {
     expect(diagramSource(block(["language-mermaid"]))).toBe("graph TD\n  a-->b\n");
     expect(diagramSource(block(["hljs", "language-go"]))).toBeNull();
     expect(diagramSource(undefined)).toBeNull();
+  });
+});
+
+describe("found lines", () => {
+  it("are shown without the Markdown they start with", () => {
+    expect(["## Refunds stuck", "- Restart it", "1. First", "- [x] done", "> quoted", "  * nested", "#hashtag", "plain"].map(plainLine)).toEqual([
+      "Refunds stuck",
+      "Restart it",
+      "First",
+      "done",
+      "quoted",
+      "nested",
+      "#hashtag",
+      "plain",
+    ]);
   });
 });

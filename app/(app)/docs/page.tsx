@@ -3,12 +3,14 @@
 import { Code } from "@connectrpc/connect";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useApi } from "@/components/providers";
 import { Empty, ErrorNote, Loading, PageHeader } from "@/components/ui/layout";
+import { Marked } from "@/components/ui/marked";
 import type { DocSearchResult } from "@/gen/forge/v1/docs_pb";
 import { isCode, serviceId } from "@/lib/api";
-import { docHref, marked, searchTerms, START } from "@/lib/docs";
+import { docHref, plainLine, searchTerms, START } from "@/lib/docs";
 import { when } from "@/lib/format";
 
 // Searches start once the reader has typed this much, and has stopped for a moment.
@@ -20,8 +22,10 @@ const PAUSE_MS = 250;
 // team and searches the pages of all of them.
 export default function Docs() {
   const api = useApi();
-  const [text, setText] = useState("");
-  const [query, setQuery] = useState("");
+  // ?q= starts with a search, as the command palette's "Search all docs" does.
+  const asked = useSearchParams().get("q")?.slice(0, 200) ?? "";
+  const [text, setText] = useState(asked);
+  const [query, setQuery] = useState(asked.trim());
   useEffect(() => {
     const t = setTimeout(() => setQuery(text.trim()), PAUSE_MS);
     return () => clearTimeout(t);
@@ -153,7 +157,7 @@ function SearchResults({
                         <span key={l.number} className="flex gap-2 text-[13px] text-fg-2">
                           <span className="w-8 shrink-0 text-right font-mono text-[11.5px] leading-[19px] text-fg-3">{l.number}</span>
                           <span className="min-w-0 break-words">
-                            <Marked text={l.text} terms={terms} />
+                            <Marked text={plainLine(l.text)} terms={terms} />
                           </span>
                         </span>
                       ))}
@@ -171,21 +175,5 @@ function SearchResults({
         </p>
       ) : null}
     </section>
-  );
-}
-
-function Marked({ text, terms }: { text: string; terms: string[] }) {
-  return (
-    <>
-      {marked(text, terms).map((p, i) =>
-        p.hit ? (
-          <mark key={i} className="rounded-[3px] bg-ember-soft px-0.5 text-ember-ink">
-            {p.text}
-          </mark>
-        ) : (
-          <span key={i}>{p.text}</span>
-        ),
-      )}
-    </>
   );
 }

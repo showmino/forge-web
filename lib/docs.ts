@@ -153,3 +153,9 @@ export function marked(text: string, terms: string[]): { text: string; hit: bool
     .filter((part) => part !== "")
     .map((part) => ({ text: part, hit: terms.includes(part.toLowerCase()) }));
 }
+
+// plainLine drops the Markdown a found line starts with (a heading's #, a
+// list's - or 1., a task box, a quote's >), to show it as text.
+export function plainLine(text: string): string {
+  return text.replace(/^\s*(?:#{1,6}\s+|>\s*|(?:[-*+]|\d+[.)])\s+(?:\[[ xX]\]\s+)?)/, "");
+}
