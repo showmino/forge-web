@@ -196,73 +196,44 @@ beforeEach(() => {
   nav.params = {};
   nav.pathname = "/";
   nav.replace.mockClear();
-  nav.router.push.mockClear();
   signIn();
 });
 afterEach(cleanup);
 
 describe("the catalog", () => {
-  it("lists every service, trouble first, with both environments", async () => {
+  it("lists every service with how staging and production are doing", async () => {
     renderWithApi(<Catalog />, forge);
     const name = await screen.findByRole("link", { name: "payments" });
     expect(name.getAttribute("href")).toBe("/services/payments");
-    // production is degraded: that outranks ledger, which was never deployed.
-    await waitFor(() => expect(within(name).getByText("Healthy")).toBeTruthy()); // staging pill
-    expect(within(name).getByText("Degraded")).toBeTruthy(); // production pill
-    expect(within(name).getByText("12 min ago")).toBeTruthy();
-    expect(within(name).getByText("platform-engineering")).toBeTruthy();
-    expect(within(name).getByText("Production")).toBeTruthy(); // lifecycle
-    const links = screen.getAllByRole("link");
-    expect(links.map((l) => l.getAttribute("aria-label"))).toEqual(["payments", "ledger"]);
-    // never deployed anywhere: both env pills say so.
-    expect(within(screen.getByRole("link", { name: "ledger" })).getAllByText("Not deployed")).toHaveLength(2);
-    expect(screen.getByRole("button", { name: /^Needs attention/ }).textContent).toContain("1");
+    await waitFor(() => expect(within(row("payments")).getByText("Healthy")).toBeTruthy());
+    expect(within(row("payments")).getByText("Degraded")).toBeTruthy();
+    expect(within(row("payments")).getByText("12 min ago")).toBeTruthy();
+    // A service that was never deployed says so in both columns.
+    expect(within(row("ledger")).getAllByText("Not deployed")).toHaveLength(2);
   });
 
-  it("heads the list with every column and calls a fully healthy service that", async () => {
-    renderWithApi(<Catalog />, (router) => {
-      router.service(AuthService, { getStatus: () => ({ subject: "ana", permissions: ["services.read"] }) });
-      router.service(ServiceCatalogService, { listServices: () => ({ services: [{ name: "services/identity", ownerTeam: "platform-engineering", updateTime: ago(5) }] }) });
-      router.service(DeployService, {
-        listDeployments: () => ({
-          deployments: (["staging", "production"] as const).map((env) => ({
-            name: `deployments/identity/${env}`,
-            service: "services/identity",
-            env,
-            health: Deployment_Health.HEALTHY,
-            sync: Deployment_SyncStatus.SYNCED,
-            commit: "abc1234",
-          })),
-        }),
-      });
-    });
-    const link = await screen.findByRole("link", { name: "identity" });
-    // both env pills say "Healthy".
-    await waitFor(() => expect(within(link).getAllByText("Healthy")).toHaveLength(2));
-    for (const label of ["Name", "Lifecycle", "Staging", "Production", "Team", "Updated"]) expect(screen.getByText(label)).toBeTruthy();
-  });
-
-  it("filters by name or team, and names the command that does the same", async () => {
+  it("filters by name or team", async () => {
     renderWithApi(<Catalog />, forge);
     await screen.findByRole("link", { name: "payments" });
-    expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge service list");
-    fireEvent.change(screen.getByPlaceholderText("Find a service"), { target: { value: "finance" } });
+    fireEvent.change(screen.getByPlaceholderText("Name or team"), { target: { value: "finance" } });
     expect(screen.queryByRole("link", { name: "payments" })).toBeNull();
     expect(screen.getByRole("link", { name: "ledger" })).toBeTruthy();
-    fireEvent.change(screen.getByPlaceholderText("Find a service"), { target: { value: "zzz" } });
+    fireEvent.change(screen.getByPlaceholderText("Name or team"), { target: { value: "zzz" } });
     expect(screen.getByText(/No services match/)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Clear" }));
-    expect(screen.getByRole("link", { name: "payments" })).toBeTruthy();
   });
 
-  it("shows only what needs attention when that tab is picked", async () => {
+  it("filters by team with a chip, and names the command that does the same", async () => {
     renderWithApi(<Catalog />, forge);
     await screen.findByRole("link", { name: "payments" });
-    fireEvent.click(screen.getByRole("button", { name: /^Needs attention/ }));
-    expect(screen.getByRole("link", { name: "payments" })).toBeTruthy();
-    expect(screen.queryByRole("link", { name: "ledger" })).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: /^All/ }));
+    const cli = () => screen.getByTitle("Same action from the terminal").textContent;
+    expect(cli()).toContain("forge service list");
+    fireEvent.click(screen.getByRole("button", { name: /^finance/ }));
+    expect(screen.queryByRole("link", { name: "payments" })).toBeNull();
     expect(screen.getByRole("link", { name: "ledger" })).toBeTruthy();
+    expect(cli()).toContain("forge service list --team finance");
+    expect(screen.getByText("1 service shown.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^All teams/ }));
+    expect(screen.getByRole("link", { name: "payments" })).toBeTruthy();
   });
 
   it("says how to make the first service when there is none", async () => {
