@@ -7,6 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
+    "dev:mock": "NEXT_PUBLIC_MOCK_API=1 next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",

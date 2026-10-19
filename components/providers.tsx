@@ -1,12 +1,20 @@
 "use client";
 
-import { Code, type Transport } from "@connectrpc/connect";
+import { createRouterTransport, Code, type Transport } from "@connectrpc/connect";
 import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { ToastProvider } from "@/components/ui/toast";
+import { mockIdToken, mockRoutes } from "@/dev/mock-api";
 import { isCode, makeApi, webTransport, type Api } from "@/lib/api";
 import { startLogin } from "@/lib/auth/login";
-import { clearSession, loadSession } from "@/lib/auth/session";
+import { clearSession, loadSession, saveSession } from "@/lib/auth/session";
+
+// npm run dev:mock calls forge-api with no cluster and no GitHub login: an
+// in-memory router (dev/mock-api.ts) stands in, and a fake session is
+// written before anything asks for one. NEXT_PUBLIC_* is read at build
+// time, so this can never be on in a real deployment -- the build that
+// makes the shipped image never sets it (docs/development.md).
+const MOCK = process.env.NEXT_PUBLIC_MOCK_API === "1";
 
 const ApiContext = createContext<Api | null>(null);
 
@@ -48,18 +56,22 @@ const FINAL = [Code.Unauthenticated, Code.PermissionDenied, Code.NotFound, Code.
 // Providers gives the pages the API clients and the query cache. Tests pass
 // their own transport; the app uses the browser's.
 export function Providers({ children, transport }: { children: ReactNode; transport?: Transport }) {
-  const [value] = useState(() => ({
-    api: makeApi(transport ?? webTransport()),
-    queries: new QueryClient({
-      queryCache: new QueryCache({ onError: loginAgain }),
-      defaultOptions: {
-        queries: {
-          staleTime: 15_000,
-          retry: (failures, err) => !transport && failures < 1 && !FINAL.some((code) => isCode(err, code)),
+  const [value] = useState(() => {
+    const mock = MOCK && !transport;
+    if (mock && !loadSession()) saveSession(mockIdToken());
+    return {
+      api: makeApi(transport ?? (mock ? createRouterTransport(mockRoutes) : webTransport())),
+      queries: new QueryClient({
+        queryCache: new QueryCache({ onError: loginAgain }),
+        defaultOptions: {
+          queries: {
+            staleTime: 15_000,
+            retry: (failures, err) => !transport && !mock && failures < 1 && !FINAL.some((code) => isCode(err, code)),
+          },
         },
-      },
-    }),
-  }));
+      }),
+    };
+  });
   return (
     <ApiContext.Provider value={value.api}>
       <QueryClientProvider client={value.queries}>

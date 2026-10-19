@@ -13,6 +13,21 @@ its Dex a public client `forge-web` with the redirect URI
 `http://localhost:3000/auth/callback`. Set `NEXT_PUBLIC_FORGE_API_URL` for
 another API; it is read at build time.
 
+### Run it without a login
+
+```sh
+npm run dev:mock
+```
+
+No cluster, no forge-api, no GitHub. `dev/mock-api.ts` stands in for the API
+(the same in-memory router the tests use, with its own small catalog), and a
+fake session is written before anything asks for one. It is not a simulator:
+a write does not change what Argo CD would actually report, and every
+operation succeeds after a couple of seconds. Good for looking at a page;
+`npm test` is still how behavior is checked (see below). Never on in a real
+deployment: `NEXT_PUBLIC_MOCK_API` is read at build time, and the build that
+makes the shipped image never sets it.
+
 ## Test it
 
 ```sh
