@@ -113,12 +113,20 @@ function forge(w: World) {
   };
 }
 
+// Only Date is frozen (not timers): the fixtures below go back up to 62
+// minutes in ago(), which crosses midnight -- and so fails near it -- if
+// Date.now() is real. A fixed afternoon keeps every fixture on the same day.
 beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date(2026, 9, 11, 15, 0, 0));
   sessionStorage.clear();
   localStorage.clear();
   signIn();
 });
-afterEach(cleanup);
+afterEach(() => {
+  vi.useRealTimers();
+  cleanup();
+});
 
 const stat = (label: string) => screen.getByText(label).parentElement!.querySelector("dd")!.textContent;
 

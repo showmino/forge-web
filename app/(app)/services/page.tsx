@@ -20,12 +20,21 @@ const dotColor: Record<Severity, string> = {
   ok: "bg-ok-dot",
   none: "bg-transparent shadow-[inset_0_0_0_1.5px_var(--fg-3)]",
 };
-const noteColor: Record<"bad" | "warn" | "muted", string> = { bad: "text-bad-fg", warn: "text-warn-fg", muted: "text-fg-3" };
+const statusText: Record<Severity, string> = {
+  bad: "text-bad-fg font-medium",
+  warn: "text-warn-fg font-medium",
+  ok: "text-fg-2 font-medium",
+  none: "text-fg-3",
+};
 
-// What a row says under the name: the worse environment's trouble, in
-// production before staging, or that it was never deployed. Nothing when
-// both environments are healthy.
-function note(prod: Deployment | undefined, prodSev: Severity, staging: Deployment | undefined, stagingSev: Severity) {
+// The status column: the worse environment's trouble, in production before
+// staging, that it was never deployed, or that it is healthy.
+function statusOf(
+  prod: Deployment | undefined,
+  prodSev: Severity,
+  staging: Deployment | undefined,
+  stagingSev: Severity,
+): { text: string; tone: Severity } {
   const trouble = (d: Deployment | undefined, env: string) => ({
     text: `${d?.health === Deployment_Health.MISSING ? "Not running" : "Degraded"} in ${env}`,
     tone: "bad" as const,
@@ -35,8 +44,8 @@ function note(prod: Deployment | undefined, prodSev: Severity, staging: Deployme
   if (stagingSev === "bad") return trouble(staging, "staging");
   if (prodSev === "warn") return stale("production");
   if (stagingSev === "warn") return stale("staging");
-  if (prodSev === "none") return { text: "Not deployed", tone: "muted" as const };
-  return null;
+  if (prodSev === "none") return { text: "Not deployed", tone: "none" };
+  return { text: "Healthy", tone: "ok" };
 }
 
 // The catalog: every service, who owns it, and how staging and production are doing.
@@ -68,7 +77,7 @@ export default function Catalog() {
       const staging = byEnv.get(`${s.name}/staging`);
       const prodSev = pending ? "ok" : severity(prod);
       const stagingSev = pending ? "ok" : severity(staging);
-      return { s, id, hot: worse(prodSev, stagingSev), note: note(prod, prodSev, staging, stagingSev) };
+      return { s, id, hot: worse(prodSev, stagingSev), status: statusOf(prod, prodSev, staging, stagingSev) };
     });
   }, [all, byEnv, pending]);
   const hot = rows.filter((r) => r.hot === "bad" || r.hot === "warn").length;
@@ -144,29 +153,39 @@ export default function Catalog() {
               </button>
             </p>
           ) : (
-            <ul className="flex flex-col gap-2.5">
-              {shown.map(({ s, id, hot: rowHot, note: rowNote }) => (
-                <li key={s.name}>
-                  <Link
-                    href={`/services/${id}`}
-                    aria-label={id}
-                    className="grid min-h-[68px] grid-cols-[8px_minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 rounded-lg border border-line bg-surface px-5 py-[18px] no-underline shadow-1 transition-colors hover:border-line-strong min-[861px]:grid-cols-[8px_190px_minmax(0,1fr)_170px_96px]"
-                  >
-                    <span aria-hidden="true" className={`h-2 w-2 rounded-full ${dotColor[rowHot]}`} />
-                    <span className="col-start-2 truncate font-mono text-[15.5px] font-semibold">{id}</span>
-                    <span className="col-span-2 col-start-2 row-start-2 min-w-0 truncate min-[861px]:col-span-1 min-[861px]:col-start-3 min-[861px]:row-start-1">
-                      {rowNote ? (
-                        <span className={`text-[12.5px] font-medium ${noteColor[rowNote.tone]}`}>{rowNote.text}</span>
-                      ) : s.displayName && s.displayName !== id ? (
-                        <span className="text-[13.5px] text-fg-3">{s.displayName}</span>
-                      ) : null}
-                    </span>
-                    <span className="col-start-3 row-start-1 hidden truncate text-[13px] text-fg-2 min-[861px]:col-start-4 min-[861px]:block">{s.ownerTeam || "–"}</span>
-                    <span className="col-start-3 row-start-1 whitespace-nowrap text-right text-[13px] text-fg-3 min-[861px]:col-start-5">{when(s.updateTime)}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <>
+              <div
+                aria-hidden="true"
+                className="hidden grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_170px_110px] gap-x-4 px-5 text-[11.5px] font-semibold uppercase tracking-wide text-fg-3 min-[861px]:grid"
+              >
+                <span>Name</span>
+                <span>Status</span>
+                <span>Team</span>
+                <span className="text-right">Updated</span>
+              </div>
+              <ul className="flex flex-col gap-2.5">
+                {shown.map(({ s, id, status: rowStatus }) => (
+                  <li key={s.name}>
+                    <Link
+                      href={`/services/${id}`}
+                      aria-label={id}
+                      className="grid min-h-[72px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 rounded-lg border border-line bg-surface px-5 py-[18px] no-underline shadow-1 transition-colors hover:border-line-strong min-[861px]:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)_170px_110px]"
+                    >
+                      <span className="col-start-1 row-start-1 flex min-w-0 flex-col gap-0.5">
+                        <span className="truncate font-mono text-[15.5px] font-semibold">{id}</span>
+                        {s.displayName && s.displayName !== id ? <span className="truncate text-[13px] text-fg-3">{s.displayName}</span> : null}
+                      </span>
+                      <span className="col-span-2 col-start-1 row-start-2 flex min-w-0 items-center gap-2 min-[861px]:col-span-1 min-[861px]:col-start-2 min-[861px]:row-start-1">
+                        <span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-full ${dotColor[rowStatus.tone]}`} />
+                        <span className={`truncate text-[13.5px] ${statusText[rowStatus.tone]}`}>{rowStatus.text}</span>
+                      </span>
+                      <span className="col-start-2 row-start-1 hidden truncate text-[13px] text-fg-2 min-[861px]:col-start-3 min-[861px]:block">{s.ownerTeam || "–"}</span>
+                      <span className="col-start-2 row-start-1 whitespace-nowrap text-right text-[13px] text-fg-3 min-[861px]:col-start-4">{when(s.updateTime)}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </>
           )}
         </>
       )}
