@@ -22,9 +22,14 @@ vi.mock("next/navigation", () => ({
 // Mermaid needs a real browser's layout; the reader's use of it is what is tested here.
 const diagrams = vi.hoisted(() => ({ fail: false, drawn: [] as string[] }));
 vi.mock("@/lib/mermaid", () => ({
-  isDark: () => false,
-  drawDiagram: async (source: string) => {
-    diagrams.drawn.push(source);
+  isDark: () => document.documentElement.dataset.theme === "dark",
+  subscribeTheme: (changed: () => void) => {
+    const watch = new MutationObserver(changed);
+    watch.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => watch.disconnect();
+  },
+  drawDiagram: async (source: string, dark: boolean) => {
+    diagrams.drawn.push(`${dark ? "dark" : "light"}: ${source}`);
     if (diagrams.fail) throw new Error("Parse error on line 2:\nexpecting 'NODE'");
     return "data:image/svg+xml;charset=utf-8,%3Csvg%2F%3E";
   },
@@ -269,8 +274,14 @@ describe("the reader", () => {
     renderWithApi(<DocPage />, forge);
     const img = await screen.findByRole("img", { name: "Diagram" });
     expect(img.getAttribute("src")).toMatch(/^data:image\/svg\+xml;/);
-    expect(diagrams.drawn).toEqual(["flowchart LR\n  a --> b\n"]);
+    expect(diagrams.drawn).toEqual(["light: flowchart LR\n  a --> b\n"]);
     expect(document.querySelector("article pre")).toBeNull();
+
+    // A theme switch draws it again, in the new theme.
+    document.documentElement.dataset.theme = "dark";
+    await waitFor(() => expect(diagrams.drawn).toEqual(["light: flowchart LR\n  a --> b\n", "dark: flowchart LR\n  a --> b\n"]));
+    expect(screen.getByRole("img", { name: "Diagram" })).toBeTruthy();
+    delete document.documentElement.dataset.theme;
   });
 
   it("shows a diagram's source, and why, when it cannot be drawn", async () => {

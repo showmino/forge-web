@@ -3,7 +3,7 @@
 import { Code } from "@connectrpc/connect";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { memo, useEffect, useMemo, useRef, useState, type MouseEvent, type ReactNode } from "react";
+import { memo, useEffect, useMemo, useRef, useState, useSyncExternalStore, type MouseEvent, type ReactNode } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import rehypeSlug from "rehype-slug";
@@ -18,7 +18,7 @@ import type { DocSet } from "@/gen/forge/v1/docs_pb";
 import { isCode } from "@/lib/api";
 import { diagramSource, docHref, type HastNode, type Heading, headingsOf, ID_PREFIX, type MenuNode, pageTree, resolve, START, stripFrontMatter } from "@/lib/docs";
 import { shortCommit, when } from "@/lib/format";
-import { drawDiagram, isDark } from "@/lib/mermaid";
+import { drawDiagram, isDark, subscribeTheme } from "@/lib/mermaid";
 
 // The docs reader: the pages of a service on the left, the page in the
 // middle, its headings on the right. A page is Markdown from the service's
@@ -413,20 +413,22 @@ function DocImage({ id, path, alt }: { id: string; path: string; alt: string }) 
   return <img src={image.data} alt={alt} />;
 }
 
-// Diagram draws a ```mermaid block. A diagram that cannot be drawn shows its
-// source, with why, so the page still says what it meant.
+// Diagram draws a ```mermaid block, again when the theme changes (the old
+// picture stays until the new one is drawn). A diagram that cannot be drawn
+// shows its source, with why, so the page still says what it meant.
 function Diagram({ source }: { source: string }) {
+  const dark = useSyncExternalStore(subscribeTheme, isDark, () => false);
   const [drawn, setDrawn] = useState<{ source: string; image?: string; error?: string } | null>(null);
   useEffect(() => {
     let live = true;
-    drawDiagram(source, isDark()).then(
+    drawDiagram(source, dark).then(
       (image) => live && setDrawn({ source, image }),
       (err: unknown) => live && setDrawn({ source, error: err instanceof Error ? err.message : String(err) }),
     );
     return () => {
       live = false;
     };
-  }, [source]);
+  }, [source, dark]);
   const now = drawn?.source === source ? drawn : null;
   if (now?.image) {
     return (
