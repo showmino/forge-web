@@ -202,21 +202,20 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("the catalog", () => {
-  it("lists every service, trouble first, with what is wrong and both environments", async () => {
+  it("lists every service, trouble first, with both environments", async () => {
     renderWithApi(<Catalog />, forge);
     const name = await screen.findByRole("link", { name: "payments" });
     expect(name.getAttribute("href")).toBe("/services/payments");
     // production is degraded: that outranks ledger, which was never deployed.
-    await waitFor(() => expect(within(row("payments")).getByText("Degraded in production")).toBeTruthy());
-    expect(within(row("payments")).getByText("12 min ago")).toBeTruthy();
-    expect(within(row("payments")).getByText("platform-engineering")).toBeTruthy();
-    expect(within(row("payments")).getByText("Production")).toBeTruthy(); // lifecycle
-    expect(within(row("payments")).getByText("Healthy")).toBeTruthy(); // staging pill
-    expect(within(row("payments")).getByText("Degraded")).toBeTruthy(); // production pill
+    await waitFor(() => expect(within(name).getByText("Healthy")).toBeTruthy()); // staging pill
+    expect(within(name).getByText("Degraded")).toBeTruthy(); // production pill
+    expect(within(name).getByText("12 min ago")).toBeTruthy();
+    expect(within(name).getByText("platform-engineering")).toBeTruthy();
+    expect(within(name).getByText("Production")).toBeTruthy(); // lifecycle
     const links = screen.getAllByRole("link");
-    expect(links.map((l) => l.textContent)).toEqual(["payments", "ledger"]);
-    // never deployed anywhere: the status column and both env pills all say so.
-    expect(within(row("ledger")).getAllByText("Not deployed")).toHaveLength(3);
+    expect(links.map((l) => l.getAttribute("aria-label"))).toEqual(["payments", "ledger"]);
+    // never deployed anywhere: both env pills say so.
+    expect(within(screen.getByRole("link", { name: "ledger" })).getAllByText("Not deployed")).toHaveLength(2);
     expect(screen.getByRole("button", { name: /^Needs attention/ }).textContent).toContain("1");
   });
 
@@ -237,10 +236,10 @@ describe("the catalog", () => {
         }),
       });
     });
-    await screen.findByRole("link", { name: "identity" });
-    // the status column and both env pills all say "Healthy".
-    await waitFor(() => expect(within(row("identity")).getAllByText("Healthy")).toHaveLength(3));
-    for (const label of ["Service", "Status", "Lifecycle", "Staging", "Production", "Team", "Updated"]) expect(screen.getByText(label)).toBeTruthy();
+    const link = await screen.findByRole("link", { name: "identity" });
+    // both env pills say "Healthy".
+    await waitFor(() => expect(within(link).getAllByText("Healthy")).toHaveLength(2));
+    for (const label of ["Name", "Lifecycle", "Staging", "Production", "Team", "Updated"]) expect(screen.getByText(label)).toBeTruthy();
   });
 
   it("filters by name or team, and names the command that does the same", async () => {
