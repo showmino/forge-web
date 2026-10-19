@@ -120,10 +120,16 @@ afterEach(cleanup);
 describe("the docs page", () => {
   it("lists the services that have docs", async () => {
     renderWithApi(<Docs />, forge);
-    const card = await screen.findByRole("link", { name: /forge-web/ });
-    expect(card.getAttribute("href")).toBe("/docs/forge-web");
-    expect(card.textContent).toContain("2 pages");
-    expect(card.textContent).toContain("Changed 3 min ago");
+    const table = within(await screen.findByRole("table", { name: "Docs" }));
+    expect(table.getByRole("link", { name: "forge-web" }).getAttribute("href")).toBe("/docs/forge-web");
+    expect(table.getByRole("link", { name: "Read the docs of forge-web" }).getAttribute("href")).toBe("/docs/forge-web");
+    const row = table.getByRole("link", { name: "forge-web" }).closest("tr")!;
+    expect([...row.querySelectorAll("td")].map((c) => c.textContent)).toEqual(["forge-web", "platform-engineering", "2", "3 min ago", "Read →"]);
+    expect(screen.getByText("1 service has docs.")).toBeTruthy();
+    // How a service gets docs, in three steps.
+    const how = within(screen.getByRole("region", { name: "How docs work" }));
+    expect(how.getAllByRole("heading").map((h) => h.textContent)).toEqual(["Write", "Merge", "Check"]);
+    expect(how.getByText("forge docs lint")).toBeTruthy();
     expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge docs list");
   });
 
@@ -139,13 +145,14 @@ describe("the docs page", () => {
     expect(pages.getByText("Showing 2 of 7 pages. Add a word to narrow it.")).toBeTruthy();
     expect(searches).toEqual(["Sign-in fails"]);
     expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge docs search Sign-in fails");
-    // No service is named so: the service cards go.
-    expect(screen.queryByRole("list", { name: "Docs" })).toBeNull();
+    // No service is named so: the list goes, and so does the explainer.
+    expect(screen.queryByRole("table", { name: "Docs" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "How docs work" })).toBeNull();
 
     // The same box still finds a service by its team, alongside the pages.
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "platform" } });
     expect(await screen.findByRole("heading", { name: "Services" })).toBeTruthy();
-    expect(within(screen.getByRole("list", { name: "Docs" })).getByRole("link", { name: /forge-web/ })).toBeTruthy();
+    expect(within(screen.getByRole("table", { name: "Docs" })).getByRole("link", { name: "forge-web" })).toBeTruthy();
   });
 
   it("starts with the search in its address", async () => {
@@ -181,7 +188,7 @@ describe("the docs page", () => {
     fireEvent.change(await screen.findByRole("searchbox"), { target: { value: "forge" } });
     expect(await screen.findByText(/cannot search the pages yet/)).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(within(screen.getByRole("list", { name: "Docs" })).getByRole("link", { name: /forge-web/ })).toBeTruthy();
+    expect(within(screen.getByRole("table", { name: "Docs" })).getByRole("link", { name: "forge-web" })).toBeTruthy();
   });
 });
 
