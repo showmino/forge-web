@@ -216,6 +216,31 @@ describe("the catalog", () => {
     expect(screen.getByRole("button", { name: /^Needs attention/ }).textContent).toContain("1");
   });
 
+  it("heads the list and calls a fully healthy service that", async () => {
+    renderWithApi(<Catalog />, (router) => {
+      router.service(AuthService, { getStatus: () => ({ subject: "ana", permissions: ["services.read"] }) });
+      router.service(ServiceCatalogService, { listServices: () => ({ services: [{ name: "services/identity", ownerTeam: "platform-engineering", updateTime: ago(5) }] }) });
+      router.service(DeployService, {
+        listDeployments: () => ({
+          deployments: (["staging", "production"] as const).map((env) => ({
+            name: `deployments/identity/${env}`,
+            service: "services/identity",
+            env,
+            health: Deployment_Health.HEALTHY,
+            sync: Deployment_SyncStatus.SYNCED,
+            commit: "abc1234",
+          })),
+        }),
+      });
+    });
+    const link = await screen.findByRole("link", { name: "identity" });
+    await waitFor(() => expect(within(link).getByText("Healthy")).toBeTruthy());
+    expect(screen.getByText("Name")).toBeTruthy();
+    expect(screen.getByText("Status")).toBeTruthy();
+    expect(screen.getByText("Team")).toBeTruthy();
+    expect(screen.getByText("Updated")).toBeTruthy();
+  });
+
   it("filters by name or team, and names the command that does the same", async () => {
     renderWithApi(<Catalog />, forge);
     await screen.findByRole("link", { name: "payments" });
