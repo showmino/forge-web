@@ -46,7 +46,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html lang="en" className={`${archivo.variable} ${plexSans.variable} ${plexMono.variable}`} suppressHydrationWarning>
-      <body className="min-h-screen bg-bg text-fg type-body antialiased [zoom:1.08]">
+      <body className="min-h-screen bg-bg text-fg type-body antialiased [zoom:1.2]">
         {/* The reader's theme choice, applied before the first paint. */}
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME }} />
         <Providers>{children}</Providers>
