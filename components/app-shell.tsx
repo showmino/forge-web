@@ -446,7 +446,7 @@ function TopBar({
           <circle cx="11" cy="11" r="6.5" />
           <path d="M20 20l-4-4" />
         </svg>
-        <span className="min-w-0 flex-1 truncate">Jump to…</span>
+        <span className="min-w-0 flex-1 truncate">Search or jump to…</span>
         <kbd className="hidden rounded-sm border border-b-2 border-line bg-surface-2 px-[5px] font-mono text-[11px] text-fg-2 rail:inline">{mac ? "⌘K" : "Ctrl K"}</kbd>
       </button>
       <div className="ml-auto flex items-center gap-2">

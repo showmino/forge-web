@@ -144,6 +144,10 @@ function forge(router: ConnectRouter) {
     getDocPage: (req) => ({
       page: { service: req.service, path: req.path, title: req.path === "runbook.md" ? "Runbook" : "Payments", markdown: req.path === "runbook.md" ? "# Runbook\n" : "# Payments\n\nSee the [runbook](runbook.md).\n" },
     }),
+    searchDocs: (req) =>
+      req.query.toLowerCase().includes("refund")
+        ? { results: [{ service: "services/payments", path: "runbook.md", title: "Runbook", lines: [{ number: 5, text: "Restart the refund worker." }] }], totalSize: 1 }
+        : { results: [], totalSize: 0 },
   });
   router.service(EnvironmentService, {
     listEnvironments: () => ({
@@ -512,6 +516,35 @@ describe("the frame around every page", () => {
     expect(screen.getByTitle(`ana@example.com · ${word}`)).toBeTruthy();
   });
 
+  it("finds pages of the docs from the palette by what they say", async () => {
+    renderWithApi(<AppShell>content</AppShell>, forge);
+    await screen.findByText("content");
+    fireEvent.keyDown(document, { key: "k", ctrlKey: true });
+    const input = await screen.findByRole("combobox", { name: "Jump to" });
+    fireEvent.change(input, { target: { value: "refund worker" } });
+    const page = await screen.findByRole("option", { name: /Runbook/ });
+    expect(page.textContent).toContain("Docs · payments");
+    expect([...page.querySelectorAll("mark")].map((m) => m.textContent)).toEqual(["refund", "worker"]);
+    // No place is named so: the docs come first, then the way to every result.
+    const options = screen.getAllByRole("option");
+    expect(options.map((o) => o.textContent)).toEqual([expect.stringContaining("Runbook"), expect.stringContaining("Search all docs for “refund worker”")]);
+    expect(page.getAttribute("aria-selected")).toBe("true");
+    fireEvent.keyDown(input, { key: "ArrowDown" });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(nav.router.push).toHaveBeenCalledWith("/docs?q=refund%20worker");
+
+    fireEvent.keyDown(document, { key: "k", ctrlKey: true });
+    fireEvent.change(await screen.findByRole("combobox"), { target: { value: "refund" } });
+    fireEvent.click(await screen.findByRole("option", { name: /Runbook/ }));
+    expect(nav.router.push).toHaveBeenCalledWith("/docs/payments/runbook.md");
+
+    // Words no page holds: it says so, and the places still show.
+    fireEvent.keyDown(document, { key: "k", ctrlKey: true });
+    fireEvent.change(await screen.findByRole("combobox"), { target: { value: "payments" } });
+    expect(await screen.findByText(/no page holds all of the words/)).toBeTruthy();
+    expect(screen.getByRole("option", { name: /^payments/ })).toBeTruthy();
+  });
+
   it("jumps to a service from the palette", async () => {
     renderWithApi(<AppShell>content</AppShell>, forge);
     await screen.findByText("content");
@@ -525,8 +558,14 @@ describe("the frame around every page", () => {
     expect(nav.router.push).toHaveBeenCalledWith("/services/ledger");
     expect(screen.queryByRole("combobox")).toBeNull();
 
+    // Templates are places too.
+    fireEvent.keyDown(document, { key: "k", ctrlKey: true });
+    fireEvent.change(await screen.findByRole("combobox", { name: "Jump to" }), { target: { value: "next" } });
+    expect((await screen.findByRole("option", { name: /^nextjs/ })).textContent).toContain("Template · Next.js web app");
+    fireEvent.keyDown(screen.getByRole("combobox"), { key: "Escape" });
+
     // The button in the top bar opens it too, and Escape closes it.
-    fireEvent.click(screen.getByRole("button", { name: /Jump to/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Search or jump to/ }));
     fireEvent.keyDown(await screen.findByRole("combobox"), { key: "Escape" });
     expect(screen.queryByRole("combobox")).toBeNull();
   });

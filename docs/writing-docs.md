@@ -65,8 +65,9 @@ as `#` and its text in lower case with dashes: `## Sign-in fails` is
   diagram do nothing, and labels are plain text. A diagram Mermaid cannot
   read shows its source, with Mermaid's message.
 
-Every page is found by the search on the Docs page (and `forge docs search`)
-within a minute of its merge: a page matches when it holds every word
+Every page is found by the search on the Docs page, the search box at the top
+of every page (Ctrl+K or ⌘K) and `forge docs search` within a minute of its
+merge: a page matches when it holds every word
 searched for.
 
 Limits: a page at most 1 MiB, at most 500 pages, at most 32 MiB of pages

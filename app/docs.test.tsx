@@ -12,9 +12,10 @@ import Docs from "./(app)/docs/page";
 // The docs reader against an in-memory Forge API with the shapes of the live
 // one: services/forge-web, pages under docs/.
 
-const nav = vi.hoisted(() => ({ params: {} as Record<string, unknown>, router: { replace: vi.fn(), push: vi.fn() } }));
+const nav = vi.hoisted(() => ({ params: {} as Record<string, unknown>, search: new URLSearchParams(), router: { replace: vi.fn(), push: vi.fn() } }));
 vi.mock("next/navigation", () => ({
   useParams: () => nav.params,
+  useSearchParams: () => nav.search,
   useRouter: () => nav.router,
   usePathname: () => "/docs",
 }));
@@ -133,6 +134,7 @@ describe("the docs page", () => {
     const first = pages.getAllByRole("link")[0];
     expect(first.getAttribute("href")).toBe("/docs/forge-web/runbook.md");
     expect(first.textContent).toContain("forge-web · docs/runbook.md");
+    expect(first.textContent).not.toContain("## ");
     expect([...first.querySelectorAll("mark")].map((m) => m.textContent)).toEqual(["Sign-in", "fails"]);
     expect(pages.getByText("Showing 2 of 7 pages. Add a word to narrow it.")).toBeTruthy();
     expect(searches).toEqual(["Sign-in fails"]);
@@ -144,6 +146,15 @@ describe("the docs page", () => {
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "platform" } });
     expect(await screen.findByRole("heading", { name: "Services" })).toBeTruthy();
     expect(within(screen.getByRole("list", { name: "Docs" })).getByRole("link", { name: /forge-web/ })).toBeTruthy();
+  });
+
+  it("starts with the search in its address", async () => {
+    nav.search = new URLSearchParams("q=sign-in");
+    renderWithApi(<Docs />, forge);
+    expect(((await screen.findByRole("searchbox")) as HTMLInputElement).value).toBe("sign-in");
+    expect(await screen.findByRole("region", { name: "Pages that match" })).toBeTruthy();
+    expect(searches).toEqual(["sign-in"]);
+    nav.search = new URLSearchParams();
   });
 
   it("says when no page matches, and waits for two letters before it asks", async () => {
