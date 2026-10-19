@@ -19,6 +19,17 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/docs",
 }));
 
+// Mermaid needs a real browser's layout; the reader's use of it is what is tested here.
+const diagrams = vi.hoisted(() => ({ fail: false, drawn: [] as string[] }));
+vi.mock("@/lib/mermaid", () => ({
+  isDark: () => false,
+  drawDiagram: async (source: string) => {
+    diagrams.drawn.push(source);
+    if (diagrams.fail) throw new Error("Parse error on line 2:\nexpecting 'NODE'");
+    return "data:image/svg+xml;charset=utf-8,%3Csvg%2F%3E";
+  },
+}));
+
 const COMMIT = "707e4ddeb5a5c0ffee00000000000000000000aa";
 const pages: Record<string, string> = {
   "index.md":
@@ -26,6 +37,8 @@ const pages: Record<string, string> = {
     "<script>alert('owned')</script>\n\n<img src=x onerror=alert(1)>\n\n[bad](javascript:alert(1)) [home](/settings) [up](../../forge.yaml)\n\nA claim.[^1]\n\n[^1]: The source.\n\n" +
     "## Pages\n\n| Page | What |\n| --- | --- |\n| runbook | fixes |\n\n- [x] done\n\n![flow](img/flow.png)\n\n![remote](https://example.com/a.png)\n\n```go\nfunc main() {}\n```\n",
   "runbook.md": "# Runbook\n\n## Sign-in fails\n\nCheck the login.\n",
+  "flow.md": "# Flow\n\n```mermaid\nflowchart LR\n  a --> b\n```\n",
+  "empty.md": "---\ntitle: Empty\n---\n",
   "kubernetes/Helm/02-installation.md": "---\ntitle: Installing Helm\ndescription: on macOS or Windows\n---\n# Installing Helm\n\nA single binary.\n",
 };
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
@@ -71,14 +84,29 @@ function forge(router: ConnectRouter) {
       assetsAsked.push(req.path);
       return { mediaType: "image/png", data: PNG, commit: COMMIT };
     },
+    searchDocs: (req) => {
+      searches.push(req.query);
+      if (req.query === "nothing here") return { results: [], totalSize: 0 };
+      return {
+        results: [
+          { service: "services/forge-web", path: "runbook.md", title: "Runbook", lines: [{ number: 3, text: "## Sign-in fails" }] },
+          { service: "services/forge-web", path: "index.md", title: "Overview", lines: [{ number: 3, text: "See the runbook to fix a failed sign-in." }] },
+        ],
+        totalSize: 7,
+      };
+    },
   });
 }
+let searches: string[] = [];
 
 beforeEach(() => {
   sessionStorage.clear();
   localStorage.clear();
   nav.router.push.mockClear();
   assetsAsked = [];
+  searches = [];
+  diagrams.fail = false;
+  diagrams.drawn = [];
   signIn();
 });
 afterEach(cleanup);
@@ -91,6 +119,53 @@ describe("the docs page", () => {
     expect(card.textContent).toContain("2 pages");
     expect(card.textContent).toContain("Changed 3 min ago");
     expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge docs list");
+  });
+
+  it("searches the pages of every service and marks the words it found", async () => {
+    renderWithApi(<Docs />, forge);
+    fireEvent.change(await screen.findByRole("searchbox", { name: "Search the docs" }), { target: { value: "  Sign-in fails " } });
+    const pages = within(await screen.findByRole("region", { name: "Pages that match" }));
+    const first = pages.getAllByRole("link")[0];
+    expect(first.getAttribute("href")).toBe("/docs/forge-web/runbook.md");
+    expect(first.textContent).toContain("forge-web · docs/runbook.md");
+    expect([...first.querySelectorAll("mark")].map((m) => m.textContent)).toEqual(["Sign-in", "fails"]);
+    expect(pages.getByText("Showing 2 of 7 pages. Add a word to narrow it.")).toBeTruthy();
+    expect(searches).toEqual(["Sign-in fails"]);
+    expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge docs search Sign-in fails");
+    // No service is named so: the service cards go.
+    expect(screen.queryByRole("list", { name: "Docs" })).toBeNull();
+
+    // The same box still finds a service by its team, alongside the pages.
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "platform" } });
+    expect(await screen.findByRole("heading", { name: "Services" })).toBeTruthy();
+    expect(within(screen.getByRole("list", { name: "Docs" })).getByRole("link", { name: /forge-web/ })).toBeTruthy();
+  });
+
+  it("says when no page matches, and waits for two letters before it asks", async () => {
+    renderWithApi(<Docs />, forge);
+    const box = await screen.findByRole("searchbox");
+    fireEvent.change(box, { target: { value: "n" } });
+    await new Promise((r) => setTimeout(r, 400));
+    expect(searches).toEqual([]);
+    fireEvent.change(box, { target: { value: "nothing here" } });
+    expect(await screen.findByText(/No page holds all of:/)).toBeTruthy();
+    expect(screen.getByText(/No page holds all of:/).textContent).toContain("nothing here");
+  });
+
+  it("still narrows the services when the API cannot search", async () => {
+    renderWithApi(<Docs />, (router) => {
+      router.service(AuthService, { getStatus: () => ({ subject: "ana", permissions: ["services.read"] }) });
+      router.service(DocsService, {
+        listDocSets: () => ({ docSets: [{ service: "services/forge-web", ownerTeam: "platform-engineering", pageCount: 2 }] }),
+        searchDocs: () => {
+          throw new ConnectError("unimplemented", Code.Unimplemented);
+        },
+      });
+    });
+    fireEvent.change(await screen.findByRole("searchbox"), { target: { value: "forge" } });
+    expect(await screen.findByText(/cannot search the pages yet/)).toBeTruthy();
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(within(screen.getByRole("list", { name: "Docs" })).getByRole("link", { name: /forge-web/ })).toBeTruthy();
   });
 });
 
@@ -187,6 +262,31 @@ describe("the reader", () => {
     renderWithApi(<DocPage />, forge);
     expect((await screen.findByRole("alert")).textContent).toContain("does not exist");
     expect(screen.getByRole("link", { name: "Go to the start page" }).getAttribute("href")).toBe("/docs/forge-web");
+  });
+
+  it("draws a Mermaid diagram as an image", async () => {
+    nav.params = { service: "forge-web", path: ["flow.md"] };
+    renderWithApi(<DocPage />, forge);
+    const img = await screen.findByRole("img", { name: "Diagram" });
+    expect(img.getAttribute("src")).toMatch(/^data:image\/svg\+xml;/);
+    expect(diagrams.drawn).toEqual(["flowchart LR\n  a --> b\n"]);
+    expect(document.querySelector("article pre")).toBeNull();
+  });
+
+  it("shows a diagram's source, and why, when it cannot be drawn", async () => {
+    diagrams.fail = true;
+    nav.params = { service: "forge-web", path: ["flow.md"] };
+    renderWithApi(<DocPage />, forge);
+    expect((await screen.findByRole("note")).textContent).toBe("This diagram could not be drawn: Parse error on line 2:");
+    expect(document.querySelector("article pre")!.textContent).toContain("a --> b");
+    expect(screen.queryByRole("img", { name: "Diagram" })).toBeNull();
+  });
+
+  it("says a page is empty instead of showing nothing", async () => {
+    nav.params = { service: "forge-web", path: ["empty.md"] };
+    renderWithApi(<DocPage />, forge);
+    expect(await screen.findByText(/This page is empty/)).toBeTruthy();
+    expect(screen.getByText(/This page is empty/).textContent).toContain("docs/empty.md");
   });
 
   it("says how to add docs to a service that has none", async () => {

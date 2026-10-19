@@ -410,6 +410,20 @@
   max-width: 100%;
   border-radius: 6px;
 }
+.doc-article .doc-diagram {
+  margin: 0 0 16px;
+  padding: 16px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  text-align: center;
+}
+.doc-article .doc-diagram img {
+  display: inline-block;
+  height: auto;
+  border-radius: 0;
+}
 .doc-article .doc-table {
   overflow-x: auto;
   border: 1px solid var(--line);

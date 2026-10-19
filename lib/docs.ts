@@ -125,3 +125,31 @@ export function headingsOf(tree: HastNode): Heading[] {
   walk(tree);
   return out;
 }
+
+// diagramSource is the source of a ```mermaid code block, given its <pre>,
+// or null for any other block.
+export function diagramSource(pre: HastNode | undefined): string | null {
+  const code = pre?.children?.find((c) => c.type === "element" && c.tagName === "code");
+  const cls = code?.properties?.className;
+  if (!code || !Array.isArray(cls) || !cls.includes("language-mermaid")) return null;
+  return textOf(code);
+}
+
+// searchTerms are the words of a search as the API matches them: lowercased,
+// each once, the first 8.
+export function searchTerms(query: string): string[] {
+  return [...new Set(query.toLowerCase().split(/\s+/).filter(Boolean))].slice(0, 8);
+}
+
+// marked splits text into the parts that are one of the terms and the rest,
+// to show the words a search found.
+export function marked(text: string, terms: string[]): { text: string; hit: boolean }[] {
+  const words = terms.filter(Boolean).map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+  if (words.length === 0) return [{ text, hit: false }];
+  words.sort((a, b) => b.length - a.length);
+  const re = new RegExp(`(${words.join("|")})`, "gi");
+  return text
+    .split(re)
+    .filter((part) => part !== "")
+    .map((part) => ({ text: part, hit: terms.includes(part.toLowerCase()) }));
+}

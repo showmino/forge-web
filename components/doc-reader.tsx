@@ -16,13 +16,15 @@ import { inputClass } from "@/components/ui/field";
 import { ErrorNote, Loading, Panel } from "@/components/ui/layout";
 import type { DocSet } from "@/gen/forge/v1/docs_pb";
 import { isCode } from "@/lib/api";
-import { docHref, type HastNode, type Heading, headingsOf, ID_PREFIX, type MenuNode, pageTree, resolve, START, stripFrontMatter } from "@/lib/docs";
+import { diagramSource, docHref, type HastNode, type Heading, headingsOf, ID_PREFIX, type MenuNode, pageTree, resolve, START, stripFrontMatter } from "@/lib/docs";
 import { shortCommit, when } from "@/lib/format";
+import { drawDiagram, isDark } from "@/lib/mermaid";
 
 // The docs reader: the pages of a service on the left, the page in the
 // middle, its headings on the right. A page is Markdown from the service's
-// repo; raw HTML in it is shown as text and never run, and images come
-// through the API as data, never from another site.
+// repo; raw HTML in it is shown as text and never run, images come through
+// the API as data, never from another site, and Mermaid diagrams are drawn
+// in the browser and shown as images.
 
 type Open = (path: string, hash?: string) => void;
 
@@ -177,6 +179,11 @@ export function DocReader({ id, path, hash, nested = false, onOpen }: { id: stri
           </>
         ) : (
           <article className="doc-article" aria-label={page.data!.title}>
+            {stripFrontMatter(page.data!.markdown).trim() === "" ? (
+              <p className="text-fg-3">
+                This page is empty. Write it in <span className="font-mono text-[12.5px]">docs/{path}</span>.
+              </p>
+            ) : null}
             <Markdown id={id} path={path} set={ds} markdown={page.data!.markdown} nested={nested} onOpen={onOpen} onHeadings={setHeads} />
             {prev || next ? (
               <div className="mt-8 flex justify-between gap-3 border-t border-line pt-4">
@@ -346,9 +353,9 @@ const Markdown = memo(function Markdown({
           <table>{children}</table>
         </div>
       ),
-      pre: ({ ...props }) => {
-        delete props.node;
-        return <CodeBlock {...props} />;
+      pre: ({ node, ...props }) => {
+        const diagram = diagramSource(node as HastNode | undefined);
+        return diagram === null ? <CodeBlock {...props} /> : <Diagram source={diagram} />;
       },
       // Inside a service's page the page's title is not the page's h1.
       ...(nested
@@ -404,6 +411,47 @@ function DocImage({ id, path, alt }: { id: string; path: string; alt: string }) 
   if (image.error || !image.data) return <span className="text-fg-3">[image not shown: {alt || path}]</span>;
   // eslint-disable-next-line @next/next/no-img-element -- a data URL from the API, which next/image cannot optimise
   return <img src={image.data} alt={alt} />;
+}
+
+// Diagram draws a ```mermaid block. A diagram that cannot be drawn shows its
+// source, with why, so the page still says what it meant.
+function Diagram({ source }: { source: string }) {
+  const [drawn, setDrawn] = useState<{ source: string; image?: string; error?: string } | null>(null);
+  useEffect(() => {
+    let live = true;
+    drawDiagram(source, isDark()).then(
+      (image) => live && setDrawn({ source, image }),
+      (err: unknown) => live && setDrawn({ source, error: err instanceof Error ? err.message : String(err) }),
+    );
+    return () => {
+      live = false;
+    };
+  }, [source]);
+  const now = drawn?.source === source ? drawn : null;
+  if (now?.image) {
+    return (
+      <figure className="doc-diagram">
+        {/* eslint-disable-next-line @next/next/no-img-element -- a data URL drawn in the browser */}
+        <img src={now.image} alt="Diagram" />
+      </figure>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-1.5">
+      {now?.error ? (
+        <p role="note" className="text-[12.5px] text-warn-fg">
+          This diagram could not be drawn: {now.error.split("\n")[0]}
+        </p>
+      ) : (
+        <p role="status" className="text-[12.5px] text-fg-3">
+          Drawing the diagram…
+        </p>
+      )}
+      <CodeBlock>
+        <code>{source}</code>
+      </CodeBlock>
+    </div>
+  );
 }
 
 // DocsLink leads to a page of the docs on the Docs page.

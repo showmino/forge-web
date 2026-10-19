@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file forge/v1/docs.proto.
  */
 export const file_forge_v1_docs: GenFile = /*@__PURE__*/
-  fileDesc("ChNmb3JnZS92MS9kb2NzLnByb3RvEghmb3JnZS52MSLgAQoGRG9jU2V0Eg8KB3NlcnZpY2UYASABKAkSEgoKb3duZXJfdGVhbRgCIAEoCRISCgpwYWdlX2NvdW50GAMgASgFEg4KBmNvbW1pdBgEIAEoCRIVCg1jaGFuZ2VfY29tbWl0GAUgASgJEi8KC2NoYW5nZV90aW1lGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIQCghyZXBvX3VybBgHIAEoCRIOCgZicmFuY2gYCCABKAkSIwoFcGFnZXMYCSADKAsyFC5mb3JnZS52MS5Eb2NQYWdlUmVmIikKCkRvY1BhZ2VSZWYSDAoEcGF0aBgBIAEoCRINCgV0aXRsZRgCIAEoCSKcAQoHRG9jUGFnZRIPCgdzZXJ2aWNlGAEgASgJEgwKBHBhdGgYAiABKAkSDQoFdGl0bGUYAyABKAkSEAoIbWFya2Rvd24YBCABKAkSDgoGY29tbWl0GAUgASgJEi8KC2NoYW5nZV90aW1lGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIQCghlZGl0X3VybBgHIAEoCSIUChJMaXN0RG9jU2V0c1JlcXVlc3QiOQoTTGlzdERvY1NldHNSZXNwb25zZRIiCghkb2Nfc2V0cxgBIAMoCzIQLmZvcmdlLnYxLkRvY1NldCIjChBHZXREb2NTZXRSZXF1ZXN0Eg8KB3NlcnZpY2UYASABKAkiNgoRR2V0RG9jU2V0UmVzcG9uc2USIQoHZG9jX3NldBgBIAEoCzIQLmZvcmdlLnYxLkRvY1NldCIyChFHZXREb2NQYWdlUmVxdWVzdBIPCgdzZXJ2aWNlGAEgASgJEgwKBHBhdGgYAiABKAkiNQoSR2V0RG9jUGFnZVJlc3BvbnNlEh8KBHBhZ2UYASABKAsyES5mb3JnZS52MS5Eb2NQYWdlIjMKEkdldERvY0Fzc2V0UmVxdWVzdBIPCgdzZXJ2aWNlGAEgASgJEgwKBHBhdGgYAiABKAkiRwoTR2V0RG9jQXNzZXRSZXNwb25zZRISCgptZWRpYV90eXBlGAEgASgJEgwKBGRhdGEYAiABKAwSDgoGY29tbWl0GAMgASgJMsgCCgtEb2NzU2VydmljZRJPCgtMaXN0RG9jU2V0cxIcLmZvcmdlLnYxLkxpc3REb2NTZXRzUmVxdWVzdBodLmZvcmdlLnYxLkxpc3REb2NTZXRzUmVzcG9uc2UiA5ACARJJCglHZXREb2NTZXQSGi5mb3JnZS52MS5HZXREb2NTZXRSZXF1ZXN0GhsuZm9yZ2UudjEuR2V0RG9jU2V0UmVzcG9uc2UiA5ACARJMCgpHZXREb2NQYWdlEhsuZm9yZ2UudjEuR2V0RG9jUGFnZVJlcXVlc3QaHC5mb3JnZS52MS5HZXREb2NQYWdlUmVzcG9uc2UiA5ACARJPCgtHZXREb2NBc3NldBIcLmZvcmdlLnYxLkdldERvY0Fzc2V0UmVxdWVzdBodLmZvcmdlLnYxLkdldERvY0Fzc2V0UmVzcG9uc2UiA5ACAWIGcHJvdG8z", [file_google_protobuf_timestamp]);
+  fileDesc("ChNmb3JnZS92MS9kb2NzLnByb3RvEghmb3JnZS52MSLgAQoGRG9jU2V0Eg8KB3NlcnZpY2UYASABKAkSEgoKb3duZXJfdGVhbRgCIAEoCRISCgpwYWdlX2NvdW50GAMgASgFEg4KBmNvbW1pdBgEIAEoCRIVCg1jaGFuZ2VfY29tbWl0GAUgASgJEi8KC2NoYW5nZV90aW1lGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIQCghyZXBvX3VybBgHIAEoCRIOCgZicmFuY2gYCCABKAkSIwoFcGFnZXMYCSADKAsyFC5mb3JnZS52MS5Eb2NQYWdlUmVmIikKCkRvY1BhZ2VSZWYSDAoEcGF0aBgBIAEoCRINCgV0aXRsZRgCIAEoCSKcAQoHRG9jUGFnZRIPCgdzZXJ2aWNlGAEgASgJEgwKBHBhdGgYAiABKAkSDQoFdGl0bGUYAyABKAkSEAoIbWFya2Rvd24YBCABKAkSDgoGY29tbWl0GAUgASgJEi8KC2NoYW5nZV90aW1lGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIQCghlZGl0X3VybBgHIAEoCSIUChJMaXN0RG9jU2V0c1JlcXVlc3QiOQoTTGlzdERvY1NldHNSZXNwb25zZRIiCghkb2Nfc2V0cxgBIAMoCzIQLmZvcmdlLnYxLkRvY1NldCIjChBHZXREb2NTZXRSZXF1ZXN0Eg8KB3NlcnZpY2UYASABKAkiNgoRR2V0RG9jU2V0UmVzcG9uc2USIQoHZG9jX3NldBgBIAEoCzIQLmZvcmdlLnYxLkRvY1NldCIyChFHZXREb2NQYWdlUmVxdWVzdBIPCgdzZXJ2aWNlGAEgASgJEgwKBHBhdGgYAiABKAkiNQoSR2V0RG9jUGFnZVJlc3BvbnNlEh8KBHBhZ2UYASABKAsyES5mb3JnZS52MS5Eb2NQYWdlIjMKEkdldERvY0Fzc2V0UmVxdWVzdBIPCgdzZXJ2aWNlGAEgASgJEgwKBHBhdGgYAiABKAkiRwoTR2V0RG9jQXNzZXRSZXNwb25zZRISCgptZWRpYV90eXBlGAEgASgJEgwKBGRhdGEYAiABKAwSDgoGY29tbWl0GAMgASgJIkYKEVNlYXJjaERvY3NSZXF1ZXN0Eg0KBXF1ZXJ5GAEgASgJEg8KB3NlcnZpY2UYAiABKAkSEQoJcGFnZV9zaXplGAMgASgFIlQKElNlYXJjaERvY3NSZXNwb25zZRIqCgdyZXN1bHRzGAEgAygLMhkuZm9yZ2UudjEuRG9jU2VhcmNoUmVzdWx0EhIKCnRvdGFsX3NpemUYAiABKAUiZwoPRG9jU2VhcmNoUmVzdWx0Eg8KB3NlcnZpY2UYASABKAkSDAoEcGF0aBgCIAEoCRINCgV0aXRsZRgDIAEoCRImCgVsaW5lcxgEIAMoCzIXLmZvcmdlLnYxLkRvY1NlYXJjaExpbmUiLQoNRG9jU2VhcmNoTGluZRIOCgZudW1iZXIYASABKAUSDAoEdGV4dBgCIAEoCTKWAwoLRG9jc1NlcnZpY2USTwoLTGlzdERvY1NldHMSHC5mb3JnZS52MS5MaXN0RG9jU2V0c1JlcXVlc3QaHS5mb3JnZS52MS5MaXN0RG9jU2V0c1Jlc3BvbnNlIgOQAgESSQoJR2V0RG9jU2V0EhouZm9yZ2UudjEuR2V0RG9jU2V0UmVxdWVzdBobLmZvcmdlLnYxLkdldERvY1NldFJlc3BvbnNlIgOQAgESTAoKR2V0RG9jUGFnZRIbLmZvcmdlLnYxLkdldERvY1BhZ2VSZXF1ZXN0GhwuZm9yZ2UudjEuR2V0RG9jUGFnZVJlc3BvbnNlIgOQAgESTwoLR2V0RG9jQXNzZXQSHC5mb3JnZS52MS5HZXREb2NBc3NldFJlcXVlc3QaHS5mb3JnZS52MS5HZXREb2NBc3NldFJlc3BvbnNlIgOQAgESTAoKU2VhcmNoRG9jcxIbLmZvcmdlLnYxLlNlYXJjaERvY3NSZXF1ZXN0GhwuZm9yZ2UudjEuU2VhcmNoRG9jc1Jlc3BvbnNlIgOQAgFiBnByb3RvMw", [file_google_protobuf_timestamp]);
 
 /**
  * DocSet is the docs of one service.
@@ -327,6 +327,130 @@ export const GetDocAssetResponseSchema: GenMessage<GetDocAssetResponse> = /*@__P
   messageDesc(file_forge_v1_docs, 10);
 
 /**
+ * @generated from message forge.v1.SearchDocsRequest
+ */
+export type SearchDocsRequest = Message<"forge.v1.SearchDocsRequest"> & {
+  /**
+   * Words, matched without regard to case; a page must hold all of them, in
+   * its title or anywhere in its text. At most 200 characters; the first 8
+   * words are searched.
+   *
+   * @generated from field: string query = 1;
+   */
+  query: string;
+
+  /**
+   * "services/{service}" to search one service's docs; empty for all.
+   *
+   * @generated from field: string service = 2;
+   */
+  service: string;
+
+  /**
+   * How many pages to return: default 20, at most 100.
+   *
+   * @generated from field: int32 page_size = 3;
+   */
+  pageSize: number;
+};
+
+/**
+ * Describes the message forge.v1.SearchDocsRequest.
+ * Use `create(SearchDocsRequestSchema)` to create a new message.
+ */
+export const SearchDocsRequestSchema: GenMessage<SearchDocsRequest> = /*@__PURE__*/
+  messageDesc(file_forge_v1_docs, 11);
+
+/**
+ * @generated from message forge.v1.SearchDocsResponse
+ */
+export type SearchDocsResponse = Message<"forge.v1.SearchDocsResponse"> & {
+  /**
+   * Best first: pages with the words in their title, then by how many of
+   * their lines hold one.
+   *
+   * @generated from field: repeated forge.v1.DocSearchResult results = 1;
+   */
+  results: DocSearchResult[];
+
+  /**
+   * How many pages matched, also those beyond page_size.
+   *
+   * @generated from field: int32 total_size = 2;
+   */
+  totalSize: number;
+};
+
+/**
+ * Describes the message forge.v1.SearchDocsResponse.
+ * Use `create(SearchDocsResponseSchema)` to create a new message.
+ */
+export const SearchDocsResponseSchema: GenMessage<SearchDocsResponse> = /*@__PURE__*/
+  messageDesc(file_forge_v1_docs, 12);
+
+/**
+ * DocSearchResult is a page that matched.
+ *
+ * @generated from message forge.v1.DocSearchResult
+ */
+export type DocSearchResult = Message<"forge.v1.DocSearchResult"> & {
+  /**
+   * "services/{service}".
+   *
+   * @generated from field: string service = 1;
+   */
+  service: string;
+
+  /**
+   * @generated from field: string path = 2;
+   */
+  path: string;
+
+  /**
+   * @generated from field: string title = 3;
+   */
+  title: string;
+
+  /**
+   * The first lines that hold a word (up to 3), cut to about 160 characters.
+   *
+   * @generated from field: repeated forge.v1.DocSearchLine lines = 4;
+   */
+  lines: DocSearchLine[];
+};
+
+/**
+ * Describes the message forge.v1.DocSearchResult.
+ * Use `create(DocSearchResultSchema)` to create a new message.
+ */
+export const DocSearchResultSchema: GenMessage<DocSearchResult> = /*@__PURE__*/
+  messageDesc(file_forge_v1_docs, 13);
+
+/**
+ * @generated from message forge.v1.DocSearchLine
+ */
+export type DocSearchLine = Message<"forge.v1.DocSearchLine"> & {
+  /**
+   * Counts from 1.
+   *
+   * @generated from field: int32 number = 1;
+   */
+  number: number;
+
+  /**
+   * @generated from field: string text = 2;
+   */
+  text: string;
+};
+
+/**
+ * Describes the message forge.v1.DocSearchLine.
+ * Use `create(DocSearchLineSchema)` to create a new message.
+ */
+export const DocSearchLineSchema: GenMessage<DocSearchLine> = /*@__PURE__*/
+  messageDesc(file_forge_v1_docs, 14);
+
+/**
  * DocsService reads a service's documentation: Markdown under docs/ in its
  * repo, on the repo's default branch, read from GitHub as it is now. Nothing
  * is built or stored. Every call is a read and needs services.read.
@@ -375,6 +499,17 @@ export const DocsService: GenService<{
     methodKind: "unary";
     input: typeof GetDocAssetRequestSchema;
     output: typeof GetDocAssetResponseSchema;
+  },
+  /**
+   * SearchDocs finds the pages, across every service's docs or one
+   * service's, that hold every word of a query, best first.
+   *
+   * @generated from rpc forge.v1.DocsService.SearchDocs
+   */
+  searchDocs: {
+    methodKind: "unary";
+    input: typeof SearchDocsRequestSchema;
+    output: typeof SearchDocsResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_forge_v1_docs, 0);
