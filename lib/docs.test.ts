@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { docHref, docPathOf, type HastNode, headingsOf, pageTree, resolve, stripFrontMatter } from "./docs";
+import { diagramSource, docHref, docPathOf, type HastNode, headingsOf, marked, pageTree, resolve, searchTerms, stripFrontMatter } from "./docs";
 
 describe("the side menu", () => {
   it("groups pages by folder, in the order of the pages", () => {
@@ -81,5 +81,38 @@ describe("headings of a page", () => {
       { depth: 2, text: "Run it", id: "doc-run-it" },
       { depth: 3, text: "Errors", id: "doc-errors" },
     ]);
+  });
+});
+
+describe("search results", () => {
+  it("takes the words as the API does", () => {
+    expect(searchTerms("  Restart the POD pod ")).toEqual(["restart", "the", "pod"]);
+    expect(searchTerms("a b c d e f g h i j")).toHaveLength(8);
+  });
+
+  it("marks the words, whatever their case, and nothing else", () => {
+    expect(marked("Restart the pod (a.k.a. Pod)", ["pod", "a.k.a."])).toEqual([
+      { text: "Restart the ", hit: false },
+      { text: "pod", hit: true },
+      { text: " (", hit: false },
+      { text: "a.k.a.", hit: true },
+      { text: " ", hit: false },
+      { text: "Pod", hit: true },
+      { text: ")", hit: false },
+    ]);
+    expect(marked("text", [])).toEqual([{ text: "text", hit: false }]);
+  });
+});
+
+describe("diagrams", () => {
+  const block = (cls: string[]): HastNode => ({
+    type: "element",
+    tagName: "pre",
+    children: [{ type: "element", tagName: "code", properties: { className: cls }, children: [{ type: "text", value: "graph TD\n  a-->b\n" }] }],
+  });
+  it("finds the source of a mermaid block only", () => {
+    expect(diagramSource(block(["language-mermaid"]))).toBe("graph TD\n  a-->b\n");
+    expect(diagramSource(block(["hljs", "language-go"]))).toBeNull();
+    expect(diagramSource(undefined)).toBeNull();
   });
 });

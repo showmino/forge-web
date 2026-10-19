@@ -288,22 +288,44 @@ export function mockRoutes(router: ConnectRouter) {
     },
   });
 
+  const docPages: Record<string, { title: string; markdown: string }> = {
+    "index.md": {
+      title: "Payments",
+      markdown:
+        "# Payments\n\nCharges, refunds and payouts for every checkout.\n\nSee the [runbook](runbook.md) for on-call steps.\n\n## How a charge flows\n\n" +
+        "```mermaid\nflowchart LR\n  checkout[checkout-api] --> payments\n  payments --> ledger\n  payments --> psp[(card network)]\n```\n",
+    },
+    "runbook.md": { title: "Runbook", markdown: "# Runbook\n\nHow to roll back a bad deploy.\n\n## Refunds stuck\n\nRestart the refund worker, then check the ledger.\n" },
+  };
   router.service(DocsService, {
     getDocSet: (req) => {
       if (req.service !== "services/payments") throw new ConnectError(`${req.service} has no docs`, Code.NotFound);
-      return { docSet: { service: req.service, branch: "main", pages: [{ path: "index.md", title: "Payments" }, { path: "runbook.md", title: "Runbook" }] } };
+      return { docSet: { service: req.service, branch: "main", pages: Object.entries(docPages).map(([path, p]) => ({ path, title: p.title })) } };
     },
-    getDocPage: (req) => ({
-      page: {
-        service: req.service,
-        path: req.path,
-        title: req.path === "runbook.md" ? "Runbook" : "Payments",
-        markdown: req.path === "runbook.md" ? "# Runbook\n\nHow to roll back a bad deploy.\n" : "# Payments\n\nCharges, refunds and payouts for every checkout.\n\nSee the [runbook](runbook.md) for on-call steps.\n",
-      },
-    }),
-    listDocSets: () => ({ docSets: [{ service: "services/payments", branch: "main", pages: [{ path: "index.md", title: "Payments" }] }] }),
+    getDocPage: (req) => {
+      const path = req.path || "index.md";
+      const p = docPages[path];
+      if (!p) throw new ConnectError(`${req.service} has no page docs/${path}`, Code.NotFound);
+      return { page: { service: req.service, path, title: p.title, markdown: p.markdown } };
+    },
+    listDocSets: () => ({ docSets: [{ service: "services/payments", ownerTeam: "platform-engineering", branch: "main", pageCount: 2, changeTime: ago(60) }] }),
     getDocAsset: () => {
       throw new ConnectError("no such asset", Code.NotFound);
+    },
+    searchDocs: (req) => {
+      const terms = [...new Set(req.query.toLowerCase().split(/\s+/).filter(Boolean))];
+      if (terms.length === 0) throw new ConnectError("query is empty: name the words to look for", Code.InvalidArgument);
+      const results = Object.entries(docPages).flatMap(([path, p]) => {
+        const text = `${p.title}\n${p.markdown}`.toLowerCase();
+        if (!terms.every((t) => text.includes(t))) return [];
+        const lines = p.markdown
+          .split("\n")
+          .map((text, i) => ({ number: i + 1, text }))
+          .filter((l) => terms.some((t) => l.text.toLowerCase().includes(t)))
+          .slice(0, 3);
+        return [{ service: "services/payments", path, title: p.title, lines }];
+      });
+      return { results, totalSize: results.length };
     },
   });
 

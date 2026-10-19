@@ -115,8 +115,8 @@ the others. The server only serves the pages and
   details, visibility, runtime, review; the whole command is shown beside
   every step as the form is filled in). What the mockup shows that Forge
   does not know is left out: rules and approvals, the golden path, tiers
-  and SLOs, team members and on-call, docs search (TechDocs milestone 3),
-  template lint.
+  and SLOs, team members and on-call, template lint. The Docs page searches
+  every service's pages (`SearchDocs`, forge-api with TechDocs milestone 3).
 
 ## Develop
 
