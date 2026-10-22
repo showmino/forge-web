@@ -1,5 +1,6 @@
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { Code, ConnectError, type ConnectRouter } from "@connectrpc/connect";
+import { readFileSync } from "node:fs";
 import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuditService } from "@/gen/forge/v1/audit_pb";
@@ -568,5 +569,26 @@ describe("the frame around every page", () => {
     fireEvent.click(screen.getByRole("button", { name: /Search or jump to/ }));
     fireEvent.keyDown(await screen.findByRole("combobox"), { key: "Escape" });
     expect(screen.queryByRole("combobox")).toBeNull();
+  });
+});
+
+// The app is scaled with CSS zoom, which also scales viewport units: a 100vh
+// box paints taller than the screen, so the rail could not stick and every
+// page had a scrollbar it did not need. Heights that mean "one screen" go
+// through --vh, which divides the zoom out again.
+describe("the zoomed viewport", () => {
+  it("defines the zoom and a screen height that allows for it", () => {
+    const css = readFileSync("app/globals.css", "utf8");
+    expect(css).toMatch(/--zoom:\s*[\d.]+/);
+    expect(css).toMatch(/--vh:\s*calc\(100vh\s*\/\s*var\(--zoom\)\)/);
+    // The zoom is set from the variable, so there is one place to change it.
+    expect(readFileSync("app/layout.tsx", "utf8")).toContain("[zoom:var(--zoom)]");
+  });
+
+  it("asks for a screen through --vh, never a raw viewport unit", () => {
+    for (const file of ["app/layout.tsx", "components/app-shell.tsx", "components/command-palette.tsx", "app/login/page.tsx", "app/auth/callback/page.tsx"]) {
+      const src = readFileSync(file, "utf8");
+      expect(`${file}: ${src.match(/\b(min-)?h-screen\b|\b\d+vh\b/) ?? "none"}`).toBe(`${file}: none`);
+    }
   });
 });

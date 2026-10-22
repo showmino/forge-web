@@ -113,7 +113,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start bg-scrim p-4" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-label="Jump to" className="mx-auto mt-[12vh] w-full max-w-[600px] overflow-hidden rounded-lg bg-surface shadow-3">
+      <div role="dialog" aria-modal="true" aria-label="Jump to" className="mx-auto mt-[calc(var(--vh)*0.12)] w-full max-w-[600px] overflow-hidden rounded-lg bg-surface shadow-3">
         <input
           ref={input}
           role="combobox"

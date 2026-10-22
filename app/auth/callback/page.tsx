@@ -24,7 +24,7 @@ export default function Callback() {
   }, [router]);
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-4 px-4 py-12">
+    <main className="mx-auto flex min-h-[var(--vh)] max-w-sm flex-col justify-center gap-4 px-4 py-12">
       {error ? (
         <>
           <h1 className="type-title">The login was not completed</h1>

@@ -43,7 +43,7 @@ export default function Login() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 px-4 py-12">
+    <main className="mx-auto flex min-h-[var(--vh)] max-w-sm flex-col justify-center gap-6 px-4 py-12">
       <p className="flex items-center gap-2.5">
         <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
           <rect x="3" y="3" width="20" height="5" rx="1" fill="currentColor" />

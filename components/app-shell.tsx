@@ -231,7 +231,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (!session) return null;
   return (
     <div
-      className={`grid min-h-screen grid-cols-[minmax(0,1fr)] rail:transition-[grid-template-columns] rail:duration-200 motion-reduce:transition-none ${
+      className={`grid min-h-[var(--vh)] grid-cols-[minmax(0,1fr)] rail:transition-[grid-template-columns] rail:duration-200 motion-reduce:transition-none ${
         mini ? "rail:grid-cols-[64px_minmax(0,1fr)]" : "rail:grid-cols-[232px_minmax(0,1fr)]"
       }`}
     >
@@ -277,7 +277,7 @@ function Rail({
       ref={railRef}
       aria-label="Primary"
       // Closed on a narrow screen it is hidden, not just moved away: nothing in it can take the focus.
-      className={`fixed inset-y-0 left-0 z-40 flex w-[260px] flex-col gap-4 bg-rail-bg px-3 py-4 text-rail-fg transition-transform duration-200 motion-reduce:transition-none rail:visible rail:sticky rail:top-0 rail:h-screen rail:w-auto rail:translate-x-0 ${m("rail:items-center rail:px-2.5")} ${open ? "visible translate-x-0" : "invisible -translate-x-full"}`}
+      className={`fixed left-0 top-0 z-40 flex h-[var(--vh)] w-[260px] flex-col gap-4 bg-rail-bg px-3 py-4 text-rail-fg transition-transform duration-200 motion-reduce:transition-none rail:visible rail:sticky rail:top-0 rail:w-auto rail:translate-x-0 ${m("rail:items-center rail:px-2.5")} ${open ? "visible translate-x-0" : "invisible -translate-x-full"}`}
     >
       <Link href="/" aria-label="Forge home" className={`flex items-center gap-2.5 px-2 pb-1.5 pt-0.5 no-underline ${m("rail:px-0")}`}>
         <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
