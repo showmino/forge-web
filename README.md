@@ -117,6 +117,8 @@ the others. The server only serves the pages and
   does not know is left out: rules and approvals, the golden path, tiers
   and SLOs, team members and on-call, template lint. The Docs page searches
   every service's pages (`SearchDocs`, forge-api with TechDocs milestone 3).
+  The mockup's Overview is the page as it is built here, with one addition:
+  a Databases widget for the service databases Phase 5 brought.
 
 ## Develop
 
