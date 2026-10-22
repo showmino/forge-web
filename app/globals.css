@@ -14,6 +14,13 @@
  */
 :root {
   color-scheme: light;
+  /* The whole app is scaled up (zoom on <body>, app/layout.tsx). A viewport
+     unit inside a zoomed element still measures the unzoomed viewport and is
+     then scaled, so a 100vh box paints --zoom times too tall: that made the
+     rail taller than the screen, so it could not stick, and gave every page a
+     scrollbar it did not need. --vh is a full screen; use it for 100vh. */
+  --zoom: 1.2;
+  --vh: calc(100vh / var(--zoom));
   --bg: oklch(0.975 0.004 250);
   --surface: oklch(1 0 0);
   --surface-2: oklch(0.965 0.005 250);
