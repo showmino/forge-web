@@ -1,3 +1,4 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Forge Console</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2312181d'/%3E%3Crect x='6' y='6.5' width='20' height='5.5' rx='1.2' fill='%23e5e8ec'/%3E%3Crect x='6' y='13.25' width='13' height='5.5' rx='1.2' fill='%23e5e8ec'/%3E%3Crect x='6' y='20' width='7' height='5.5' rx='1.2' fill='%23d2520f'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -417,51 +418,48 @@ tr.group td{background:var(--surface-2);font-size:11.5px;letter-spacing:.06em;te
 .input[aria-invalid="true"]{border-color:var(--bad-dot)}
 
 /* ---------- Overview ---------- */
-.hlegend{display:inline-flex;flex-wrap:wrap;gap:4px 12px;margin-left:auto;font-size:12px;color:var(--fg-2)}
-.hlegend span{display:inline-flex;align-items:center;gap:5px}
-.hlegend i{width:8px;height:8px;border-radius:2px;background:var(--line-strong)}
-.hlegend i{border-radius:50%}.hlegend i.ok{background:var(--ok-dot)} .hlegend i.warn{background:var(--warn-dot)} .hlegend i.bad{background:var(--bad-dot);border-radius:1.5px} .hlegend i.neutral{background:transparent;border:1.5px solid var(--fg-3)}
-.hmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:var(--s2)}
-.htile{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);text-decoration:none;color:var(--fg);min-width:0}
-.htile.hot.warn{border-color:color-mix(in oklab,var(--warn-dot) 55%,var(--line));background:color-mix(in oklab,var(--warn-bg) 55%,var(--surface))}
-.htile.hot.bad{border-color:color-mix(in oklab,var(--bad-dot) 50%,var(--line));background:color-mix(in oklab,var(--bad-bg) 55%,var(--surface))}
-.htile-n{display:flex;align-items:baseline;gap:8px;font-size:13px;font-weight:500;min-width:0}
-.htile-n .mono{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tier{font-size:10.5px;font-weight:600;color:var(--fg-3);font-family:var(--font-mono);margin-left:auto}
-.htile-s{display:flex;gap:6px;flex-wrap:wrap}
-.hchip{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-mono);font-size:11px;color:var(--fg-2);padding:1px 7px 1px 6px;border-radius:999px;background:var(--surface-2)}
-.hchip b{font-weight:600;font-family:var(--font-ui);font-size:11.5px}
-.hchip.warn b{color:var(--warn-fg)} .hchip.bad b{color:var(--bad-fg)}
-.hdot{width:7px;height:7px;border-radius:50%;background:var(--ok-dot);flex:none}
-.hchip.warn .hdot{background:var(--warn-dot)} .hchip.bad .hdot{background:var(--bad-dot);border-radius:1.5px}
-.hchip.neutral .hdot{background:transparent;border:1.5px solid var(--fg-3)}
-@media (hover:hover) and (pointer:fine){.htile:hover{border-color:var(--fg-3)}}
-@media (max-width:560px){.hmap{grid-template-columns:repeat(2,minmax(0,1fr))}.htile{padding:9px 10px}.htile-s{gap:4px}}
-.ov-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:var(--s5);align-items:start}
-.ov-main,.ov-side{display:flex;flex-direction:column;gap:var(--s6,32px);min-width:0}
-@media (max-width:1080px){.ov-grid{grid-template-columns:minmax(0,1fr)}}
-.deliv{display:flex;flex-direction:column;gap:var(--s3);padding-top:var(--s4)}
-.deliv-top{display:flex;align-items:flex-end;gap:var(--s3)}
-.deliv-top>div{display:flex;align-items:baseline;gap:8px}
-.deliv-top .hlegend{margin-bottom:4px}
-.dchart{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:4px;height:76px;align-items:end;border-bottom:1px solid var(--line)}
-.dbar{position:relative;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;height:100%;padding:0 2px;cursor:default}
-.dbar i{display:block;width:100%;max-width:14px;margin:0 auto}
-.dbar i:first-child{border-radius:4px 4px 0 0}
-.dbar .o{background:var(--ok-dot)} .dbar .f{background:var(--bad-dot)}
-.dbar .zero{height:2px;background:var(--line-strong);border-radius:1px}
-@media (hover:hover) and (pointer:fine){.dbar:hover{background:var(--surface-2);border-radius:4px 4px 0 0}
-  .dbar:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);font-size:12px;padding:4px 8px;border-radius:var(--r-sm);white-space:nowrap;z-index:5;pointer-events:none}
-  .dbar:nth-child(-n+3):hover::after{left:0;transform:none}.dbar:nth-last-child(-n+3):hover::after{left:auto;right:0;transform:none}}
-.dchart-x{display:flex;justify-content:space-between;font-size:11.5px;color:var(--fg-3);margin-top:-6px}
-.metrics{margin:var(--s2) 0 0;display:flex;flex-direction:column}
-.metrics>div{display:flex;align-items:baseline;justify-content:space-between;gap:var(--s3);padding:9px 0;border-top:1px solid var(--line);flex-wrap:wrap}
-.metrics dt{font-size:13px;color:var(--fg-2)}
-.metrics dd{margin:0;display:flex;align-items:baseline;gap:10px}
-.metrics dd .num{font-weight:600;font-size:14px}
-.trend{display:inline-flex;align-items:center;gap:3px;font-size:12px}
-.trend.good{color:var(--ok-fg)} .trend.bad{color:var(--bad-fg)}
-.sev.ok{background:var(--ok-dot)}
+.ov-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.ov-cell{display:flex;flex-direction:column;gap:2px;padding:var(--s4) var(--s5) var(--s4) 0;min-width:0}
+.ov-cell+.ov-cell{padding-left:var(--s5);border-left:1px solid var(--line)}
+.ov-k{font-size:12.5px;color:var(--fg-3)}
+.ov-v{display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-stretch:112%;font-weight:700;font-size:24px;line-height:1.2}
+.ov-v small{font-family:var(--font-ui);font-stretch:100%;font-weight:400;font-size:13px;color:var(--fg-2)}
+.ov-n{font-size:12.5px;color:var(--fg-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ov-n a{color:inherit}
+.ov-dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--line-strong)}
+.ov-dot.ok{background:var(--ok-dot)} .ov-dot.warn{background:var(--warn-dot)} .ov-dot.bad{background:var(--bad-dot);border-radius:2px} .ov-dot.run{background:var(--ember);box-shadow:0 0 0 3px color-mix(in oklab,var(--ember) 25%,transparent)}
+.ov-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:var(--s7,48px)}
+.ov-list{display:flex;flex-direction:column}
+.ov-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:var(--s3);align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.ov-item:last-child{border-bottom:1px solid var(--line)}
+.ov-item>.ov-dot{align-self:start;margin-top:7px}
+.ov-item-b{min-width:0;font-size:13.5px}
+.ov-item-b .mono{font-size:13px;font-weight:500}
+.ov-item-s{font-size:12.5px;color:var(--fg-3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ov-item-a{display:flex;gap:6px;align-items:center}
+.ov-state{font-size:12.5px;color:var(--fg-3)} .ov-state.bad{color:var(--bad-fg);font-weight:500}
+.ov-none{margin:0;padding:var(--s5) 0;text-align:center;color:var(--fg-2);font-size:13.5px}
+.ov-flights{display:flex;flex-direction:column;gap:var(--s4)}
+.ov-flights .flight{padding:var(--s5)}
+
+
+.dash{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s5);align-items:start}
+.widget{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-1);min-width:0;display:flex;flex-direction:column}
+.widget.full{grid-column:1/-1}
+.widget-h{display:flex;align-items:center;gap:var(--s2);padding:var(--s4) var(--s5) var(--s3)}
+.widget-h h2{margin:0;font-size:15px;font-weight:600}
+.w-link{margin-left:auto;font-size:12.5px;color:var(--fg-2)}
+.widget-b{padding:0 var(--s5) var(--s5);min-width:0}
+.widget-b .ov-list .ov-item:first-child{border-top:0;padding-top:4px}
+.widget-b .ov-list .ov-item:last-child{border-bottom:0;padding-bottom:0}
+.widget-b .ov-strip{border:0;grid-template-columns:repeat(4,minmax(0,1fr))}
+.widget-b .ov-cell{padding-top:0;padding-bottom:0}
+.widget-b .flight.flat{padding:0;gap:var(--s3)}
+.widget.half .ov-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.widget.half .ov-cell:nth-child(3){border-left:0;padding-left:0}.widget.half .ov-cell:nth-child(n+3){border-top:1px solid var(--line);padding-top:var(--s3);margin-top:var(--s3)}
+.ov-state.warn{color:var(--warn-fg);font-weight:500}
+@media (max-width:1080px){.dash{grid-template-columns:minmax(0,1fr)}.widget.full{grid-column:auto}.widget-b .ov-strip{grid-template-columns:repeat(2,minmax(0,1fr))}.widget-b .ov-cell:nth-child(3){border-left:0;padding-left:0}.widget-b .ov-cell:nth-child(n+3){border-top:1px solid var(--line);padding-top:var(--s3);margin-top:var(--s3)}}
+@media (max-width:700px){.widget-b .ov-cell+.ov-cell{padding-left:var(--s3)}.widget-b .ov-cell:nth-child(2){border-top:0;margin-top:0;padding-top:0;border-left:1px solid var(--line)}.widget-b .ov-cell:nth-child(3){padding-left:0}.widget-b .ov-v{font-size:21px}.widget-b .ov-n{white-space:normal}.widget-h,.widget-b{padding-left:var(--s4);padding-right:var(--s4)}}
+@media (max-width:700px){.ov-strip{grid-template-columns:minmax(0,1fr)}.ov-cell,.ov-cell+.ov-cell{padding:var(--s3) 0;border-left:0}.ov-cell+.ov-cell{border-top:1px solid var(--line)}.ov-item{grid-template-columns:auto minmax(0,1fr)}.ov-item-a{grid-column:2}.ov-item-s{white-space:normal}}
 
 /* ---------- Create a service ---------- */
 .stepper{list-style:none;margin:0;padding:0;display:flex;gap:var(--s2);flex-wrap:wrap;counter-reset:st}
@@ -543,6 +541,61 @@ tr.group td{background:var(--surface-2);font-size:11.5px;letter-spacing:.06em;te
 .rv-what ol{margin:8px 0 0;padding-left:20px;color:var(--fg-2);font-size:13.5px;display:flex;flex-direction:column;gap:4px}
 @media (max-width:1080px){.cw{grid-template-columns:minmax(0,1fr)}.cw-side{position:static}.cw-side .preview-cli{max-height:120px;overflow:auto}}
 @media (max-width:700px){.stepper{flex-wrap:nowrap;gap:6px}.st-l{display:none}.stepper li.current .st-l{display:block}.stepper li{flex:0 0 auto}.stepper li.current{flex:1 1 auto;min-width:0}.stepper li>*{padding:10px 6px}.cw-grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.kv-row{grid-template-columns:minmax(0,1fr) auto!important}.kv-row .kv-cell:nth-child(n+2){grid-column:1}.kv-row .icon-btn{grid-column:2;grid-row:1}.run-s{margin-left:0;width:100%}}
+
+/* ---------- Services page ---------- */
+.sl-bar{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);flex-wrap:wrap}
+.sl-tabs{display:flex;gap:var(--s5)}
+.sl-tabs button{all:unset;cursor:pointer;font-size:14px;color:var(--fg-3);padding:6px 0;border-bottom:2px solid transparent}
+.sl-tabs button span{font-size:12px;margin-left:4px;color:var(--fg-3)}.sl-tabs button span.hot{color:var(--bad-fg);font-weight:600}
+.sl-tabs button:hover{color:var(--fg)}.sl-tabs button[aria-pressed="true"]{color:var(--fg);border-bottom-color:var(--fg)}
+.sl-tabs button:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+.sl-find .input{width:240px}
+.sl{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.sl-row{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr) 170px 110px;align-items:center;column-gap:var(--s4);min-height:72px;box-sizing:border-box;padding:18px 20px;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-1);transition:border-color .12s,box-shadow .12s}
+.sl-row:hover{border-color:var(--line-strong);box-shadow:var(--shadow-3)}.sl-row:focus-visible{outline:2px solid var(--ember);outline-offset:-2px}
+.sl-dot{width:8px;height:8px;border-radius:50%;background:var(--ok-dot);flex:none}
+.sl-dot.warn{background:var(--warn-dot)}.sl-dot.bad{background:var(--bad-dot)}.sl-dot.none{background:transparent;box-shadow:inset 0 0 0 1.5px var(--fg-3)}
+.sl-name{font-family:var(--font-mono);font-size:15.5px;font-weight:600}
+.sl-main{display:flex;flex-direction:column;gap:3px;min-width:0}.sl-desc{font-size:13px;color:var(--fg-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sl-status{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--fg-2);font-weight:500;min-width:0;white-space:nowrap}.sl-status.bad{color:var(--bad-fg)}.sl-status.warn{color:var(--warn-fg)}.sl-status.none{color:var(--fg-3);font-weight:400}
+.sl-head{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr) 170px 110px;column-gap:var(--s4);padding:0 21px 2px;font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--fg-3);margin-bottom:-14px}.sl-head span:last-child{text-align:right}
+.sl-team{font-size:13px;color:var(--fg-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sl-when{font-size:13px;color:var(--fg-3);text-align:right;white-space:nowrap}
+.sl-empty{color:var(--fg-2)}.linkish{all:unset;cursor:pointer;color:var(--ember-ink);text-decoration:underline}
+@media (max-width:860px){.sl-head{display:none}.sl-row{grid-template-columns:minmax(0,1fr) auto;row-gap:8px;padding:16px}.sl-main{grid-column:1}.sl-when{grid-column:2;grid-row:1;align-self:start}.sl-status{grid-column:1/-1;grid-row:2}.sl-team{display:none}.sl-desc{white-space:normal}.sl-find{flex:1}.sl-find .input{width:100%}}
+.sl-status{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--fg-2);font-weight:500;min-width:0;white-space:nowrap}.sl-status.bad{color:var(--bad-fg)}.sl-status.warn{color:var(--warn-fg)}.sl-status.none{color:var(--fg-3);font-weight:400}
+
+/* ---------- Actions and personal settings ---------- */
+.act-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:var(--s3)}
+.act-card{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:var(--s4);border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);box-shadow:var(--shadow-1);text-align:left;font:inherit;color:var(--fg);cursor:pointer}
+@media (hover:hover) and (pointer:fine){.act-card:hover{border-color:var(--ember)}}
+.act-card:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+.act-i{display:grid;place-items:center;width:34px;height:34px;border-radius:var(--r-md);background:var(--surface-2);color:var(--fg-2);flex:none}
+.act-t{font-weight:600;font-size:14.5px;margin-top:4px}
+.act-d{font-size:13px;color:var(--fg-2)}
+.drawer-h h2{margin:0}
+.res-pick{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--s2)}
+.res-pick .access-opt{padding:10px 12px}
+.res-pick .access-opt::before{left:12px;top:13px}
+.res-pick .access-opt>span{padding-left:22px}
+.stepper-in{display:flex;gap:6px;max-width:200px}
+.stepper-in .input{text-align:center}
+.stepper-in .btn-icon{width:36px;justify-content:center;font-size:16px}
+.me{display:flex;flex-direction:column;gap:var(--s6);max-width:880px}
+.me-prof{display:flex;gap:var(--s5);align-items:flex-start;padding-top:var(--s4)}
+.me-av{width:52px;height:52px;font-size:16px}
+.warn-t{color:var(--warn-fg);font-weight:500}
+.table-wrap.flat{border:0;box-shadow:none;border-radius:var(--r-lg) var(--r-lg) 0 0;margin:0}
+table.notif th:not(:first-child),table.notif td:not(:first-child){text-align:center;width:92px}
+table.notif input{width:16px;height:16px;accent-color:var(--ember)}
+.notif-more{display:flex;flex-direction:column;gap:var(--s4);border-top:1px solid var(--line);padding-top:var(--s4)}
+.quiet{display:flex;gap:var(--s3);padding-left:26px}.quiet .field{width:140px}
+.tok-show{display:flex;align-items:center;gap:var(--s2);padding:10px 12px;border-radius:var(--r-md);background:var(--surface-2);margin:var(--s3) 0}
+.tok-show code{flex:1;min-width:0;font-family:var(--font-mono);font-size:12.5px;overflow-wrap:anywhere}
+a.rail-foot{text-decoration:none;color:inherit;border-radius:var(--r-md)}
+@media (hover:hover) and (pointer:fine){a.rail-foot:hover .avatar{box-shadow:0 0 0 2px var(--rail-fg-2)}}
+a.rail-foot[aria-current="page"] .avatar{box-shadow:0 0 0 2px var(--ember)}
+@media (max-width:560px){.res-pick{grid-template-columns:minmax(0,1fr)}.me-prof{flex-direction:column}}
 
 /* ---------- TechDocs ---------- */
 .doc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:var(--s4)}
@@ -671,10 +724,10 @@ tr.group td{background:var(--surface-2);font-size:11.5px;letter-spacing:.06em;te
       <a href="#design" data-r="design"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="8" r="4.5"/><circle cx="16" cy="8" r="4.5"/><circle cx="12" cy="15.5" r="4.5"/></svg>Design language</a>
     </nav>
     <button class="rail-toggle" data-action="toggle-rail" aria-label="Expand sidebar" aria-expanded="false"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M9 4v16"/><path class="chev" d="M13.5 10l2 2-2 2"/></svg><span class="nav-t">Collapse</span></button>
-    <div class="rail-foot">
-      <span class="avatar" title="Showmino · deogratias-saidi · Writer">SM</span>
+    <a class="rail-foot" href="#me" data-r="me" title="Your settings">
+      <span class="avatar">SM</span>
       <span class="who">Showmino<small>deogratias-saidi</small></span><span class="role">Writer</span>
-    </div>
+    </a>
   </aside>
 
   <div class="main">
@@ -755,7 +808,10 @@ var D={
               {key:"deletion_protection",label:"Deletion protection",type:"bool",def:true,hint:"Blocks destroy until it is turned off."}]}
   ],
   resources:[
-    {name:"payments-db",kind:"PostgreSQL 16",svc:"payments",env:"production",state:"applied",plan:"",when:"2 d ago"},
+    {name:"payments-db",kind:"PostgreSQL 18",svc:"payments",env:"production",state:"applied",plan:"",when:"2 d ago",size:"20Gi",instances:2,health:"2 of 2 ready"},
+    {name:"payments-db",kind:"PostgreSQL 18",svc:"payments",env:"staging",state:"applied",plan:"",when:"2 d ago",size:"5Gi",instances:1,health:"1 of 1 ready"},
+    {name:"ledger-db",kind:"PostgreSQL 18",svc:"ledger",env:"production",state:"applied",plan:"",when:"6 d ago",size:"10Gi",instances:2,health:"2 of 2 ready"},
+    {name:"search-index-db",kind:"PostgreSQL 18",svc:"search-indexer",env:"staging",state:"failed",plan:"+1 ~0 −0",when:"5 h ago",size:"1Gi",instances:1,health:"0 of 1 ready, not healthy in time"},
     {name:"payments-events",kind:"Kafka topic",svc:"payments",env:"production",state:"plan",plan:"+1 ~0 −0",when:"12 min ago"},
     {name:"checkout-cache",kind:"Redis 7",svc:"checkout-api",env:"production",state:"applied",plan:"",when:"6 d ago"},
     {name:"storefront-assets",kind:"S3 bucket",svc:"web-storefront",env:"production",state:"drift",plan:"+0 ~2 −0",when:"1 h ago"},
@@ -834,72 +890,87 @@ function plural(n,w){return n+" "+w+(n===1?"":"s");}
 
 /* ---------------- Views ---------------- */
 var V={};
-var ui={depFilter:"all",catTeam:"all",catQuery:"",svcTab:"overview",auditQuery:"",docQuery:"",docPage:0};
+var ui={depFilter:"all",catTeam:"all",catQuery:"",catStatus:"all",svcTab:"overview",auditQuery:"",docQuery:"",docPage:0};
 
-/* Delivery history for the last 14 days, oldest first: production deploys that succeeded and failed. */
-var DELIVERY={ok:[6,7,5,0,0,8,6,9,7,6,0,0,7,5],fail:[1,0,1,0,0,0,1,0,2,0,0,0,0,2],lead:["2 h 40 min","3 h 55 min"],restore:["24 min","1 h 10 min"]};
-function ovDay(back){var d=new Date();d.setDate(d.getDate()-back);return d;}
-function ovDeployChart(){
-  var n=DELIVERY.ok.length,max=Math.max.apply(null,DELIVERY.ok.map(function(v,i){return v+DELIVERY.fail[i];})),H=72;
-  var bars=DELIVERY.ok.map(function(ok,i){var f=DELIVERY.fail[i],d=ovDay(n-1-i),lbl=i===n-1?"Today":d.toLocaleDateString(undefined,{weekday:"short",day:"numeric",month:"short"});
-    var tip=lbl+": "+(ok+f?plural(ok+f,"deploy")+(f?", "+f+" failed":""):"no deploys");
-    return '<div class="dbar" data-tip="'+esc(tip)+'">'+(ok+f?'':'<i class="zero"></i>')+(f?'<i class="f" style="height:'+Math.max(3,Math.round(f/max*H))+'px"></i>':'')+(ok?'<i class="o" style="height:'+Math.round(ok/max*H)+'px"></i>':'')+'</div>';}).join("");
-  var tot=0,fl=0;DELIVERY.ok.forEach(function(v,i){tot+=v+DELIVERY.fail[i];fl+=DELIVERY.fail[i];});
-  return {html:'<div class="dchart" role="img" aria-label="Production deploys per day over the last 14 days: '+tot+' deploys, '+fl+' failed.">'+bars+'</div><div class="dchart-x"><span>'+ovDay(n-1).toLocaleDateString(undefined,{day:"numeric",month:"short"})+'</span><span>Today</span></div>',total:tot,failed:fl};
+/* ---------------- Overview: the console's home page ----------------
+   Summary before detail: the four numbers, then what is in flight, what
+   needs someone, what shipped lately, and the databases Forge runs. Only
+   what the API already knows: no invented metrics, no layout to arrange. */
+function ovItem(sev,t,s,act){return '<div class="ov-item"><span class="ov-dot '+sev+'"></span><div class="ov-item-b"><div>'+t+'</div><div class="ov-item-s">'+s+'</div></div>'+(act?'<div class="ov-item-a">'+act+'</div>':'')+'</div>';}
+function ovTrouble(env){return D.services.filter(function(s){var st=s.env[env][3];return st==="degraded"||st==="failing";});}
+function ovDeployed(env){return D.services.filter(function(s){var st=s.env[env][3];return st!=="none"&&st!=="creating";});}
+/* One card: a title, an optional count or link, and its contents. */
+function ovWidget(id,title,body,o){o=o||{};
+  return '<section class="widget" aria-labelledby="w-'+id+'"><div class="widget-h"><h2 id="w-'+id+'">'+title+'</h2>'+
+    (o.note?'<span class="faint num" style="font-size:13px">'+o.note+'</span>':'')+
+    (o.link?'<a class="w-link" href="'+o.link[0]+'">'+o.link[1]+'</a>':'')+
+    '</div><div class="widget-b">'+body+'</div></section>';
 }
+function ovNone(t){return '<p class="ov-none">'+t+'</p>';}
+/* The four numbers across the top, from what the API already knows. */
+function ovStats(){
+  var today=D.deploys.filter(function(d){return d.today;});
+  var ended=today.filter(function(d){return d.state==="succeeded"||d.state==="failed";});
+  var failed=ended.filter(function(d){return d.state==="failed";}).length;
+  var cell=function(v,l){return '<div class="stat"><span class="stat-v num">'+v+'</span><span class="stat-l">'+l+'</span></div>';};
+  return '<div class="stats">'+cell(D.services.length,"Services in the catalog")+cell(today.length,"Deploys today")+
+    cell(failed+'<small> of '+ended.length+'</small>',"Finished deploys that failed")+
+    cell(D.envs.filter(function(e){return e.kind==="preview";}).length,"Preview environments live")+'</div>';
+}
+/* Needs attention: a broken environment, a deploy that failed, a preview about to expire. */
+function ovNeeds(){
+  var out=[];
+  D.services.forEach(function(s){ENVS.forEach(function(env){var st=s.env[env][3];
+    if(st!=="failing"&&st!=="degraded")return;
+    out.push([st==="failing"?"bad":"warn",'<span class="mono">'+s.name+'</span> is '+st+' in '+env,
+      catIssue(s)||"Deployed "+s.env[env][1].toLowerCase()+" by "+esc(s.env[env][2]),
+      '<a class="btn btn-sm" href="#service-'+s.name+'">Open</a>']);});});
+  D.deploys.filter(function(d){return d.state==="failed";}).forEach(function(d){
+    out.push(["bad",'<span class="mono">'+d.svc+'</span> <span class="faint">→ '+d.env+'</span> failed',
+      (d.note?esc(d.note)+" · ":"")+esc(d.by)+" · "+d.when,'<a class="btn btn-sm" href="#deployments">View</a>']);});
+  D.envs.filter(function(e){return e.kind==="preview"&&e.left<=6;}).forEach(function(e){
+    out.push(["warn",'<span class="mono">'+e.name+'</span> expires soon',
+      e.left+" h left · "+e.svc+" · "+esc(e.by),'<button class="btn btn-sm" data-action="extend" data-env="'+e.name+'">Extend</button>']);});
+  return out;
+}
+/* One running deploy, stage by stage, as the console follows it. */
+function ovFlight(d){
+  return '<div class="panel flight"><div class="flight-top"><span class="flight-title">'+d.svc+' <span class="faint">→</span> '+d.env+'</span>'+
+    pill(DEP_PILL,d.state)+'<span class="tag">'+d.ref+'</span><a class="btn btn-sm" style="margin-left:auto" href="#deployments">Watch</a></div>'+line(d)+
+    '<div class="flight-meta"><span>Started by <span class="mono">'+esc(d.by)+'</span> '+d.when+'</span>'+
+    '<span>Operation <span class="mono">'+d.op+'</span></span>'+
+    '<span>Argo CD <a class="ext" href="'+argoUrl(d.svc,d.env)+'" target="_blank" rel="noopener"><span class="mono">'+argoApp(d.svc,d.env)+'</span>'+ARGO_I+'</a></span></div></div>';
+}
+/* The databases Forge runs: one Postgres cluster per service and environment. */
+function ovDatabases(){return D.resources.filter(function(r){return r.svc&&r.kind.indexOf("PostgreSQL")===0;});}
+
+
+/* The page as the console renders it: the stats strip, what is in flight,
+   what needs someone, what shipped lately, and the databases Forge runs.
+   Fixed, in that order: the console has no layout to customize. */
 V.overview=function(){
-  var running=D.deploys.filter(function(d){return d.state==="running";})[0];
-  var bad=function(env){return D.services.filter(function(s){var st=s.env[env][3];return st==="degraded"||st==="failing";});};
-  var prodBad=bad("production"),stagBad=bad("staging");
-  var hr=new Date().getHours(),greet=hr<12?"Good morning":hr<18?"Good afternoon":"Good evening";
-  var parts=[];
-  parts.push(prodBad.length?'Production has '+plural(prodBad.length,"service")+' in trouble':'Production is healthy');
-  if(D.approvals.length)parts.push(plural(D.approvals.length,"deploy")+' waiting for your approval');
-  var sentence=parts.join(", and ")+".";
-  var h=header({title:greet+", Showmino",lede:sentence,cli:"forge status",actions:'<a class="btn" href="#environments">'+I.plus+'Preview env</a><a class="btn btn-primary" href="#create" data-action="create">'+I.plus+'Create service</a>'});
-
-  /* Health map: every service in staging and production */
-  var order=D.services.slice().sort(function(a,b){var r=function(s){var p=s.env.production[3],st=s.env.staging[3];return p==="failing"?0:p==="degraded"?1:st==="failing"||st==="degraded"?2:p==="none"?4:3;};return r(a)-r(b)||a.name.localeCompare(b.name);});
-  var chip=function(s,env){var st=s.env[env][3],m=SVC_PILL[st]||SVC_PILL.healthy;return '<span class="hchip '+m[0]+'"><span class="hdot"></span>'+(env==="production"?"prod":"stg")+(st!=="healthy"&&st!=="none"?' <b>'+m[1].toLowerCase()+'</b>':'')+'<span class="sr">: '+m[1]+'</span></span>';};
-  var healthy=D.services.filter(function(s){return s.env.production[3]==="healthy";}).length,deployed=D.services.filter(function(s){return s.env.production[3]!=="none";}).length;
-  h+='<section class="section"><div class="section-h"><h2>Right now</h2><span class="faint">'+healthy+' of '+deployed+' services healthy in production</span><span class="hlegend"><span><i class="ok"></i>Healthy</span><span><i class="warn"></i>Degraded</span><span><i class="bad"></i>Failing</span><span><i class="neutral"></i>Not deployed</span></span></div>'+
-    '<div class="hmap">'+order.map(function(s){var p=s.env.production[3],st=s.env.staging[3],hot=p==="failing"||st==="failing"?"bad":p==="degraded"||st==="degraded"?"warn":"";
-      return '<a class="htile'+(hot?" hot "+hot:"")+'" href="#service-'+s.name+'"><span class="htile-n"><span class="mono">'+s.name+'</span>'+(s.tier?'<span class="tier">T'+s.tier+'</span>':'')+'</span><span class="htile-s">'+chip(s,"staging")+chip(s,"production")+'</span></a>';}).join("")+
-    '</div></section>';
-
-  /* Needs you */
-  var needs=[];
-  D.approvals.forEach(function(a){needs.push('<div class="row"><span class="sev warn"></span><div style="min-width:0"><div class="row-t"><span class="mono">'+a.svc+'</span> <span class="mono ahead">'+a.ref+'</span> <span class="faint">→ production</span></div><div class="row-s">Waiting for approval · requested by '+esc(a.by)+' '+a.when+'</div></div><div class="ph-actions"><button class="btn btn-sm btn-ghost" data-action="approval" data-id="'+a.id+'" data-ok="0">Reject</button><button class="btn btn-sm btn-primary" data-action="approval" data-id="'+a.id+'" data-ok="1">Approve</button></div></div>');});
-  [{sev:"bad",t:'<span class="mono">checkout-api</span> failed verification in production',s:"Error rate 4.1% above the 2% gate. Rolled back to 5d20c9e.",href:"#service-checkout-api",a:"Open"},
-   {sev:"bad",t:'<span class="mono">search-indexer</span> build is failing in staging',s:"pip resolver: no matching opensearch-py>=3",href:"#deployments",a:"View"},
-   {sev:"warn",t:'Preview <span class="mono">pr-388</span> expires in 2 hours',s:"checkout-api · created by jonas.weber",href:"#environments",a:"Extend"},
-   {sev:"warn",t:'<span class="mono">storefront-assets</span> drifted from its definition',s:"2 attributes changed outside Forge",href:"#resources",a:"Review"}].forEach(function(a){
-    needs.push('<div class="row"><span class="sev '+a.sev+'"></span><div style="min-width:0"><div class="row-t">'+a.t+'</div><div class="row-s">'+esc(a.s)+'</div></div><a class="btn btn-sm" href="'+a.href+'">'+a.a+'</a></div>');});
-  if(unowned().length)needs.push('<div class="row"><span class="sev warn"></span><div style="min-width:0"><div class="row-t">'+plural(unowned().length,"resource")+' with no owner</div><div class="row-s">Ownership at '+coverage().pct+'%, against a '+OWNER_TARGET+'% target</div></div><a class="btn btn-sm" href="#ownership">Assign</a></div>');
-
-  var ch=ovDeployChart(),cfr=Math.round(ch.failed/ch.total*100);
-  h+='<div class="ov-grid"><div class="ov-main">';
-  h+='<section class="section"><div class="section-h"><h2>Needs you</h2><span class="faint num">'+needs.length+'</span></div><div class="panel list">'+needs.join("")+'</div></section>';
-  if(running){
-    h+='<section class="section"><div class="section-h"><h2>In flight</h2><a href="#deployments">All deployments</a></div><div class="panel flight">'+
-      '<div class="flight-top"><span class="flight-title">'+running.svc+' <span class="faint">→</span> '+running.env+'</span>'+pill(DEP_PILL,running.state)+'<span class="tag">'+running.ref+'</span><button class="btn btn-sm" style="margin-left:auto" data-action="toast" data-msg="Watching '+running.op+'" data-code="forge op watch '+running.op+'">Watch</button></div>'+
-      line(running)+
-      '<div class="flight-meta"><span>Started by <span class="mono">'+running.by+'</span> '+running.when+'</span><span>Operation <span class="mono">'+running.op+'</span></span><span>Argo CD app <a class="ext" href="'+argoUrl("payments","staging")+'" target="_blank" rel="noopener"><span class="mono">payments-staging</span>'+ARGO_I+'</a></span></div>'+
-      '<div class="flight-log">01:33:02  build    <em>ok</em>   image ghcr.io/acme/payments:9c1e2fa  (sha256:4be1…)\n01:34:10  test     <em>ok</em>   412 passed, 0 failed\n01:35:01  plan     <em>ok</em>   no infra changes\n01:35:20  <b>sync     …    argo cd: 2 of 3 pods ready (rolling)</b></div>'+
-      '</div></section>';
-  }
-  h+='</div><div class="ov-side">';
-  h+='<section class="section"><div class="section-h"><h2>Delivery</h2><span class="faint">Production, last 14 days</span></div><div class="panel"><div class="panel-b deliv">'+
-    '<div class="deliv-top"><div><span class="stat-v num">'+ch.total+'</span><span class="stat-l">Deploys</span></div><span class="hlegend"><span><i class="ok"></i>Succeeded</span><span><i class="bad"></i>Failed</span></span></div>'+ch.html+
-    '<dl class="metrics">'+
-      '<div><dt>Change failure rate</dt><dd><span class="num">'+cfr+'%</span><span class="trend good">'+I.down+'Down from 14%</span></dd></div>'+
-      '<div><dt>Lead time to production</dt><dd><span class="num">'+DELIVERY.lead[0]+'</span><span class="trend good">'+I.down+'Was '+DELIVERY.lead[1]+'</span></dd></div>'+
-      '<div><dt>Time to restore</dt><dd><span class="num">'+DELIVERY.restore[0]+'</span><span class="trend good">'+I.down+'Was '+DELIVERY.restore[1]+'</span></dd></div>'+
-    '</dl></div></div></section>';
-  h+='<section class="section"><div class="section-h"><h2>Recent deploys</h2><a href="#deployments">History</a></div><div class="panel list">';
-  D.deploys.filter(function(d){return d.state!=="running";}).slice(0,5).forEach(function(d){
-    h+='<div class="row">'+'<span class="sev '+(d.state==="failed"?"bad":d.state==="succeeded"?"ok":"")+'"></span><div style="min-width:0"><div class="row-t"><span class="mono">'+d.svc+'</span> <span class="faint">→ '+d.env+'</span></div><div class="row-s">'+(d.note?esc(d.note)+' · ':'')+d.when+'</div></div>'+pill(DEP_PILL,d.state)+'</div>';});
-  h+='</div></section></div></div>';
+  var needs=ovNeeds(),run=D.deploys.filter(function(d){return d.state==="running"||d.state==="queued";});
+  var rec=D.deploys.filter(function(d){return d.state==="succeeded"||d.state==="failed";}).slice(0,6);
+  var db=ovDatabases();
+  var h=header({title:"Overview",lede:"What is shipping, what is broken and what needs you, in staging and production.",
+    cli:"forge deploy status",actions:'<a class="btn btn-primary" href="#create" data-action="create">'+I.plus+'Create service</a>'});
+  h+=ovStats();
+  if(run.length)h+=ovWidget("flight","In flight",'<div class="ov-flights">'+run.slice(0,3).map(ovFlight).join("")+
+    (run.length>3?'<p class="ov-none" style="text-align:left;padding-bottom:0">And '+(run.length-3)+' more. <a href="#deployments">See them all</a></p>':'')+'</div>',
+    {link:["#deployments","All operations"]});
+  h+='<div class="grid-2">';
+  h+=ovWidget("needs","Needs attention",needs.length?'<div class="ov-list">'+needs.map(function(n){return ovItem(n[0],n[1],n[2],n[3]);}).join("")+'</div>'
+    :ovNone("Nothing needs you right now."),{note:needs.length||""});
+  h+=ovWidget("recent","Recent deploys",rec.length?'<div class="ov-list">'+rec.map(function(d){
+      return ovItem(d.state==="failed"?"bad":"ok",'<span class="mono">'+d.svc+'</span> <span class="faint">→ '+d.env+'</span>',
+        (d.note?esc(d.note)+" · ":"")+esc(d.by)+" · "+d.when,pill(DEP_PILL,d.state));}).join("")+'</div>'
+    :ovNone("No deploy has ended in the last 24 hours."),{link:["#audit","History"]});
+  h+='</div>';
+  h+=ovWidget("databases","Databases",db.length?'<div class="ov-list">'+db.map(function(r){var ok=r.state==="applied";
+      return ovItem(ok?"ok":"bad",'<span class="mono">'+r.name+'</span> <span class="faint">'+r.svc+' · '+r.env+'</span>',
+        r.kind+(r.size?" · "+r.size:"")+(r.instances?" · "+plural(r.instances,"instance"):"")+" · "+(r.health||(ok?"Ready":"Not ready")),
+        '<a class="btn btn-sm" href="#resources">Open</a>');}).join("")+'</div>'
+    :ovNone("No service has asked for a database yet."),{link:["#resources","Resources"]});
   return h;
 };
 
@@ -918,21 +989,46 @@ var HOST_RE=/^(?=.{4,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/;
 function envchip(n){return '<span class="envchip '+(n==="staging"||n==="production"?n:"preview")+'">'+n+'</span>';}
 function life(l){return '<span class="life '+l.toLowerCase()+'">'+l+'</span>';}
 
-V.catalog=function(){
-  var teams=["all"];D.services.forEach(function(s){if(teams.indexOf(s.team)<0)teams.push(s.team);});
+/* ---------------- Services page: three designs to choose from ---------------- */
+function catRank(s){var p=s.env.production[3],st=s.env.staging[3];return p==="failing"?0:st==="failing"?1:p==="degraded"?2:st==="degraded"?3:p==="none"?5:4;}
+function catHot(s){var p=s.env.production[3],st=s.env.staging[3];return p==="failing"||st==="failing"?"bad":p==="degraded"||st==="degraded"?"warn":"";}
+function catAhead(s){var a=s.env.staging[0],b=s.env.production[0];return a!=="—"&&b!=="—"&&a!==b&&s.env.staging[3]==="healthy";}
+function catIssue(s){
+  var bad=["production","staging"].filter(function(e){var x=s.env[e][3];return x==="failing"||x==="degraded";});
+  if(!bad.length)return "";
+  var d=D.deploys.filter(function(d){return d.svc===s.name&&d.state==="failed"&&d.note;})[0];
+  return (bad[0]==="production"?"Production":"Staging")+" is "+s.env[bad[0]][3]+(d?". "+d.note:"");
+}
+function catRows(){
   var q=ui.catQuery.toLowerCase();
-  var rows=D.services.filter(function(s){return (ui.catTeam==="all"||s.team===ui.catTeam)&&(!q||(s.name+" "+s.owner+" "+s.team+" "+s.desc).toLowerCase().indexOf(q)>=0);});
-  var h=header({title:"Services",lede:"Every service in the catalog, and how its environments are doing.",cli:"forge service list"+(ui.catTeam!=="all"?" --team "+ui.catTeam:""),actions:'<button class="btn" data-action="toast" data-msg="Reads forge.yaml from the repo" data-code="forge service register">Register existing</button><a class="btn btn-primary" href="#create" data-action="create">'+I.plus+'Create service</a>'});
-  h+='<div class="toolbar"><label class="sr" for="cat-q">Filter services</label><input id="cat-q" class="input filter" placeholder="Name or team" value="'+esc(ui.catQuery)+'">';
-  teams.forEach(function(t){var n=t==="all"?D.services.length:D.services.filter(function(s){return s.team===t;}).length;h+='<button class="chip" data-action="team" data-team="'+t+'" aria-pressed="'+(ui.catTeam===t)+'">'+(t==="all"?"All teams":t)+'<span class="n">'+n+'</span></button>';});
-  h+='</div><div class="table-wrap"><table><thead><tr><th>Service</th><th>Team</th><th>Lifecycle</th><th>Staging</th><th>Production</th><th class="hide-sm">Golden path</th><th>Updated</th></tr></thead><tbody>';
-  if(!rows.length)h+='<tr><td colspan="7" class="faint">No services match. Clear the filter or pick another team.</td></tr>';
-  rows.forEach(function(s){
-    var score=s.checks?'<span class="score" role="img" aria-label="'+sum(s.checks)+' of 5 checks">'+[0,1,2,3,4].map(function(i){return '<i class="'+(i<sum(s.checks)?"on":"")+'"></i>';}).join("")+'</span>':'<span class="faint">Not checked</span>';
-    h+='<tr class="link" data-href="#service-'+s.name+'"><td><div class="cell-name"><a href="#service-'+s.name+'">'+s.name+'</a><span>'+esc(s.desc)+'</span></div></td><td>'+s.team+'</td><td>'+life(s.life)+'</td><td>'+pill(SVC_PILL,s.env.staging[3])+'</td><td>'+pill(SVC_PILL,s.env.production[3])+'</td><td class="hide-sm">'+score+'</td><td class="faint" style="white-space:nowrap">'+s.updated+'</td></tr>';});
-  h+='</tbody></table></div><p class="faint" style="margin:0;font-size:12.5px">'+plural(rows.length,"service")+' shown. Golden path counts CI, SLO, tracing, runbook and on-call.</p>';
+  return D.services.filter(function(s){
+    var okQ=!q||(s.name+" "+s.owner+" "+s.team+" "+s.desc).toLowerCase().indexOf(q)>=0;
+    var okT=ui.catTeam==="all"||s.team===ui.catTeam;
+    var okS=ui.catStatus==="all"||(ui.catStatus==="attention"?!!catHot(s):ui.catStatus==="ahead"?catAhead(s):!catHot(s)&&s.env.production[3]!=="none");
+    return okQ&&okT&&okS;}).sort(function(a,b){return catRank(a)-catRank(b)||a.name.localeCompare(b.name);});
+}
+/* Services page: a quiet list, one line per service. Only problems get colour. */
+function catStatus(s){var p=s.env.production[3],st=s.env.staging[3];
+  if(p==="failing"||p==="degraded")return [catHot(s),(p==="failing"?"Failing":"Degraded")+" in production"];
+  if(st==="failing"||st==="degraded")return [catHot(s),(st==="failing"?"Failing":"Degraded")+" in staging"];
+  if(p==="none")return ["none","Not deployed"];
+  return ["ok","Healthy"];}
+V.catalog=function(){
+  var rows=catRows(),hot=D.services.filter(function(s){return catHot(s);}).length;
+  var h=header({title:"Services",lede:"Everything you run, and whether it is healthy.",cli:"forge service list",actions:'<a class="btn btn-primary" href="#create" data-action="create">'+I.plus+'Create service</a>'});
+  h+='<div class="sl-bar"><div class="sl-tabs" role="group" aria-label="Show">'+
+    '<button data-action="cat-status" data-st="all" aria-pressed="'+(ui.catStatus!=="attention")+'">All <span>'+D.services.length+'</span></button>'+
+    '<button data-action="cat-status" data-st="attention" aria-pressed="'+(ui.catStatus==="attention")+'">Needs attention <span class="'+(hot?"hot":"")+'">'+hot+'</span></button></div>'+
+    '<label class="sl-find"><span class="sr">Find a service</span><input id="cat-q" class="input" placeholder="Find a service" value="'+esc(ui.catQuery)+'" autocomplete="off"></label></div>';
+  if(!rows.length)return h+'<p class="sl-empty">No services match. <button class="linkish" data-action="cat-clear">Clear</button></p>';
+  h+='<div class="sl-head" aria-hidden="true"><span>Name</span><span>Status</span><span>Team</span><span>Updated</span></div>';
+  h+='<ul class="sl">'+rows.map(function(s){var c=catStatus(s);
+    return '<li><a class="sl-row" href="#service-'+s.name+'"><span class="sl-main"><span class="sl-name">'+s.name+'</span><span class="sl-desc">'+esc(s.desc)+'</span></span>'+
+      '<span class="sl-status '+c[0]+'"><span class="sl-dot '+c[0]+'" aria-hidden="true"></span>'+c[1]+'</span>'+
+      '<span class="sl-team">'+s.team+'</span><span class="sl-when">'+s.updated+'</span></a></li>';}).join("")+'</ul>';
   return h;
 };
+
 function sum(a){return a.reduce(function(x,y){return x+y;},0);}
 
 V.service=function(name){
@@ -949,7 +1045,7 @@ V.service=function(name){
     actions:'<button class="btn btn-icon" data-action="svctab" data-tab="settings" aria-label="Service settings" title="Settings"'+(ui.svcTab==="settings"?' aria-pressed="true"':'')+'>'+I.gear+'</button><button class="btn" data-action="toast" data-msg="Preview environment requested" data-code="forge env create pr-new --service '+s.name+' --ttl 48h">'+I.plus+'Preview env</button>'+
       (ahead?'<button class="btn btn-primary" data-action="toast" data-msg="Promoting '+st[0]+' to production" data-code="forge deploy promote '+s.name+' --to production">'+I.ship+'Promote '+st[0]+'</button>'
             :'<button class="btn btn-primary" data-action="toast" data-msg="Deploy started for '+s.name+'" data-code="forge deploy start '+s.name+' --env staging">'+I.ship+'Deploy</button>')});
-  var tabs=[["overview","Overview"],["deploys","Deployments"],["deps","Dependencies"],["docs","Docs"],["settings","Settings"]];
+  var tabs=[["overview","Overview"],["deploys","Deployments"],["deps","Dependencies"],["docs","Docs"],["actions","Actions"],["settings","Settings"]];
   h+='<div class="tabs" role="tablist">'+tabs.map(function(t){return '<button class="tab" role="tab" data-action="svctab" data-tab="'+t[0]+'" aria-selected="'+(ui.svcTab===t[0])+'">'+t[1]+(t[0]==="deploys"?' <span class="faint num">'+deps.length+'</span>':'')+'</button>';}).join("")+'</div>';
   if(ui.svcTab==="overview"){
     h+='<section class="section"><div class="section-h"><h2>Staging and production</h2>'+(ahead?'<span class="faint" style="font-size:13px">Staging is ahead of production</span>':'<span class="faint" style="font-size:13px">'+(st[0]==="—"?"Not deployed yet":"Both run the same commit")+'</span>')+'</div>';
@@ -976,6 +1072,8 @@ V.service=function(name){
   }else if(ui.svcTab==="deps"){
     h+='<section class="section"><h2>Calls</h2><div class="deps">'+(s.deps.length?s.deps.map(function(d){return '<a class="dep" href="#service-'+d+'"><span class="k">service</span>'+d+'</a>';}).join(""):'<span class="faint">No service dependencies.</span>')+s.res.map(function(r){return '<a class="dep" href="#resources"><span class="k">resource</span>'+r+'</a>';}).join("")+'</div></section>';
     h+='<section class="section"><h2>Called by</h2><div class="deps">'+(used.length?used.map(function(o){return '<a class="dep" href="#service-'+o.name+'"><span class="k">service</span>'+o.name+'</a>';}).join(""):'<span class="faint">Nothing in the catalog calls this service.</span>')+'</div></section>';
+  }else if(ui.svcTab==="actions"){
+    h+=actionsTab(s);
   }else if(ui.svcTab==="settings"){
     var lifeOpts=["Experimental","Production","Deprecated"].map(function(l){return '<option'+(l===s.life?" selected":"")+'>'+l+'</option>';}).join("");
     var teamOpts=Object.keys(TEAMS).map(function(t){return '<option'+(t===s.team?" selected":"")+'>'+t+'</option>';}).join("");
@@ -1200,6 +1298,123 @@ function crCreate(){
   D.audit.unshift({t:"Now",actor:"deogratias-saidi",verb:"service create",res:"services/"+name,ctx:"—",ok:true});
   document.getElementById("nav-svc").textContent=D.services.length;
   var cmd=crCli().join(" ");CR=null;location.hash="#service-"+name;toast("Creating "+name+". The repo and first build are on their way.",cmd);
+}
+
+/* ---------------- Self-service actions on a service ---------------- */
+var REPLICAS={};function replicas(s,env){var k=s.name+"/"+env;if(REPLICAS[k]===undefined)REPLICAS[k]=env==="production"?(s.tier===1?3:2):1;return REPLICAS[k];}
+var SECRETS={payments:[["DATABASE_URL","op://payments/db/url","38 days"],["STRIPE_KEY","op://payments/stripe/secret","112 days"]],"checkout-api":[["REDIS_URL","op://checkout/cache/url","12 days"],["PAYMENTS_TOKEN","op://checkout/payments-api/token","96 days"]]};
+function secretsOf(s){return SECRETS[s.name]||(SECRETS[s.name]=[["APP_SECRET","op://"+s.name+"/app/secret","64 days"]]);}
+var RES_KINDS=[["postgres","PostgreSQL 16","Relational database with daily backups"],["redis","Redis 7","In-memory cache"],["kafka","Kafka topic","Event stream with retention"],["queue","Queue","Work queue with a dead-letter queue"],["s3","S3 bucket","Object storage, private by default"]];
+var ACTIONS=[
+  ["restart","Restart","Roll the pods without changing the image. Use it after a config change or a stuck process."],
+  ["scale","Scale","Change how many replicas run in an environment."],
+  ["resource","Add a resource","Add a database, cache, queue, topic or bucket. Forge plans it, then applies after you approve."],
+  ["rotate","Rotate a secret","Ask 1Password for a new value and roll it out without downtime."]];
+var I_ACT={restart:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>',
+  scale:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="13" width="5" height="8" rx="1"/><rect x="10" y="8" width="5" height="13" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg>',
+  resource:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><ellipse cx="11" cy="6" rx="7" ry="2.8"/><path d="M4 6v11c0 1.5 3.1 2.8 7 2.8"/><path d="M18 6v5"/><path d="M18 15v6M15 18h6" stroke-linecap="round"/></svg>',
+  rotate:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="15" r="4"/><path d="M11 12l8-8M16 7l3 3M14 9l2 2"/></svg>'};
+function actionsTab(s){
+  var h='<div class="act-grid">'+ACTIONS.map(function(a){return '<button class="act-card" data-action="act" data-kind="'+a[0]+'" data-svc="'+s.name+'"><span class="act-i">'+I_ACT[a[0]]+'</span><span class="act-t">'+a[1]+'</span><span class="act-d">'+a[2]+'</span></button>';}).join("")+'</div>';
+  var log=D.audit.filter(function(a){return a.res.indexOf("services/"+s.name)===0||a.res.indexOf(s.name)>=0;}).slice(0,6);
+  h+='<section class="section"><div class="section-h"><h2>Recent actions</h2><a href="#audit">Audit log</a></div>'+(log.length?'<div class="panel list">'+log.map(function(a){return '<div class="row"><span class="sev '+(a.ok?"":"bad")+'"></span><div style="min-width:0"><div class="row-t"><span class="mono">'+esc(a.verb)+'</span> <span class="faint">'+esc(a.res)+'</span></div><div class="row-s">'+esc(a.actor)+' · '+esc(a.t)+'</div></div><span></span></div>';}).join("")+'</div>':'<div class="panel empty-note">No actions yet.</div>')+'</section>';
+  return h;
+}
+function acEnvSelect(id,def){return '<select class="select" id="'+id+'">'+ENVS.map(function(e){return '<option'+(e===def?" selected":"")+'>'+e+'</option>';}).join("")+'</select>';}
+function actionDrawer(kind,name){
+  var s=svc(name),a=ACTIONS.filter(function(x){return x[0]===kind;})[0],b="";
+  if(kind==="restart")b='<div class="field"><label for="ac-env">Environment</label>'+acEnvSelect("ac-env","staging")+'</div>'+
+    '<fieldset class="cw-fs"><legend class="cw-label">How</legend><div class="access-pick">'+
+    '<label class="access-opt"><input type="radio" name="ac-strategy" value="rolling" checked><span><b>Rolling</b><span class="muted">One pod at a time. No downtime.</span></span></label>'+
+    '<label class="access-opt"><input type="radio" name="ac-strategy" value="all"><span><b>All at once</b><span class="muted">Every pod restarts together. Expect a short outage.</span></span></label></div></fieldset>'+
+    '<div class="admon warn" id="ac-warn" hidden>'+NOTE_I+'<p>All at once in production drops traffic for a few seconds.</p></div>'+
+    '<div class="field"><label for="ac-reason">Reason <span class="faint" style="font-weight:400">(optional)</span></label><input class="input" id="ac-reason" placeholder="Picking up new feature flags" autocomplete="off"><span class="hint">Goes in the audit log.</span></div>';
+  if(kind==="scale")b='<div class="field"><label for="ac-env">Environment</label>'+acEnvSelect("ac-env","production")+'</div>'+
+    '<div class="field"><label for="ac-rep">Replicas</label><div class="stepper-in"><button type="button" class="btn btn-icon" data-action="ac-step" data-d="-1" aria-label="One fewer">−</button><input class="input num" id="ac-rep" type="number" min="1" max="20" inputmode="numeric" value="'+replicas(s,"production")+'" aria-describedby="ac-rep-err"><button type="button" class="btn btn-icon" data-action="ac-step" data-d="1" aria-label="One more">+</button></div><span class="hint" id="ac-rep-now"></span><span class="field-err" id="ac-rep-err" role="status"></span></div>'+
+    '<p class="cw-help">This changes the replica count until the next deploy. To keep it, Forge also opens a pull request that sets <span class="mono">run.replicas</span> in forge.yaml.</p>';
+  if(kind==="resource")b='<fieldset class="cw-fs"><legend class="cw-label">Type</legend><div class="res-pick">'+RES_KINDS.map(function(r,i){return '<label class="access-opt"><input type="radio" name="ac-kind" value="'+r[0]+'"'+(i===0?" checked":"")+'><span><b>'+r[1]+'</b><span class="muted">'+r[2]+'</span></span></label>';}).join("")+'</div></fieldset>'+
+    '<div class="field"><label for="ac-name">Name</label><input class="input mono" id="ac-name" value="'+esc(name)+'-db" autocomplete="off" spellcheck="false" aria-describedby="ac-name-err"><span class="hint">Lowercase letters, digits and hyphens.</span><span class="field-err" id="ac-name-err" role="status"></span></div>'+
+    '<div class="field" id="ac-size-f"><label for="ac-size">Size</label><select class="select" id="ac-size"><option value="small">Small · 2 vCPU, 4 GB</option><option value="medium">Medium · 4 vCPU, 16 GB</option><option value="large">Large · 8 vCPU, 32 GB</option></select></div>'+
+    '<fieldset class="cw-fs"><legend class="cw-label">Environments</legend><label class="check"><input type="checkbox" id="ac-stg" checked><span>staging</span></label><label class="check"><input type="checkbox" id="ac-prd"><span>production</span></label><span class="field-err" id="ac-envs-err" role="status"></span></fieldset>'+
+    '<p class="cw-help">Forge adds it to forge.yaml, runs an OpenTofu plan, and waits for your approval before it applies. The connection details arrive as environment variables.</p>';
+  if(kind==="rotate"){var sec=secretsOf(s);b='<div class="field"><label for="ac-secret">Secret</label><select class="select" id="ac-secret">'+sec.map(function(x){return '<option value="'+x[0]+'">'+x[0]+' · rotated '+x[2]+' ago</option>';}).join("")+'</select><span class="hint mono" id="ac-ref"></span></div>'+
+    '<fieldset class="cw-fs"><legend class="cw-label">Environments</legend><label class="check"><input type="checkbox" id="ac-stg" checked><span>staging</span></label><label class="check"><input type="checkbox" id="ac-prd" checked><span>production</span></label><span class="field-err" id="ac-envs-err" role="status"></span></fieldset>'+
+    '<div class="field"><label for="ac-overlap">Keep the old value working for</label><select class="select" id="ac-overlap"><option value="0">No overlap</option><option value="1h" selected>1 hour</option><option value="24h">24 hours</option></select><span class="hint">Gives running clients time to pick up the new value.</span></div>'+
+    '<label class="check"><input type="checkbox" id="ac-restart" checked><span>Restart pods afterwards so they read the new value</span></label>';}
+  openLayer('<div class="drawer" role="dialog" aria-modal="true" aria-labelledby="ac-h"><div class="drawer-h"><span class="act-i">'+I_ACT[kind]+'</span><div style="min-width:0"><h2 id="ac-h">'+a[1]+'</h2><div class="faint mono" style="font-size:12.5px">'+esc(name)+'</div></div><button class="icon-btn" data-action="close" aria-label="Close">'+I.x+'</button></div>'+
+    '<form class="drawer-b" id="ac-form" data-kind="'+kind+'" data-svc="'+esc(name)+'" novalidate>'+b+'<div class="field"><span class="cw-label">Same thing from the terminal</span><div class="preview-cli" id="ac-cli"></div></div></form>'+
+    '<div class="drawer-f"><button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" id="ac-go" data-action="do-act">'+a[1]+'</button></div></div>',"#ac-form select, #ac-form input");
+  acUpdate();
+}
+function acVal(id){var e=document.getElementById(id);return e?(e.type==="checkbox"?e.checked:e.value.trim()):null;}
+function acRadio(n){var e=document.querySelector('input[name="'+n+'"]:checked');return e?e.value:null;}
+function acEnvs(){return [acVal("ac-stg")?"staging":null,acVal("ac-prd")?"production":null].filter(Boolean);}
+function acCmd(){
+  var f=document.getElementById("ac-form");if(!f)return null;var k=f.dataset.kind,n=f.dataset.svc,s=svc(n);
+  if(k==="restart"){var r=acVal("ac-reason");return ["forge service restart "+n,"--env "+acVal("ac-env"),"--strategy "+(acRadio("ac-strategy")==="all"?"all-at-once":"rolling")].concat(r?['--reason "'+r+'"']:[]);}
+  if(k==="scale")return ["forge service scale "+n,"--env "+acVal("ac-env"),"--replicas "+(acVal("ac-rep")||"<n>")];
+  if(k==="resource"){var t=acRadio("ac-kind");return ["forge resource add "+t,"--service "+n,"--name "+(acVal("ac-name")||"<name>")].concat(t==="postgres"||t==="redis"?["--size "+acVal("ac-size")]:[]).concat(["--env "+(acEnvs().join(",")||"<env>")]);}
+  if(k==="rotate"){var o=acVal("ac-overlap");return ["forge secret rotate "+n+" "+acVal("ac-secret"),"--env "+(acEnvs().join(",")||"<env>")].concat(o!=="0"?["--overlap "+o]:[]).concat(acVal("ac-restart")?["--restart"]:[]);}
+}
+function acUpdate(){
+  var f=document.getElementById("ac-form");if(!f)return;var k=f.dataset.kind,s=svc(f.dataset.svc);
+  if(k==="restart")document.getElementById("ac-warn").hidden=!(acVal("ac-env")==="production"&&acRadio("ac-strategy")==="all");
+  if(k==="scale"){var env=acVal("ac-env"),cur=replicas(s,env),f2=document.getElementById("ac-rep");if(f2.dataset.env!==env){f2.dataset.env=env;f2.value=cur;}var v=+f2.value;document.getElementById("ac-rep-now").textContent="Now running "+plural(cur,"replica")+" in "+env+"."+(v&&v!==cur?(v>cur?" Adds ":" Removes ")+Math.abs(v-cur)+".":"");}
+  if(k==="resource"){var t=acRadio("ac-kind");document.getElementById("ac-size-f").hidden=!(t==="postgres"||t==="redis");var nm=document.getElementById("ac-name");if(!nm.dataset.touched){nm.value=f.dataset.svc+"-"+({postgres:"db",redis:"cache",kafka:"events",queue:"jobs",s3:"files"})[t];}}
+  if(k==="rotate"){var sec=secretsOf(s).filter(function(x){return x[0]===acVal("ac-secret");})[0];document.getElementById("ac-ref").textContent=sec[1];}
+  var c=acCmd();document.getElementById("ac-cli").innerHTML='<span class="p">$</span> '+esc(c[0])+c.slice(1).map(function(x){var i=x.indexOf(" ");return ' \\\n    <span class="f">'+esc(x.slice(0,i))+'</span>'+esc(x.slice(i));}).join("");
+}
+function acErr(id,msg){var e=document.getElementById(id+"-err");if(e)e.textContent=msg||"";var i=document.getElementById(id);if(i){if(msg)i.setAttribute("aria-invalid","true");else i.removeAttribute("aria-invalid");}return !!msg;}
+function doAction(){
+  var f=document.getElementById("ac-form"),k=f.dataset.kind,n=f.dataset.svc,s=svc(n),cmd=acCmd().join(" "),bad=null,msg="";
+  if(k==="scale"){var v=acVal("ac-rep");if(acErr("ac-rep",/^\d+$/.test(v)&&+v>=1&&+v<=20?"":"Enter a whole number from 1 to 20."))bad="ac-rep";}
+  if(k==="resource"){var nm=acVal("ac-name");if(acErr("ac-name",!/^[a-z][a-z0-9-]{2,40}$/.test(nm)?"Use 3 to 41 lowercase letters, digits and hyphens, starting with a letter.":D.resources.some(function(r){return r.name===nm;})?nm+" already exists.":""))bad="ac-name";}
+  if(k==="resource"||k==="rotate"){if(acErr("ac-envs",acEnvs().length?"":"Pick at least one environment.")&&!bad)bad="ac-stg";}
+  if(bad){document.getElementById(bad).focus();return;}
+  if(k==="restart"){msg=n+" is restarting in "+acVal("ac-env")+(acRadio("ac-strategy")==="all"?", all at once":", one pod at a time");}
+  if(k==="scale"){var env=acVal("ac-env");REPLICAS[n+"/"+env]=+acVal("ac-rep");msg=n+" "+env+" scaled to "+plural(+acVal("ac-rep"),"replica");}
+  if(k==="resource"){var t=RES_KINDS.filter(function(r){return r[0]===acRadio("ac-kind");})[0];acEnvs().forEach(function(e,i){D.resources.unshift({name:acVal("ac-name")+(i?"-"+e:""),kind:t[1],svc:n,env:e,state:"plan",plan:"+1 ~0 −0",when:"Just now"});});if(s.res.indexOf(acVal("ac-name"))<0)s.res.push(acVal("ac-name"));msg="Plan ready for "+acVal("ac-name")+". Approve it on Resources to apply.";}
+  if(k==="rotate"){var sec=secretsOf(s).filter(function(x){return x[0]===acVal("ac-secret");})[0];sec[2]="0 days";msg=sec[0]+" rotated in "+acEnvs().join(" and ");}
+  D.audit.unshift({t:"Now",actor:"deogratias-saidi",verb:{restart:"service restart",scale:"service scale",resource:"resource add",rotate:"secret rotate"}[k],res:"services/"+n,ctx:k==="scale"||k==="restart"?acVal("ac-env"):acEnvs().join(","),ok:true});
+  closeLayer();render();toast(msg,cmd);
+}
+
+/* ---------------- Personal settings ---------------- */
+var ME={name:"Showmino",login:"deogratias-saidi",email:"deogratias.saidi@outlook.com",team:"platform-engineering",
+  tokens:[{id:"tok_1",name:"laptop",scopes:["read","deploy"],created:"Aug 2",used:"2 h ago",expires:"Nov 2"},{id:"tok_2",name:"github-actions-forge-web",scopes:["read","deploy"],created:"Sep 14",used:"6 h ago",expires:"Never"}],
+  notif:{approval:{email:true,slack:true,app:true},failed:{email:true,slack:true,app:true},degraded:{email:false,slack:true,app:true},preview:{email:false,slack:false,app:true},digest:{email:true,slack:false,app:false}},
+  mineOnly:true,quiet:false,quietFrom:"20:00",quietTo:"08:00",slack:"@showmino"};
+var NOTIF_EVENTS=[["approval","A deploy needs my approval"],["failed","A deploy I started fails"],["degraded","A service I own is degraded or failing"],["preview","A preview I made is about to expire"],["digest","Weekly summary"]];
+var NOTIF_CH=[["email","Email"],["slack","Slack"],["app","In Forge"]];
+V.me=function(){
+  var h=header({title:"Your settings",lede:"Your profile, the tokens the CLI uses, and what Forge tells you about.",cli:"forge auth status"});
+  h+='<div class="me">';
+  h+='<section class="section"><div class="section-h"><h2>Profile</h2></div><div class="panel"><div class="panel-b me-prof"><span class="avatar me-av">SM</span><dl class="kv"><dt>Name</dt><dd>'+ME.name+'</dd><dt>GitHub</dt><dd class="mono">'+ME.login+'</dd><dt>Email</dt><dd>'+ME.email+'</dd><dt>Team</dt><dd>'+ME.team+'</dd><dt>Role</dt><dd>Writer</dd></dl></div></div></section>';
+  h+='<section class="section"><div class="section-h"><h2>CLI tokens</h2><span class="faint num">'+ME.tokens.length+'</span><button class="btn btn-sm" style="margin-left:auto" data-action="tok-new">'+I.plus+'New token</button></div>'+
+    (ME.tokens.length?'<div class="table-wrap"><table><thead><tr><th>Name</th><th>Can</th><th class="hide-sm">Created</th><th>Last used</th><th>Expires</th><th><span class="sr">Actions</span></th></tr></thead><tbody>'+ME.tokens.map(function(t){return '<tr><td class="mono" style="font-weight:500">'+esc(t.name)+'</td><td>'+t.scopes.map(function(x){return '<span class="tag">'+x+'</span>';}).join(" ")+'</td><td class="faint hide-sm">'+t.created+'</td><td class="faint">'+t.used+'</td><td'+(t.expires==="Never"?' class="warn-t"':'')+'>'+t.expires+'</td><td style="text-align:right"><button class="btn btn-sm btn-ghost" data-action="tok-revoke" data-id="'+t.id+'">Revoke</button></td></tr>';}).join("")+'</tbody></table></div>':'<div class="panel empty-note">No tokens. The CLI signs in through your browser with <span class="mono">forge login</span>, so you only need one for CI or scripts.</div>')+
+    '<p class="faint" style="margin:0;font-size:12.5px">Tokens act as you. Give each one only what it needs, and an expiry.</p></section>';
+  var n=ME.notif;
+  h+='<section class="section"><div class="section-h"><h2>Notifications</h2></div><form class="panel" id="notif-form"><div class="table-wrap flat"><table class="notif"><thead><tr><th>Tell me when</th>'+NOTIF_CH.map(function(c){return '<th>'+c[1]+'</th>';}).join("")+'</tr></thead><tbody>'+
+    NOTIF_EVENTS.map(function(e){return '<tr><td>'+e[1]+'</td>'+NOTIF_CH.map(function(c){return '<td><input type="checkbox" data-notif="'+e[0]+'.'+c[0]+'" aria-label="'+e[1]+' by '+c[1]+'"'+(n[e[0]][c[0]]?" checked":"")+'></td>';}).join("")+'</tr>';}).join("")+'</tbody></table></div>'+
+    '<div class="panel-b notif-more"><div class="field" style="max-width:320px"><label for="me-slack">Slack handle</label><input class="input mono" id="me-slack" value="'+esc(ME.slack)+'" autocomplete="off"></div>'+
+    '<label class="check"><input type="checkbox" id="me-mine"'+(ME.mineOnly?" checked":"")+'><span>Only for services my team owns</span></label>'+
+    '<label class="check"><input type="checkbox" id="me-quiet"'+(ME.quiet?" checked":"")+'><span>Quiet hours: hold everything except approvals and production failures</span></label>'+
+    '<div class="quiet" id="me-quiet-times"'+(ME.quiet?'':' hidden')+'><div class="field"><label for="me-qf">From</label><input class="input" type="time" id="me-qf" value="'+ME.quietFrom+'"></div><div class="field"><label for="me-qt">To</label><input class="input" type="time" id="me-qt" value="'+ME.quietTo+'"></div></div>'+
+    '<div><button class="btn btn-primary" data-action="notif-save">Save notifications</button></div></div></form></section>';
+  return h+'</div>';
+};
+function tokenDialog(){
+  openLayer('<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="tk-h" style="width:min(500px,calc(100% - 32px))"><h2 id="tk-h">New CLI token</h2><form id="tk-form" novalidate style="display:flex;flex-direction:column;gap:var(--s4)">'+
+    '<div class="field"><label for="tk-name">Name</label><input class="input mono" id="tk-name" placeholder="ci-deploys" autocomplete="off" spellcheck="false" aria-describedby="tk-name-err"><span class="hint">Where it will be used, so you know what breaks if you revoke it.</span><span class="field-err" id="tk-name-err" role="status"></span></div>'+
+    '<fieldset class="cw-fs"><legend class="cw-label">It can</legend><label class="check"><input type="checkbox" id="tk-read" checked disabled><span>Read services, deploys and logs</span></label><label class="check"><input type="checkbox" id="tk-deploy"><span>Deploy, promote and roll back</span></label><label class="check"><input type="checkbox" id="tk-admin"><span>Change settings, secrets and resources</span></label></fieldset>'+
+    '<div class="field"><label for="tk-exp">Expires</label><select class="select" id="tk-exp"><option value="7">In 7 days</option><option value="30" selected>In 30 days</option><option value="90">In 90 days</option><option value="0">Never</option></select><span class="hint" id="tk-exp-h"></span></div></form>'+
+    '<div class="dialog-f"><button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-primary" data-action="tok-create">Create token</button></div></div>',"#tk-name");
+}
+function tokenCreated(t,secret){
+  openLayer('<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="tk2-h" style="width:min(520px,calc(100% - 32px))"><h2 id="tk2-h">Copy your token now</h2><p>This is the only time Forge shows <span class="mono">'+esc(t.name)+'</span>. Store it in your secret manager.</p>'+
+    '<div class="tok-show"><code id="tk-secret">'+secret+'</code><button class="btn btn-sm" data-action="tok-copy">Copy</button></div>'+
+    '<div class="field"><span class="cw-label">Use it</span><div class="preview-cli"><span class="p">$</span> export FORGE_TOKEN=…\n<span class="p">$</span> forge auth status</div></div>'+
+    '<div class="dialog-f"><button class="btn btn-primary" data-action="close">Done</button></div></div>',"[data-action=tok-copy]");
 }
 
 V.templates=function(){
@@ -1433,7 +1648,7 @@ function route(){
   var h=(location.hash||"#overview").slice(1);
   var key=h.indexOf("service-")===0||h==="create"?"catalog":h.indexOf("docs-")===0?"docs":h;
   if(!V[h]&&h.indexOf("service-")!==0&&h.indexOf("docs-")!==0){h="overview";key="overview";}
-  document.querySelectorAll("#nav a").forEach(function(a){if(a.dataset.r===key)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
+  document.querySelectorAll("#nav a, a.rail-foot").forEach(function(a){if(a.dataset.r===key)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current");});
   return h;
 }
 var lastRoute=null;var pendingDocPage=false;
@@ -1566,7 +1781,7 @@ function newEnvDialog(){
 var palItems=[];var palSel=0;
 function palData(){
   var items=[];
-  [["overview","Overview"],["catalog","Services"],["templates","Templates"],["environments","Environments"],["deployments","Deployments"],["resources","Resources"],["docs","TechDocs"],["rules","Rules"],["ownership","Ownership"],["audit","Audit log"],["design","Design language"]].forEach(function(p){items.push({label:p[1],href:"#"+p[0],k:"Page"});});
+  [["overview","Overview"],["catalog","Services"],["templates","Templates"],["environments","Environments"],["deployments","Deployments"],["resources","Resources"],["docs","TechDocs"],["rules","Rules"],["ownership","Ownership"],["audit","Audit log"],["design","Design language"],["me","Your settings"]].forEach(function(p){items.push({label:p[1],href:"#"+p[0],k:"Page"});});
   D.services.forEach(function(s){items.push({label:s.name,href:"#service-"+s.name,k:"Service · "+s.team,mono:true});});
   D.envs.forEach(function(e){items.push({label:e.name,href:"#environments",k:"Environment",mono:true});});
   D.services.forEach(function(s){items.push({label:s.name+" docs",href:"#docs-"+s.name,k:"TechDocs",mono:true});});
@@ -1592,6 +1807,23 @@ document.addEventListener("click",function(e){
   var a=el.dataset.action;
   if(a==="scrim"){if(e.target===el)closeLayer();return;}
   switch(a){
+    case "act":actionDrawer(el.dataset.kind,el.dataset.svc);break;
+    case "do-act":doAction();break;
+    case "ac-step":var ri=document.getElementById("ac-rep");ri.value=Math.max(1,Math.min(20,(+ri.value||0)+(+el.dataset.d)));acErr("ac-rep","");acUpdate();break;
+    case "tok-new":tokenDialog();break;
+    case "tok-create":var tn=document.getElementById("tk-name").value.trim();
+      if(!/^[a-z0-9][a-z0-9._-]{1,48}$/.test(tn)){document.getElementById("tk-name-err").textContent="Use 2 to 49 lowercase letters, digits, dots, dashes or underscores.";var tni=document.getElementById("tk-name");tni.setAttribute("aria-invalid","true");tni.focus();break;}
+      if(ME.tokens.some(function(t){return t.name===tn;})){document.getElementById("tk-name-err").textContent="You already have a token called "+tn+".";document.getElementById("tk-name").focus();break;}
+      var days=+document.getElementById("tk-exp").value,exp=days?new Date(Date.now()+days*864e5).toLocaleDateString(undefined,{month:"short",day:"numeric"}):"Never";
+      var tk={id:"tok_"+Date.now(),name:tn,scopes:["read"].concat(document.getElementById("tk-deploy").checked?["deploy"]:[]).concat(document.getElementById("tk-admin").checked?["admin"]:[]),created:"Today",used:"Never",expires:exp};
+      ME.tokens.unshift(tk);D.audit.unshift({t:"Now",actor:"deogratias-saidi",verb:"token create",res:"tokens/"+tn,ctx:"—",ok:true});render();
+      var chars="abcdefghijkmnopqrstuvwxyz23456789",sec="forge_pat_";for(var ci=0;ci<32;ci++)sec+=chars[Math.floor(Math.random()*chars.length)];tokenCreated(tk,sec);break;
+    case "tok-copy":var ts=document.getElementById("tk-secret").textContent;try{navigator.clipboard.writeText(ts);el.textContent="Copied";}catch(x){el.textContent="Select and copy";}break;
+    case "tok-revoke":var rt=ME.tokens.filter(function(t){return t.id===el.dataset.id;})[0];
+      openLayer('<div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="rv-h"><h2 id="rv-h">Revoke '+esc(rt.name)+'?</h2><p>Anything using it stops working straight away. This can\'t be undone.</p><div class="dialog-f"><button class="btn btn-ghost" data-action="close">Cancel</button><button class="btn btn-danger" data-action="tok-revoke-go" data-id="'+rt.id+'">Revoke token</button></div></div>',".btn-danger");break;
+    case "tok-revoke-go":var rv=ME.tokens.filter(function(t){return t.id===el.dataset.id;})[0];ME.tokens=ME.tokens.filter(function(t){return t!==rv;});D.audit.unshift({t:"Now",actor:"deogratias-saidi",verb:"token revoke",res:"tokens/"+rv.name,ctx:"—",ok:true});closeLayer();render();toast(rv.name+" revoked","forge auth token revoke "+rv.name);break;
+    case "notif-save":e.preventDefault();ME.slack=document.getElementById("me-slack").value.trim();ME.mineOnly=document.getElementById("me-mine").checked;ME.quietFrom=document.getElementById("me-qf").value;ME.quietTo=document.getElementById("me-qt").value;
+      var on=[];NOTIF_EVENTS.forEach(function(ev){NOTIF_CH.forEach(function(c){if(ME.notif[ev[0]][c[0]])on.push(ev[0]+":"+c[0]);});});toast("Notification settings saved","forge config set notify "+on.join(",")+(ME.quiet?" --quiet "+ME.quietFrom+"-"+ME.quietTo:""));break;
     case "open-nav":app.classList.add("nav-open");break;
     case "toggle-rail":setRail(!app.classList.contains("rail-min"));break;
     case "close-nav":app.classList.remove("nav-open");break;
@@ -1607,6 +1839,8 @@ document.addEventListener("click",function(e){
       break;
     case "toast":toast(el.dataset.msg,el.dataset.code);break;
     case "team":ui.catTeam=el.dataset.team;render();break;
+    case "cat-status":ui.catStatus=el.dataset.st;render();break;
+    case "cat-clear":ui.catStatus="all";ui.catTeam="all";ui.catQuery="";render();break;
     case "depf":ui.depFilter=el.dataset.f;render();break;
     case "svctab":ui.svcTab=el.dataset.tab;render();var t=view.querySelector('[data-tab="'+ui.svcTab+'"]');if(t)t.focus();break;
     case "create":e.preventDefault();crReset(el.dataset.tpl);if(location.hash==="#create")render();else location.hash="#create";break;
@@ -1656,6 +1890,8 @@ document.addEventListener("click",function(e){
 });
 document.addEventListener("input",function(e){
   var id=e.target.id;
+  if(id&&id.indexOf("ac-")===0){if(id==="ac-name")e.target.dataset.touched="1";acErr(id,"");acUpdate();return;}
+  if(id==="tk-name"){e.target.removeAttribute("aria-invalid");document.getElementById("tk-name-err").textContent="";return;}
   if(e.target.dataset&&e.target.dataset.cr&&CR){var t=e.target;crSet(t.dataset.cr,t.type==="checkbox"?t.checked:t.dataset.cr==="name"?t.value.trim().toLowerCase():t.value);if(CR.errors[id]){delete CR.errors[id];t.removeAttribute("aria-invalid");var fe=document.getElementById(id+"-err");if(fe)fe.textContent="";}crLive();return;}
   if(id==="cat-q"){ui.catQuery=e.target.value;render();var c=document.getElementById("cat-q");c.focus();c.setSelectionRange(c.value.length,c.value.length);}
   else if(id==="doc-q"){ui.docQuery=e.target.value;render();var dq=document.getElementById("doc-q");dq.focus();dq.setSelectionRange(dq.value.length,dq.value.length);}
@@ -1666,7 +1902,11 @@ document.addEventListener("input",function(e){
   else if(id==="ds-in"){document.getElementById("ds-go").disabled=e.target.value!==document.getElementById("ds-go").dataset.env;}
   else if(id&&id.indexOf("cr-")===0){e.target.removeAttribute("aria-invalid");var fe=document.getElementById(id+"-err");if(fe)fe.textContent="";updateCreate();}
 });
-document.addEventListener("change",function(e){if(CR&&e.target.name==="cw-tpl"){CR.tpl=e.target.value;crDefaults();CR.max=Math.min(CR.max,1);crRender();var r=document.querySelector('input[name="cw-tpl"]:checked');if(r)r.focus();return;}if(CR&&e.target.name==="cw-access"){CR.access=e.target.value;crLive();return;}if(CR&&e.target.dataset&&e.target.dataset.cr){var t=e.target;crSet(t.dataset.cr,t.type==="checkbox"?t.checked:t.value);if(CR.errors[t.id]){delete CR.errors[t.id];t.removeAttribute("aria-invalid");var fe=document.getElementById(t.id+"-err");if(fe)fe.textContent="";}crLive();return;}if(e.target.id==="ho-env"||e.target.id==="ho-dnsok"){hostCheck();return;}if(e.target.id==="doc-sel"){ui.docPage=+e.target.value;render();window.scrollTo(0,0);return;}if(e.target.id&&e.target.id.indexOf("cr-")===0)updateCreate();});
+document.addEventListener("change",function(e){var tg=e.target;
+  if((tg.id&&tg.id.indexOf("ac-")===0)||tg.name==="ac-kind"||tg.name==="ac-strategy"){if(tg.id==="ac-stg"||tg.id==="ac-prd")acErr("ac-envs","");acUpdate();return;}
+  if(tg.dataset&&tg.dataset.notif){var np=tg.dataset.notif.split(".");ME.notif[np[0]][np[1]]=tg.checked;return;}
+  if(tg.id==="me-quiet"){ME.quiet=tg.checked;document.getElementById("me-quiet-times").hidden=!tg.checked;return;}
+  if(tg.id==="tk-exp"){document.getElementById("tk-exp-h").textContent=tg.value==="0"?"A token that never expires is risky if it leaks. Rules may flag it.":"";return;}if(CR&&e.target.name==="cw-tpl"){CR.tpl=e.target.value;crDefaults();CR.max=Math.min(CR.max,1);crRender();var r=document.querySelector('input[name="cw-tpl"]:checked');if(r)r.focus();return;}if(CR&&e.target.name==="cw-access"){CR.access=e.target.value;crLive();return;}if(CR&&e.target.dataset&&e.target.dataset.cr){var t=e.target;crSet(t.dataset.cr,t.type==="checkbox"?t.checked:t.value);if(CR.errors[t.id]){delete CR.errors[t.id];t.removeAttribute("aria-invalid");var fe=document.getElementById(t.id+"-err");if(fe)fe.textContent="";}crLive();return;}if(e.target.id==="ho-env"||e.target.id==="ho-dnsok"){hostCheck();return;}if(e.target.id==="doc-sel"){ui.docPage=+e.target.value;render();window.scrollTo(0,0);return;}if(e.target.id&&e.target.id.indexOf("cr-")===0)updateCreate();});
 document.addEventListener("submit",function(e){e.preventDefault();if(e.target.id==="cw-form"){var g=document.getElementById("cw-go");if(g)g.click();}});
 document.addEventListener("keydown",function(e){
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k"){e.preventDefault();if(document.getElementById("pal-in"))closeLayer();else openPalette();return;}
@@ -1681,3 +1921,5 @@ document.addEventListener("keydown",function(e){
 render();
 })();
 </script>
+
+</body></html>
