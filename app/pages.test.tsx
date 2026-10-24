@@ -397,27 +397,36 @@ describe("ownership", () => {
 
 describe("clusters", () => {
   const GiB = BigInt(1) << BigInt(30);
-  const capacity = (cpu: number, cpuUsed: number, mem: number, memUsed: number, pods: number) => ({
+  const capacity = (cpu: number, cpuUsed: number, mem: number, memUsed: number, pods: number, disk = 0, diskUsed = 0) => ({
     cpuMillis: BigInt(cpu),
     cpuUsedMillis: BigInt(cpuUsed),
     memoryBytes: BigInt(mem) * GiB,
     memoryUsedBytes: BigInt(memUsed) * GiB,
     pods,
     podsMax: 110,
+    diskBytes: BigInt(disk) * GiB,
+    diskUsedBytes: BigInt(diskUsed) * GiB,
   });
-  // The shapes the live API sends (forge-api v0.24.0).
+  // The shapes the live API sends (forge-api v0.25.0).
   const cluster = (metricsAvailable = true) => ({
     name: "clusters/default",
     kubernetesVersion: "v1.37.0+k3s1",
     createTime: ago(60 * 24 * 184),
     grafanaUrl: "https://grafana.example.com",
     metricsAvailable,
-    totals: { ...capacity(12000, metricsAvailable ? 3500 : 0, 24, metricsAvailable ? 10 : 0, 3), podsMax: 220 },
+    storageAvailable: metricsAvailable,
+    totals: { ...capacity(12000, metricsAvailable ? 3500 : 0, 24, metricsAvailable ? 10 : 0, 3, 300, 95), podsMax: 220 },
     nodes: [
-      { name: "srv-cron", roles: ["worker"], condition: "Ready", schedulable: true, kubeletVersion: "v1.37.0+k3s1", capacity: capacity(8000, 2500, 16, 4, 2) },
-      { name: "srv-kube", roles: ["control-plane", "etcd"], condition: "Ready", schedulable: true, kubeletVersion: "v1.37.0+k3s1", capacity: capacity(4000, 1000, 8, 6, 1) },
-      { name: "srv-lab", roles: ["worker"], condition: "MemoryPressure", schedulable: false, kubeletVersion: "v1.37.0+k3s1", capacity: capacity(4000, 500, 8, 7, 1) },
+      { name: "srv-cron", roles: ["worker"], condition: "Ready", schedulable: true, kubeletVersion: "v1.37.0+k3s1", capacity: capacity(8000, 2500, 16, 4, 2, 200, 20) },
+      { name: "srv-kube", roles: ["control-plane", "etcd"], condition: "Ready", schedulable: true, kubeletVersion: "v1.37.0+k3s1", capacity: capacity(4000, 1000, 8, 6, 1, 100, 75) },
+      { name: "srv-lab", roles: ["worker"], condition: "MemoryPressure", schedulable: false, kubeletVersion: "v1.37.0+k3s1", capacity: capacity(4000, 500, 8, 7, 1, 50, 45) },
     ],
+    volumes: metricsAvailable
+      ? [
+          { namespace: "payments-production", claim: "data", capacityBytes: BigInt(10) * GiB, usedBytes: BigInt(9) * GiB, service: "services/payments", environment: "production" },
+          { namespace: "monitoring", claim: "prometheus-db", capacityBytes: BigInt(50) * GiB, usedBytes: BigInt(20) * GiB },
+        ]
+      : [],
   });
   const clusters = (metrics = true) => (router: ConnectRouter) => {
     forge(router);
@@ -437,6 +446,7 @@ describe("clusters", () => {
     expect(c.getByText("Memory pressure on 1 node")).toBeTruthy();
     expect(c.getByRole("img", { name: "CPU 29% used" })).toBeTruthy();
     expect(c.getByRole("img", { name: "Memory 42% used" })).toBeTruthy();
+    expect(c.getByRole("img", { name: "Storage 32% used" })).toBeTruthy();
     expect(c.getByText("v1.37.0+k3s1")).toBeTruthy();
     expect(screen.getByRole("link", { name: /Open Grafana/ }).getAttribute("href")).toBe("https://grafana.example.com");
     expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge cluster list");
@@ -454,6 +464,15 @@ describe("clusters", () => {
     expect(within(row("srv-cron")).getByText("2/110")).toBeTruthy();
     expect(screen.getByText("of 220 that fit")).toBeTruthy();
     expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge cluster get default");
+    expect(lab.getByRole("img", { name: "srv-lab disk 90% used" })).toBeTruthy();
+    expect(screen.getByRole("img", { name: "Disk 32% used" })).toBeTruthy();
+    // Volumes, fullest first, tied to their service and environment.
+    const vols = within(screen.getByRole("table", { name: "Volumes" }));
+    const data = within(vols.getByText("data").closest("tr")!);
+    expect(data.getByRole("link", { name: "payments" }).getAttribute("href")).toBe("/services/payments");
+    expect(data.getByText("production")).toBeTruthy();
+    expect(data.getByRole("img", { name: "payments-production/data 90% used" })).toBeTruthy();
+    expect(within(vols.getByText("prometheus-db").closest("tr")!).getByText("–")).toBeTruthy();
   });
 
   it("shows the nodes without usage figures when metrics-server does not answer", async () => {

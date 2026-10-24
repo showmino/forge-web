@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file forge/v1/cluster.proto.
  */
 export const file_forge_v1_cluster: GenFile = /*@__PURE__*/
-  fileDesc("ChZmb3JnZS92MS9jbHVzdGVyLnByb3RvEghmb3JnZS52MSLXAQoHQ2x1c3RlchIMCgRuYW1lGAEgASgJEhoKEmt1YmVybmV0ZXNfdmVyc2lvbhgCIAEoCRIvCgtjcmVhdGVfdGltZRgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEwoLZ3JhZmFuYV91cmwYBCABKAkSIgoGdG90YWxzGAUgASgLMhIuZm9yZ2UudjEuQ2FwYWNpdHkSHQoFbm9kZXMYBiADKAsyDi5mb3JnZS52MS5Ob2RlEhkKEW1ldHJpY3NfYXZhaWxhYmxlGAcgASgIIooBCgROb2RlEgwKBG5hbWUYASABKAkSDQoFcm9sZXMYAiADKAkSEQoJY29uZGl0aW9uGAMgASgJEhMKC3NjaGVkdWxhYmxlGAQgASgIEhcKD2t1YmVsZXRfdmVyc2lvbhgFIAEoCRIkCghjYXBhY2l0eRgGIAEoCzISLmZvcmdlLnYxLkNhcGFjaXR5IogBCghDYXBhY2l0eRISCgpjcHVfbWlsbGlzGAEgASgDEhcKD2NwdV91c2VkX21pbGxpcxgCIAEoAxIUCgxtZW1vcnlfYnl0ZXMYAyABKAMSGQoRbWVtb3J5X3VzZWRfYnl0ZXMYBCABKAMSDAoEcG9kcxgFIAEoBRIQCghwb2RzX21heBgGIAEoBSIVChNMaXN0Q2x1c3RlcnNSZXF1ZXN0IjsKFExpc3RDbHVzdGVyc1Jlc3BvbnNlEiMKCGNsdXN0ZXJzGAEgAygLMhEuZm9yZ2UudjEuQ2x1c3RlciIhChFHZXRDbHVzdGVyUmVxdWVzdBIMCgRuYW1lGAEgASgJIjgKEkdldENsdXN0ZXJSZXNwb25zZRIiCgdjbHVzdGVyGAEgASgLMhEuZm9yZ2UudjEuQ2x1c3RlcjKyAQoOQ2x1c3RlclNlcnZpY2USUgoMTGlzdENsdXN0ZXJzEh0uZm9yZ2UudjEuTGlzdENsdXN0ZXJzUmVxdWVzdBoeLmZvcmdlLnYxLkxpc3RDbHVzdGVyc1Jlc3BvbnNlIgOQAgESTAoKR2V0Q2x1c3RlchIbLmZvcmdlLnYxLkdldENsdXN0ZXJSZXF1ZXN0GhwuZm9yZ2UudjEuR2V0Q2x1c3RlclJlc3BvbnNlIgOQAgFiBnByb3RvMw", [file_google_protobuf_timestamp]);
+  fileDesc("ChZmb3JnZS92MS9jbHVzdGVyLnByb3RvEghmb3JnZS52MSKVAgoHQ2x1c3RlchIMCgRuYW1lGAEgASgJEhoKEmt1YmVybmV0ZXNfdmVyc2lvbhgCIAEoCRIvCgtjcmVhdGVfdGltZRgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASEwoLZ3JhZmFuYV91cmwYBCABKAkSIgoGdG90YWxzGAUgASgLMhIuZm9yZ2UudjEuQ2FwYWNpdHkSHQoFbm9kZXMYBiADKAsyDi5mb3JnZS52MS5Ob2RlEhkKEW1ldHJpY3NfYXZhaWxhYmxlGAcgASgIEhkKEXN0b3JhZ2VfYXZhaWxhYmxlGAggASgIEiEKB3ZvbHVtZXMYCSADKAsyEC5mb3JnZS52MS5Wb2x1bWUifAoGVm9sdW1lEhEKCW5hbWVzcGFjZRgBIAEoCRINCgVjbGFpbRgCIAEoCRIWCg5jYXBhY2l0eV9ieXRlcxgDIAEoAxISCgp1c2VkX2J5dGVzGAQgASgDEg8KB3NlcnZpY2UYBSABKAkSEwoLZW52aXJvbm1lbnQYBiABKAkiigEKBE5vZGUSDAoEbmFtZRgBIAEoCRINCgVyb2xlcxgCIAMoCRIRCgljb25kaXRpb24YAyABKAkSEwoLc2NoZWR1bGFibGUYBCABKAgSFwoPa3ViZWxldF92ZXJzaW9uGAUgASgJEiQKCGNhcGFjaXR5GAYgASgLMhIuZm9yZ2UudjEuQ2FwYWNpdHkitQEKCENhcGFjaXR5EhIKCmNwdV9taWxsaXMYASABKAMSFwoPY3B1X3VzZWRfbWlsbGlzGAIgASgDEhQKDG1lbW9yeV9ieXRlcxgDIAEoAxIZChFtZW1vcnlfdXNlZF9ieXRlcxgEIAEoAxIMCgRwb2RzGAUgASgFEhAKCHBvZHNfbWF4GAYgASgFEhIKCmRpc2tfYnl0ZXMYByABKAMSFwoPZGlza191c2VkX2J5dGVzGAggASgDIhUKE0xpc3RDbHVzdGVyc1JlcXVlc3QiOwoUTGlzdENsdXN0ZXJzUmVzcG9uc2USIwoIY2x1c3RlcnMYASADKAsyES5mb3JnZS52MS5DbHVzdGVyIiEKEUdldENsdXN0ZXJSZXF1ZXN0EgwKBG5hbWUYASABKAkiOAoSR2V0Q2x1c3RlclJlc3BvbnNlEiIKB2NsdXN0ZXIYASABKAsyES5mb3JnZS52MS5DbHVzdGVyMrIBCg5DbHVzdGVyU2VydmljZRJSCgxMaXN0Q2x1c3RlcnMSHS5mb3JnZS52MS5MaXN0Q2x1c3RlcnNSZXF1ZXN0Gh4uZm9yZ2UudjEuTGlzdENsdXN0ZXJzUmVzcG9uc2UiA5ACARJMCgpHZXRDbHVzdGVyEhsuZm9yZ2UudjEuR2V0Q2x1c3RlclJlcXVlc3QaHC5mb3JnZS52MS5HZXRDbHVzdGVyUmVzcG9uc2UiA5ACAWIGcHJvdG8z", [file_google_protobuf_timestamp]);
 
 /**
  * Cluster is one Kubernetes cluster.
@@ -68,6 +68,21 @@ export type Cluster = Message<"forge.v1.Cluster"> & {
    * @generated from field: bool metrics_available = 7;
    */
   metricsAvailable: boolean;
+
+  /**
+   * False when no Prometheus is configured or it did not answer: disk figures
+   * are 0 and there are no volumes.
+   *
+   * @generated from field: bool storage_available = 8;
+   */
+  storageAvailable: boolean;
+
+  /**
+   * The persistent volumes and how full they are, fullest first.
+   *
+   * @generated from field: repeated forge.v1.Volume volumes = 9;
+   */
+  volumes: Volume[];
 };
 
 /**
@@ -76,6 +91,57 @@ export type Cluster = Message<"forge.v1.Cluster"> & {
  */
 export const ClusterSchema: GenMessage<Cluster> = /*@__PURE__*/
   messageDesc(file_forge_v1_cluster, 0);
+
+/**
+ * Volume is a PersistentVolumeClaim with how much of it is in use.
+ *
+ * @generated from message forge.v1.Volume
+ */
+export type Volume = Message<"forge.v1.Volume"> & {
+  /**
+   * @generated from field: string namespace = 1;
+   */
+  namespace: string;
+
+  /**
+   * The claim's name.
+   *
+   * @generated from field: string claim = 2;
+   */
+  claim: string;
+
+  /**
+   * @generated from field: int64 capacity_bytes = 3;
+   */
+  capacityBytes: bigint;
+
+  /**
+   * @generated from field: int64 used_bytes = 4;
+   */
+  usedBytes: bigint;
+
+  /**
+   * "services/{service}" when the namespace is a Forge service's.
+   *
+   * @generated from field: string service = 5;
+   */
+  service: string;
+
+  /**
+   * The Forge environment of that namespace: "staging", "production" or a
+   * preview's name.
+   *
+   * @generated from field: string environment = 6;
+   */
+  environment: string;
+};
+
+/**
+ * Describes the message forge.v1.Volume.
+ * Use `create(VolumeSchema)` to create a new message.
+ */
+export const VolumeSchema: GenMessage<Volume> = /*@__PURE__*/
+  messageDesc(file_forge_v1_cluster, 1);
 
 /**
  * Node is one node of a cluster.
@@ -129,7 +195,7 @@ export type Node = Message<"forge.v1.Node"> & {
  * Use `create(NodeSchema)` to create a new message.
  */
 export const NodeSchema: GenMessage<Node> = /*@__PURE__*/
-  messageDesc(file_forge_v1_cluster, 1);
+  messageDesc(file_forge_v1_cluster, 2);
 
 /**
  * Capacity is what can be given to pods and what is in use now.
@@ -179,6 +245,18 @@ export type Capacity = Message<"forge.v1.Capacity"> & {
    * @generated from field: int32 pods_max = 6;
    */
   podsMax: number;
+
+  /**
+   * The root filesystem's size and use, from Prometheus (node-exporter).
+   *
+   * @generated from field: int64 disk_bytes = 7;
+   */
+  diskBytes: bigint;
+
+  /**
+   * @generated from field: int64 disk_used_bytes = 8;
+   */
+  diskUsedBytes: bigint;
 };
 
 /**
@@ -186,7 +264,7 @@ export type Capacity = Message<"forge.v1.Capacity"> & {
  * Use `create(CapacitySchema)` to create a new message.
  */
 export const CapacitySchema: GenMessage<Capacity> = /*@__PURE__*/
-  messageDesc(file_forge_v1_cluster, 2);
+  messageDesc(file_forge_v1_cluster, 3);
 
 /**
  * @generated from message forge.v1.ListClustersRequest
@@ -199,7 +277,7 @@ export type ListClustersRequest = Message<"forge.v1.ListClustersRequest"> & {
  * Use `create(ListClustersRequestSchema)` to create a new message.
  */
 export const ListClustersRequestSchema: GenMessage<ListClustersRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_cluster, 3);
+  messageDesc(file_forge_v1_cluster, 4);
 
 /**
  * @generated from message forge.v1.ListClustersResponse
@@ -216,7 +294,7 @@ export type ListClustersResponse = Message<"forge.v1.ListClustersResponse"> & {
  * Use `create(ListClustersResponseSchema)` to create a new message.
  */
 export const ListClustersResponseSchema: GenMessage<ListClustersResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_cluster, 4);
+  messageDesc(file_forge_v1_cluster, 5);
 
 /**
  * @generated from message forge.v1.GetClusterRequest
@@ -235,7 +313,7 @@ export type GetClusterRequest = Message<"forge.v1.GetClusterRequest"> & {
  * Use `create(GetClusterRequestSchema)` to create a new message.
  */
 export const GetClusterRequestSchema: GenMessage<GetClusterRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_cluster, 5);
+  messageDesc(file_forge_v1_cluster, 6);
 
 /**
  * @generated from message forge.v1.GetClusterResponse
@@ -252,7 +330,7 @@ export type GetClusterResponse = Message<"forge.v1.GetClusterResponse"> & {
  * Use `create(GetClusterResponseSchema)` to create a new message.
  */
 export const GetClusterResponseSchema: GenMessage<GetClusterResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_cluster, 6);
+  messageDesc(file_forge_v1_cluster, 7);
 
 /**
  * ClusterService reports how much room the Kubernetes cluster Forge runs on

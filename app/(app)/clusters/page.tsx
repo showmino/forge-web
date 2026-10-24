@@ -23,7 +23,7 @@ export default function Clusters() {
     <>
       <PageHeader
         title="Clusters"
-        lead="How much room each cluster has left: its nodes, their CPU and memory in use now. Figures come from metrics-server and are at most a minute old."
+        lead="How much room each cluster has left: its nodes, their CPU, memory and disk in use now, and its volumes. Figures come from metrics-server and Prometheus and are at most a minute old."
         cli="forge cluster list"
       >
         {grafana ? <ExternalButton href={grafana}>Open Grafana</ExternalButton> : null}
@@ -40,6 +40,7 @@ export default function Clusters() {
               <th className={th}>Status</th>
               <th className={`${th} w-[170px]`}>CPU</th>
               <th className={`${th} w-[170px]`}>Memory</th>
+              <th className={`${th} w-[170px]`}>Storage</th>
               <th className={th}>Nodes</th>
               <th className={th}>Kubernetes</th>
             </tr>
@@ -47,7 +48,7 @@ export default function Clusters() {
           <tbody>
             {clusters.data.map((c) => {
               const id = clusterId(c.name);
-              const u = usage(c.totals, c.metricsAvailable);
+              const u = usage(c.totals, c.metricsAvailable, c.storageAvailable);
               return (
                 <tr key={c.name} className={tr}>
                   <td className={td}>
@@ -61,6 +62,9 @@ export default function Clusters() {
                   </td>
                   <td className={td}>
                     <Meter label="Memory" meter={u.memory} />
+                  </td>
+                  <td className={td}>
+                    <Meter label="Storage" meter={u.disk} />
                   </td>
                   <td className={td}>{c.nodes.length}</td>
                   <td className={`${td} font-mono text-[12.5px] text-fg-2`}>{c.kubernetesVersion}</td>
