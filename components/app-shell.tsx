@@ -32,6 +32,13 @@ const icon = {
     </>
   ),
   operations: <path d="M3 12h4l3-8 4 16 3-8h4" />,
+  clusters: (
+    <>
+      <rect x="3" y="4" width="18" height="7" rx="1.5" />
+      <rect x="3" y="13" width="18" height="7" rx="1.5" />
+      <path d="M7 7.5h.01M7 16.5h.01" />
+    </>
+  ),
   docs: (
     <>
       <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10a2 2 0 0 1 2 2v14a1.5 1.5 0 0 0-1.5-1.5h-5A1.5 1.5 0 0 1 4 17z" />
@@ -65,7 +72,8 @@ const icon = {
   ),
 };
 
-type Item = { href: string; label: string; icon: keyof typeof icon; match: (p: string) => boolean };
+// adminOnly hides a link from everyone else; the API refuses them anyway.
+type Item = { href: string; label: string; icon: keyof typeof icon; match: (p: string) => boolean; adminOnly?: boolean };
 const groups: { label: string; items: Item[] }[] = [
   { label: "", items: [{ href: "/", label: "Overview", icon: "overview", match: (p) => p === "/" }] },
   {
@@ -87,6 +95,7 @@ const groups: { label: string; items: Item[] }[] = [
       { href: "/environments", label: "Environments", icon: "environments", match: (p) => p.startsWith("/environments") },
       { href: "/deployments", label: "Deployments", icon: "deployments", match: (p) => p.startsWith("/deployments") },
       { href: "/operations", label: "Operations", icon: "operations", match: (p) => p.startsWith("/operations") },
+      { href: "/clusters", label: "Clusters", icon: "clusters", match: (p) => p.startsWith("/clusters"), adminOnly: true },
     ],
   },
   {
@@ -294,7 +303,7 @@ function Rail({
               <div className={`px-2.5 pb-1.5 pt-3 text-[11px] uppercase tracking-[0.08em] text-rail-fg-2 ${m("rail:hidden")}`}>{group.label}</div>
             ) : null}
             {group.label && mini ? <div aria-hidden="true" className="my-2 hidden h-px w-6 bg-rail-line rail:block" /> : null}
-            {group.items.map((item) => {
+            {group.items.filter((item) => !item.adminOnly || role === "Admin").map((item) => {
               const active = item.match(pathname);
               return (
                 <Link

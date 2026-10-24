@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuditService } from "@/gen/forge/v1/audit_pb";
 import { AuthService } from "@/gen/forge/v1/auth_pb";
 import { Lifecycle, ServiceCatalogService } from "@/gen/forge/v1/catalog_pb";
+import { ClusterService } from "@/gen/forge/v1/cluster_pb";
 import { Deployment_Health, Deployment_SyncStatus, DeployService } from "@/gen/forge/v1/deploy_pb";
 import { Environment_State, EnvironmentService } from "@/gen/forge/v1/environment_pb";
 import { OperationService } from "@/gen/forge/v1/operation_pb";
@@ -16,6 +17,8 @@ import { ADMIN, authAs, idToken, READER, renderWithApi, signIn } from "@/test/he
 import { saveForgeSession } from "@/lib/auth/session";
 import { AppShell } from "@/components/app-shell";
 import AuditLog from "./(app)/audit/page";
+import ClusterPage from "./(app)/clusters/[name]/page";
+import Clusters from "./(app)/clusters/page";
 import Deployments from "./(app)/deployments/page";
 import Environments from "./(app)/environments/page";
 import Ownership from "./(app)/ownership/page";
@@ -392,6 +395,88 @@ describe("ownership", () => {
   });
 });
 
+describe("clusters", () => {
+  const GiB = BigInt(1) << BigInt(30);
+  const capacity = (cpu: number, cpuUsed: number, mem: number, memUsed: number, pods: number) => ({
+    cpuMillis: BigInt(cpu),
+    cpuUsedMillis: BigInt(cpuUsed),
+    memoryBytes: BigInt(mem) * GiB,
+    memoryUsedBytes: BigInt(memUsed) * GiB,
+    pods,
+    podsMax: 110,
+  });
+  // The shapes the live API sends (forge-api v0.24.0).
+  const cluster = (metricsAvailable = true) => ({
+    name: "clusters/default",
+    kubernetesVersion: "v1.37.0+k3s1",
+    createTime: ago(60 * 24 * 184),
+    grafanaUrl: "https://grafana.example.com",
+    metricsAvailable,
+    totals: { ...capacity(12000, metricsAvailable ? 3500 : 0, 24, metricsAvailable ? 10 : 0, 3), podsMax: 220 },
+    nodes: [
+      { name: "srv-cron", roles: ["worker"], condition: "Ready", schedulable: true, kubeletVersion: "v1.37.0+k3s1", capacity: capacity(8000, 2500, 16, 4, 2) },
+      { name: "srv-kube", roles: ["control-plane", "etcd"], condition: "Ready", schedulable: true, kubeletVersion: "v1.37.0+k3s1", capacity: capacity(4000, 1000, 8, 6, 1) },
+      { name: "srv-lab", roles: ["worker"], condition: "MemoryPressure", schedulable: false, kubeletVersion: "v1.37.0+k3s1", capacity: capacity(4000, 500, 8, 7, 1) },
+    ],
+  });
+  const clusters = (metrics = true) => (router: ConnectRouter) => {
+    forge(router);
+    router.service(ClusterService, {
+      listClusters: () => ({ clusters: [cluster(metrics)] }),
+      getCluster: (req) => {
+        if (req.name !== "clusters/default") throw new ConnectError("there is no cluster", Code.NotFound);
+        return { cluster: cluster(metrics) };
+      },
+    });
+  };
+
+  it("lists the cluster with its worst problem and how full it is", async () => {
+    renderWithApi(<Clusters />, clusters());
+    const c = within((await screen.findByRole("link", { name: "default" })).closest("tr")!);
+    expect(screen.getByRole("link", { name: "default" }).getAttribute("href")).toBe("/clusters/default");
+    expect(c.getByText("Memory pressure on 1 node")).toBeTruthy();
+    expect(c.getByRole("img", { name: "CPU 29% used" })).toBeTruthy();
+    expect(c.getByRole("img", { name: "Memory 42% used" })).toBeTruthy();
+    expect(c.getByText("v1.37.0+k3s1")).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Open Grafana/ }).getAttribute("href")).toBe("https://grafana.example.com");
+    expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge cluster list");
+  });
+
+  it("shows every node of one cluster", async () => {
+    nav.params = { name: "default" };
+    renderWithApi(<ClusterPage />, clusters());
+    expect(await screen.findByRole("heading", { name: "default" })).toBeTruthy();
+    const lab = within(row("srv-lab"));
+    expect(lab.getByText("Memory Pressure")).toBeTruthy();
+    expect(lab.getByText("cordoned")).toBeTruthy();
+    expect(lab.getByRole("img", { name: "srv-lab memory 88% used" })).toBeTruthy();
+    expect(within(row("srv-kube")).getByText(/control-plane, etcd · 4 cores · 8.0 GiB/)).toBeTruthy();
+    expect(within(row("srv-cron")).getByText("2/110")).toBeTruthy();
+    expect(screen.getByText("of 220 that fit")).toBeTruthy();
+    expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge cluster get default");
+  });
+
+  it("shows the nodes without usage figures when metrics-server does not answer", async () => {
+    nav.params = { name: "default" };
+    renderWithApi(<ClusterPage />, clusters(false));
+    expect(await screen.findByText(/metrics-server did not answer/)).toBeTruthy();
+    expect(screen.queryAllByRole("img", { name: /% used/ })).toEqual([]);
+    expect(within(row("srv-cron")).getByText("8 cores")).toBeTruthy();
+  });
+
+  it("says what is wrong for someone who is not an admin", async () => {
+    renderWithApi(<Clusters />, (router) => {
+      forge(router);
+      router.service(ClusterService, {
+        listClusters: () => {
+          throw new ConnectError("bo may not cluster.read: only an admin may", Code.PermissionDenied);
+        },
+      });
+    });
+    expect((await screen.findByRole("alert")).textContent).toContain("You do not have access to this");
+  });
+});
+
 describe("templates", () => {
   it("lists the templates", async () => {
     renderWithApi(<Templates />, forge);
@@ -515,6 +600,8 @@ describe("the frame around every page", () => {
     expect(await screen.findByText(word)).toBeTruthy();
     // The rail starts as icons: the avatar says it on hover.
     expect(screen.getByTitle(`ana@example.com · ${word}`)).toBeTruthy();
+    // Only an admin sees the clusters.
+    expect(screen.queryByRole("link", { name: "Clusters" }) !== null).toBe(word === "Admin");
   });
 
   it("finds pages of the docs from the palette by what they say", async () => {

@@ -42,6 +42,18 @@ export function ButtonLink({
   return <Link {...props} className={`${base} ${sizes[size]} ${kinds[kind].replaceAll("enabled:", "")} ${className}`} />;
 }
 
+// ExternalButton is a secondary button to a page outside the console, in a new
+// tab; anything that is not a web address is left out.
+export function ExternalButton({ href, children }: { href: string; children: string }) {
+  if (!/^https?:\/\//i.test(href)) return null;
+  return (
+    <a href={href} target="_blank" rel="noreferrer" className={`${base} ${sizes.md} ${kinds.secondary.replaceAll("enabled:", "")}`}>
+      {children}
+      <Icon name="external" size={13} />
+    </a>
+  );
+}
+
 // TextLink is a link in running text or a list.
 export function TextLink({ className = "", ...props }: ComponentProps<typeof Link>) {
   return <Link {...props} className={`text-info-fg no-underline hover:underline ${className}`} />;
