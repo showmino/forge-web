@@ -53,11 +53,11 @@ the others. The server only serves the pages and
   team is not a team on GitHub, services with no contacts, teams with no
   services.
 - **Clusters** (`/clusters`, admins only): the cluster Forge runs on
-  (`ClusterService`) with its status and how much CPU and memory is in use;
-  `/clusters/<name>` adds the pods and every node with its condition. The
-  rail shows the link to admins only, and the API refuses everyone else.
-  Storage and volumes from the design are not shown: Forge does not measure
-  them yet.
+  (`ClusterService`) with its status and how much CPU, memory and disk is in
+  use; `/clusters/<name>` adds the pods, every node with its condition, and
+  every persistent volume tied to its service. The rail shows the link to
+  admins only, and the API refuses everyone else. Disk and volumes need
+  forge-api's `--prometheus-url`; without it the page says so.
 - **Jump to** (top bar, Ctrl+K or ⌘K): a command palette over the pages,
   the services and the previews.
 - **Docs** (`/docs`, and a Docs tab on a service that has docs): a service's
