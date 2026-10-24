@@ -4,6 +4,7 @@ import { createConnectTransport } from "@connectrpc/connect-web";
 import { type AuditEvent, AuditService } from "@/gen/forge/v1/audit_pb";
 import { AuthService } from "@/gen/forge/v1/auth_pb";
 import { ServiceCatalogService } from "@/gen/forge/v1/catalog_pb";
+import { ClusterService } from "@/gen/forge/v1/cluster_pb";
 import { DeployService } from "@/gen/forge/v1/deploy_pb";
 import { DocsService } from "@/gen/forge/v1/docs_pb";
 import { EnvironmentService } from "@/gen/forge/v1/environment_pb";
@@ -26,6 +27,7 @@ export type Api = {
   audit: Client<typeof AuditService>;
   operations: Client<typeof OperationService>;
   docs: Client<typeof DocsService>;
+  clusters: Client<typeof ClusterService>;
 };
 
 const bearer: Interceptor = (next) => async (req) => {
@@ -68,6 +70,7 @@ export function makeApi(transport: Transport): Api {
     audit: createClient(AuditService, transport),
     operations: createClient(OperationService, transport),
     docs: createClient(DocsService, transport),
+    clusters: createClient(ClusterService, transport),
   };
 }
 
@@ -114,6 +117,9 @@ export function environmentId(name: string): string {
 }
 export function operationId(name: string): string {
   return name.replace(/^operations\//, "");
+}
+export function clusterId(name: string): string {
+  return name.replace(/^clusters\//, "");
 }
 
 // listAuditSince reads the audit log back to `ms` milliseconds ago, newest

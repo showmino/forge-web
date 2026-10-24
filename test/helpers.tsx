@@ -46,6 +46,7 @@ const ACTION_ROLES: Record<string, "team" | "admin"> = {
   "resource.plan": "team",
   "resource.apply": "team",
   "resource.apply.production": "admin",
+  "cluster.read": "admin",
 };
 const GLOBAL_ACTIONS = ["service.create", "service.create.any_team", "service.register"];
 
