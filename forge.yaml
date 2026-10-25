@@ -14,6 +14,10 @@ run:
   # The dashboard is "forge", not "forge-web", to the people who open it:
   # forge.<domain> in production, forge-staging.<domain> in staging.
   host: forge
+  # The Forge API the pages call, from a browser: showmino's own. Another
+  # Forge runs the same image with its own address here.
+  env:
+    FORGE_API_URL: https://forge-api.showmino.com
 # The pages of docs/, in the order the dashboard shows them.
 docs:
   - path: index.md

@@ -139,7 +139,7 @@ Locally the API must accept the dashboard: start forge-api with
 `--oidc-web-client-id forge-web --cors-origins http://localhost:3000`, and give
 its Dex a public client `forge-web` with the redirect URI
 `http://localhost:3000/auth/callback` and `http://localhost:3000` in
-`web.allowedOrigins`. Set `NEXT_PUBLIC_FORGE_API_URL` for another API.
+`web.allowedOrigins`. Set `FORGE_API_URL` for another API.
 
 The tests render each page against an in-memory Forge API
 (`app/pages.test.tsx`); none needs a network.
@@ -153,8 +153,9 @@ On `main` it builds and pushes
 `ghcr.io/showmino/forge-web:<short-sha>`, then a `deploy`
 job deploys that commit to staging through Forge. It logs in with the job's
 GitHub OIDC token, and needs the organization variable `FORGE_API_URL`.
-The image build also takes that address (`NEXT_PUBLIC_FORGE_API_URL`): the
-pages call the API from the browser, so it is built into them.
+The image has no API address built in: the server reads `FORGE_API_URL` when
+it starts (`forge.yaml` `run.env`) and puts it into each page, so the same
+image serves any Forge.
 
 - `forge deploy status forge-web`: what runs where.
 - `forge deploy promote forge-web`: staging to production.

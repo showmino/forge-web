@@ -37,7 +37,7 @@ const bearer: Interceptor = (next) => async (req) => {
 };
 
 export function webTransport(): Transport {
-  return createConnectTransport({ baseUrl: apiUrl, interceptors: [bearer] });
+  return createConnectTransport({ baseUrl: apiUrl(), interceptors: [bearer] });
 }
 
 // startForgeSession trades a fresh ID token for a Forge session of 7 days.
@@ -47,7 +47,7 @@ export async function startForgeSession(idToken: string, label: string, transpor
     req.header.set("Authorization", `Bearer ${idToken}`);
     return next(req);
   };
-  const auth = createClient(AuthService, transport ?? createConnectTransport({ baseUrl: apiUrl, interceptors: [withLogin] }));
+  const auth = createClient(AuthService, transport ?? createConnectTransport({ baseUrl: apiUrl(), interceptors: [withLogin] }));
   try {
     const res = await auth.createSession({ label });
     const ends = res.session?.expireTime;

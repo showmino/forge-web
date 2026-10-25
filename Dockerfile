@@ -9,9 +9,9 @@ RUN npm ci --no-audit --no-fund
 FROM mirror.gcr.io/library/node:24-slim AS build
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
-# The Forge API's address is built into the pages: the browser calls it.
-ARG NEXT_PUBLIC_FORGE_API_URL
-RUN test -n "$NEXT_PUBLIC_FORGE_API_URL" || { echo "set --build-arg NEXT_PUBLIC_FORGE_API_URL=<the Forge API's address>"; exit 1; }
+# The Forge API's address is not built in: the server reads FORGE_API_URL when
+# it starts. The build argument is still honoured, for older deploy setups.
+ARG NEXT_PUBLIC_FORGE_API_URL=
 ENV NEXT_PUBLIC_FORGE_API_URL=$NEXT_PUBLIC_FORGE_API_URL
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

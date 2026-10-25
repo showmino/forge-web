@@ -10,8 +10,8 @@ npm run dev        # http://localhost:3000, calls the API at http://localhost:80
 The API must accept the dashboard: start forge-api with
 `--oidc-web-client-id forge-web --cors-origins http://localhost:3000`, and give
 its Dex a public client `forge-web` with the redirect URI
-`http://localhost:3000/auth/callback`. Set `NEXT_PUBLIC_FORGE_API_URL` for
-another API; it is read at build time.
+`http://localhost:3000/auth/callback`. Set `FORGE_API_URL` for another API;
+the server reads it when it starts.
 
 ### Run it without a login
 
