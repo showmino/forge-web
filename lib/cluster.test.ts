@@ -54,6 +54,7 @@ describe("clusterStatus", () => {
       "Volume payments-production/data at 90%",
     ],
     ["volumes without storage do not count", create(ClusterSchema, { volumes: [create(VolumeSchema, { capacityBytes: BigInt(10), usedBytes: BigInt(9) })] }), "success", "Healthy"],
+    ["could not be read", create(ClusterSchema, { unavailableReason: "cluster aks did not answer", nodes: [node("Ready")] }), "danger", "Unavailable"],
   ] as const)("%s", (_, cl, tone, word) => {
     expect(clusterStatus(cl)).toEqual({ tone, word });
   });
