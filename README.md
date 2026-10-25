@@ -173,3 +173,7 @@ security, how to work on it, and a runbook, in the order `docs:` in
 `forge.yaml` gives. Forge reads them from `main` (`forge docs get forge-web
 runbook.md`). Check them with `forge docs lint` before a push, and keep them
 true in the same pull request as the change they describe.
+
+## License
+
+Apache License 2.0: see [LICENSE](LICENSE).
