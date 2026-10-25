@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { headers } from "next/headers";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { API_META, serverApiUrl } from "@/lib/config";
 
 // The three faces of the Forge design language. Their files are in the repo
 // (app/fonts, Latin subsets, under the SIL Open Font License), so a build
@@ -34,10 +35,13 @@ const plexMono = localFont({
 
 const THEME = `try{var t=localStorage.getItem("forge.theme");if(t==="dark"||t==="light")document.documentElement.dataset.theme=t}catch(e){}`;
 
-export const metadata: Metadata = {
-  title: "Forge",
-  description: "The services, templates, deploys and audit log of Forge.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: "Forge",
+    description: "The services, templates, deploys and audit log of Forge.",
+    other: { [API_META]: serverApiUrl() },
+  };
+}
 
 export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   // Every script on a page carries the nonce of its request (proxy.ts); the

@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
+import { serverApiUrl } from "@/lib/config";
 import { contentSecurityPolicy, newNonce, origin } from "@/lib/csp";
 
 // Sets the Content-Security-Policy on every page, with a nonce of its own for
@@ -7,7 +8,7 @@ import { contentSecurityPolicy, newNonce, origin } from "@/lib/csp";
 // this asks the API, remembers the answer for a while, and names both in the
 // policy. Until the API has answered, the policy allows any web address.
 
-const API = (process.env.NEXT_PUBLIC_FORGE_API_URL ?? "http://localhost:8080").replace(/\/$/, "");
+const API = serverApiUrl();
 const dev = process.env.NODE_ENV !== "production";
 
 // How long an answer, or a failure, is remembered.

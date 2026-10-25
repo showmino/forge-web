@@ -48,19 +48,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build and push
-        env:
-          # The address the pages call the Forge API at, from a browser. The
-          # dashboard is served over HTTPS, so this must be the API's HTTPS
-          # name; FORGE_API_URL (what CI itself uses, on the LAN) is the
-          # fallback for a dashboard served over plain HTTP.
-          FORGE_API_URL: ${{ vars.FORGE_WEB_API_URL || vars.FORGE_API_URL }}
+        # No API address is built in: Forge runs the image with FORGE_API_URL
+        # (forge.yaml run.env), so the same image serves any Forge.
         run: |
-          if [ -z "$FORGE_API_URL" ]; then
-            echo "::error::set the variable FORGE_WEB_API_URL (or the organization variable FORGE_API_URL) to the Forge API: the dashboard's pages call it"
-            exit 1
-          fi
           image=ghcr.io/showmino/forge-web:${GITHUB_SHA::7}
-          docker build --build-arg NEXT_PUBLIC_FORGE_API_URL="$FORGE_API_URL" -t "$image" .
+          docker build -t "$image" .
           docker push "$image"
 
   # Deploys main to staging through Forge, logging in with this job's GitHub

@@ -51,7 +51,7 @@ says how this app is built, page by page.
 npm ci
 npm run lint && npm run typecheck && npm test   # what CI runs
 npm run dev      # http://localhost:3000, calls the API at http://localhost:8080
-npm run build    # NEXT_PUBLIC_FORGE_API_URL is read at build time
+npm run build    # no API address is built in: the server reads FORGE_API_URL when it starts
 sh scripts/sync-proto.sh ../forge   # after the API's protos change: copies them and regenerates gen/
 ```
 
@@ -78,8 +78,8 @@ Write the test first. `gen/` is committed and CI checks it matches `proto/`.
   Pages are rendered per request because of it.
 - **Fonts are files in `app/fonts`.** A build fetches nothing from the
   internet except npm packages.
-- **Its address** comes from `forge.yaml` (`run.host: forge`), and the build
-  calls the API at the repo variable `FORGE_WEB_API_URL`.
+- **Its address** comes from `forge.yaml` (`run.host: forge`), and the API it
+  calls from `run.env` `FORGE_API_URL`, read when the server starts.
 
 ### Conventions
 

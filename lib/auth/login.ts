@@ -42,7 +42,7 @@ export function safeReturn(path: string | null | undefined): string {
 }
 
 async function discover(fetcher: Fetch) {
-  const auth = createClient(AuthService, createConnectTransport({ baseUrl: apiUrl, fetch: fetcher }));
+  const auth = createClient(AuthService, createConnectTransport({ baseUrl: apiUrl(), fetch: fetcher }));
   const info = await auth.getServerInfo({});
   const oidc = info.oidc;
   if (!oidc?.issuer || !oidc.webClientId) {
