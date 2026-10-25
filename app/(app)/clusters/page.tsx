@@ -9,7 +9,7 @@ import { StatusBadge } from "@/components/ui/status";
 import { clusterId } from "@/lib/api";
 import { clusterStatus, usage } from "@/lib/cluster";
 
-// The clusters Forge runs on, and how much room each has left. Admins only.
+// The clusters Forge knows, and how much room each has left. Admins only.
 export default function Clusters() {
   const api = useApi();
   const clusters = useQuery({
@@ -48,6 +48,19 @@ export default function Clusters() {
           <tbody>
             {clusters.data.map((c) => {
               const id = clusterId(c.name);
+              if (c.unavailableReason) {
+                return (
+                  <tr key={c.name} className={tr}>
+                    <td className={td}>{id}</td>
+                    <td className={td}>
+                      <StatusBadge status={clusterStatus(c)} />
+                    </td>
+                    <td className={`${td} text-fg-2`} colSpan={5}>
+                      {c.unavailableReason}
+                    </td>
+                  </tr>
+                );
+              }
               const u = usage(c.totals, c.metricsAvailable, c.storageAvailable);
               return (
                 <tr key={c.name} className={tr}>

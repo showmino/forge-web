@@ -34,6 +34,7 @@ function nodes(n: number): string {
 // condition first, then the fullest of CPU, memory, disk or a volume from 80%
 // used, else Healthy.
 export function clusterStatus(cl: Cluster): Status {
+  if (cl.unavailableReason) return { tone: "danger", word: "Unavailable" };
   for (const [condition, words] of conditionWords) {
     const n = cl.nodes.filter((node) => node.condition === condition).length;
     if (n === 0) continue;
