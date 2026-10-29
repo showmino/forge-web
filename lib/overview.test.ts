@@ -5,7 +5,7 @@ import { AuditEventSchema } from "@/gen/forge/v1/audit_pb";
 import { Deployment_Health, Deployment_SyncStatus, DeploymentSchema } from "@/gen/forge/v1/deploy_pb";
 import { Environment_State, EnvironmentSchema } from "@/gen/forge/v1/environment_pb";
 import { OperationSchema } from "@/gen/forge/v1/operation_pb";
-import { attention, dayStats, pipelineOf, recentDeploys, segment, severity, shipping, stageOf, STAGES, worse } from "./overview";
+import { attention, board, dayStats, expiringSoon, pipelineOf, recentDeploys, segment, severity, shipping, stageOf, STAGES, worse } from "./overview";
 
 const NOW = new Date(2026, 9, 11, 15, 0, 0);
 const ago = (minutes: number) => timestampFromDate(new Date(NOW.getTime() - minutes * 60_000));
@@ -161,5 +161,67 @@ describe("what needs attention", () => {
   it("forgets a failed deploy after a day", () => {
     const old = recentDeploys([event(1, 25 * 60, "deploy.start", "outcome", "failed", { result: { code: "failed", message: "ci_failed: tests" } })]);
     expect(attention([], [], old, NOW)).toEqual([]);
+  });
+});
+
+describe("the status board", () => {
+  const dep = (service: string, env: string, over: object = {}) =>
+    create(DeploymentSchema, {
+      name: `deployments/${service}/${env}`,
+      service: `services/${service}`,
+      env,
+      commit: "4b7d1c0aa9e1",
+      health: Deployment_Health.HEALTHY,
+      sync: Deployment_SyncStatus.SYNCED,
+      deployTime: ago(90),
+      ...over,
+    });
+
+  it("has a row for production, then staging, with one tile per deployed service", () => {
+    const rows = board([dep("ledger", "staging"), dep("payments", "production"), dep("ledger", "production")], 3, NOW);
+    expect(rows.map((r) => r.env)).toEqual(["production", "staging"]);
+    expect(rows[0].tiles.map((t) => t.service)).toEqual(["ledger", "payments"]);
+    expect(rows[1].tiles.map((t) => t.service)).toEqual(["ledger"]);
+    // What is not deployed in an environment gets no tile, only a count.
+    expect(rows[0].notDeployed).toBe(1);
+    expect(rows[1].notDeployed).toBe(2);
+  });
+
+  it("puts what is broken first and says what runs on the rest", () => {
+    const rows = board(
+      [
+        dep("identity", "production"),
+        dep("checkout-api", "production", { health: Deployment_Health.DEGRADED, deployTime: ago(31) }),
+        dep("web", "production", { sync: Deployment_SyncStatus.OUT_OF_SYNC }),
+        dep("search", "production", { health: Deployment_Health.MISSING }),
+        dep("payments", "production", { version: "v0.4.1", deployTime: ago(26 * 60) }),
+        dep("notifications", "production", { health: Deployment_Health.PROGRESSING }),
+        dep("never", "production", { commit: "" }),
+      ],
+      undefined,
+      NOW,
+    );
+    const p = rows[0];
+    expect(p.tiles.map((t) => [t.service, t.severity, t.word])).toEqual([
+      ["checkout-api", "bad", "Degraded"],
+      ["search", "bad", "Not running"],
+      ["web", "warn", "Out of sync"],
+      ["identity", "ok", "4b7d1c0"],
+      ["notifications", "ok", "Progressing"],
+      ["payments", "ok", "v0.4.1"],
+    ]);
+    expect(p.tiles[0].when).toBe("31 min ago");
+    expect(p.tiles[0].href).toBe("/services/checkout-api");
+    expect(p.unhealthy).toBe(2);
+    expect(p.outOfSync).toBe(1);
+    // Without the catalog, the board does not guess what is missing.
+    expect(p.notDeployed).toBeUndefined();
+    expect(rows[1].tiles).toEqual([]);
+  });
+
+  it("counts the previews that end within six hours", () => {
+    const preview = (id: string, hours: number, state = Environment_State.READY) =>
+      create(EnvironmentSchema, { name: `environments/${id}`, state, expireTime: timestampFromDate(new Date(NOW.getTime() + hours * 3_600_000)) });
+    expect(expiringSoon([preview("a", 2), preview("b", 30), preview("c", 5.9), preview("d", 1, Environment_State.FAILED), preview("e", -1)], NOW)).toBe(2);
   });
 });

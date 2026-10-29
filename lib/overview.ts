@@ -4,7 +4,7 @@ import { type Deployment, Deployment_Health, Deployment_SyncStatus } from "@/gen
 import { type Environment, Environment_State } from "@/gen/forge/v1/environment_pb";
 import type { Operation, OperationEvent } from "@/gen/forge/v1/operation_pb";
 import { environmentId, serviceId } from "@/lib/api";
-import { actorText, shortCommit, timeUntil } from "@/lib/format";
+import { actorText, shortCommit, timeAgo, timeUntil } from "@/lib/format";
 
 // The overview answers three questions from what the API already knows: what
 // is shipping (running operations), what is broken or about to be (the state
@@ -156,6 +156,66 @@ export function worse(a: Severity, b: Severity): Severity {
   return SEVERITY_RANK[a] <= SEVERITY_RANK[b] ? a : b;
 }
 
+// The status board: staging and production at a glance. One tile per service
+// deployed there, what is broken first; a healthy tile names what runs.
+export const BOARD_ENVS = ["production", "staging"] as const;
+
+export type Tile = {
+  service: string;
+  severity: Exclude<Severity, "none">;
+  // "Degraded", "Not running" or "Out of sync"; else the version or commit
+  // that runs, or "Progressing" while Argo CD rolls it out.
+  word: string;
+  // When it was deployed: "31 min ago".
+  when: string;
+  href: string;
+};
+
+export type BoardRow = {
+  env: (typeof BOARD_ENVS)[number];
+  tiles: Tile[];
+  unhealthy: number;
+  outOfSync: number;
+  // Services in the catalog with nothing in this environment; undefined
+  // when the catalog is not known.
+  notDeployed?: number;
+};
+
+function tileWord(d: Deployment, grade: Severity): string {
+  if (d.health === Deployment_Health.DEGRADED) return "Degraded";
+  if (d.health === Deployment_Health.MISSING) return "Not running";
+  if (grade === "warn") return "Out of sync";
+  if (d.health === Deployment_Health.PROGRESSING) return "Progressing";
+  return d.version || shortCommit(d.commit);
+}
+
+// board groups the deployments by environment, worst first, then by name.
+export function board(deployments: Deployment[], services: number | undefined, now = new Date()): BoardRow[] {
+  return BOARD_ENVS.map((env) => {
+    const tiles: Tile[] = [];
+    for (const d of deployments) {
+      const grade = severity(d);
+      if (d.env !== env || grade === "none") continue;
+      const service = serviceId(d.service);
+      tiles.push({
+        service,
+        severity: grade,
+        word: tileWord(d, grade),
+        when: d.deployTime ? timeAgo(timestampDate(d.deployTime), now) : "",
+        href: `/services/${service}`,
+      });
+    }
+    tiles.sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] || a.service.localeCompare(b.service));
+    return {
+      env,
+      tiles,
+      unhealthy: tiles.filter((t) => t.severity === "bad").length,
+      outOfSync: tiles.filter((t) => t.severity === "warn").length,
+      notDeployed: services === undefined ? undefined : Math.max(0, services - tiles.length),
+    };
+  });
+}
+
 // Something a person should look at, most urgent first.
 export type Attention = {
   key: string;
@@ -172,6 +232,19 @@ export type Attention = {
 
 // How soon a preview's end is worth a line.
 const EXPIRES_SOON_MS = 6 * 3600_000;
+// endsSoon is the time a ready preview has left, when that is six hours or less.
+function endsSoon(e: Environment, now: Date): Date | null {
+  if (e.state !== Environment_State.READY || !e.expireTime) return null;
+  const ends = timestampDate(e.expireTime);
+  const left = ends.getTime() - now.getTime();
+  return left > 0 && left <= EXPIRES_SOON_MS ? ends : null;
+}
+
+// expiringSoon counts the previews that end within six hours.
+export function expiringSoon(environments: Environment[], now = new Date()): number {
+  return environments.filter((e) => endsSoon(e, now)).length;
+}
+
 // How long a failed deploy stays on the page when nothing replaced it.
 const FAILED_FOR_MS = 24 * 3600_000;
 
@@ -216,10 +289,9 @@ export function attention(deployments: Deployment[], environments: Environment[]
     const by = `${service} · created by ${e.creator || "unknown"}`;
     if (e.state === Environment_State.FAILED) {
       out.push({ key: `${e.name}/failed`, tone: "danger", before: "Preview ", subject: id, after: " failed", detail: by, href: `/services/${service}` });
-    } else if (e.state === Environment_State.READY && e.expireTime) {
-      const ends = timestampDate(e.expireTime);
-      const left = ends.getTime() - now.getTime();
-      if (left > 0 && left <= EXPIRES_SOON_MS) {
+    } else {
+      const ends = endsSoon(e, now);
+      if (ends) {
         out.push({ key: `${e.name}/expires`, tone: "warning", before: "Preview ", subject: id, after: ` expires ${timeUntil(ends, now)}`, detail: by, href: `/services/${service}`, extend: e });
       }
     }

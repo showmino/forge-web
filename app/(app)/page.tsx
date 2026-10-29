@@ -1,27 +1,44 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { type ReactNode, useEffect, useMemo, useState } from "react";
 import { usePermissions } from "@/components/app-shell";
 import { StepLog, type Step, useOperation } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
 import { ExtendDialog } from "@/components/service-actions";
 import { Button, ButtonLink, Icon, TextLink } from "@/components/ui/button";
 import { ErrorNote, Loading, PageHeader, Panel, Widget } from "@/components/ui/layout";
-import { MiniLine, StageLine, Stats } from "@/components/ui/pipeline";
+import { MiniLine, StageLine } from "@/components/ui/pipeline";
 import { StatusBadge, Tag } from "@/components/ui/status";
+import type { Cluster } from "@/gen/forge/v1/cluster_pb";
 import type { Environment } from "@/gen/forge/v1/environment_pb";
 import type { Operation } from "@/gen/forge/v1/operation_pb";
 import { lastDay, listAllServices, operationId, serviceId } from "@/lib/api";
+import { clusterStatus } from "@/lib/cluster";
 import { timeAgo, when } from "@/lib/format";
-import { attention, dayStats, deployKind, pipelineOf, recentDeploys, shipping, type Attention, type RecentDeploy } from "@/lib/overview";
+import {
+  attention,
+  board,
+  type BoardRow,
+  dayStats,
+  type DayStats,
+  deployKind,
+  expiringSoon,
+  pipelineOf,
+  recentDeploys,
+  shipping,
+  type Attention,
+  type RecentDeploy,
+  type Tile,
+} from "@/lib/overview";
 import { operationTitle, type Status, type Tone } from "@/lib/status";
 
 
 const mono = "font-mono text-[0.92em] font-medium";
 
-// Overview: what is shipping, what is broken and what needs someone, from
-// what the API already knows.
+// Overview: the status of staging and production first, then what is
+// shipping, what is broken and what needs someone, from what the API already knows.
 export default function Overview() {
   const api = useApi();
   const canCreate = usePermissions().can("service.create");
@@ -45,6 +62,11 @@ export default function Overview() {
     refetchInterval: 5_000,
   });
   const audit = useQuery({ queryKey: ["audit", "last-day"], queryFn: () => lastDay(api), refetchInterval: 30_000 });
+  const clusters = useQuery({
+    queryKey: ["clusters"],
+    queryFn: () => api.clusters.listClusters({}).then((r) => r.clusters),
+    refetchInterval: 60_000,
+  });
 
   const recent = useMemo(() => recentDeploys(audit.data ?? []), [audit.data]);
   const stats = useMemo(() => dayStats(audit.data ?? []), [audit.data]);
@@ -58,7 +80,6 @@ export default function Overview() {
     for (const key of ["operations", "audit", "deployments", "environments"]) void queries.invalidateQueries({ queryKey: [key] });
   }
 
-  const number = (q: { isPending: boolean; error: unknown }, n: number) => (q.isPending ? "…" : q.error ? "–" : n);
   const broken = deployments.error ?? environments.error ?? audit.error;
 
   return (
@@ -76,13 +97,12 @@ export default function Overview() {
         ) : null}
       </PageHeader>
 
-      <Stats
-        items={[
-          { label: "Services in the catalog", value: number(services, services.data?.length ?? 0) },
-          { label: "Deploys today", value: number(audit, stats.started) },
-          { label: "Finished deploys that failed", value: number(audit, stats.failed), of: audit.data ? stats.finished : undefined },
-          { label: "Preview environments live", value: number(environments, environments.data?.length ?? 0) },
-        ]}
+      <StatusBoard
+        rows={deployments.data ? board(deployments.data, services.data?.length) : undefined}
+        error={deployments.error}
+        day={audit.data ? stats : audit.error ? "error" : undefined}
+        previews={environments.data ? { live: environments.data.length, ending: expiringSoon(environments.data) } : environments.error ? "error" : undefined}
+        clusters={clusters.data ?? (clusters.error ? "error" : undefined)}
       />
 
       {running.data && running.data.length > 0 ? (
@@ -145,6 +165,162 @@ export default function Overview() {
         />
       ) : null}
     </>
+  );
+}
+
+type Loaded<T> = T | "error" | undefined;
+
+// StatusBoard is the head of the page: a row each for production and
+// staging, one tile per service deployed there with what is broken first, and
+// under them the day's deploys, the previews and the clusters.
+function StatusBoard({
+  rows,
+  error,
+  day,
+  previews,
+  clusters,
+}: {
+  rows: BoardRow[] | undefined;
+  error: unknown;
+  day: Loaded<DayStats>;
+  previews: Loaded<{ live: number; ending: number }>;
+  clusters: Loaded<Cluster[]>;
+}) {
+  const shown = <T,>(v: Loaded<T>, f: (v: T) => ReactNode) => (v === undefined ? "…" : v === "error" ? "–" : f(v));
+  const needLook = Array.isArray(clusters) ? clusters.filter((c) => clusterStatus(c).tone !== "success").length : 0;
+  return (
+    <section aria-labelledby="status-board" className="min-w-0 rounded-lg border border-line bg-surface shadow-1">
+      <div className="flex items-baseline gap-3 px-6 pt-4 pb-1 max-[700px]:px-4">
+        <h2 id="status-board" className="text-[12px] font-semibold tracking-[.06em] text-fg-3 uppercase">
+          Status
+        </h2>
+        <TextLink href="/environments" className="ml-auto text-[12.5px] text-fg-2">
+          Environments
+        </TextLink>
+      </div>
+      {error ? (
+        <div className="px-6 pb-4">
+          <ErrorNote error={error} />
+        </div>
+      ) : !rows ? (
+        <div className="px-6 pb-4">
+          <Loading what="the status of staging and production" />
+        </div>
+      ) : (
+        rows.map((r, i) => <BoardEnv key={r.env} row={r} divided={i > 0} />)
+      )}
+      <dl className="grid grid-cols-3 border-t border-line max-[700px]:grid-cols-1">
+        <BoardFact label="Deploys today" href="/audit">
+          {shown(day, (d) => (
+            <>
+              {d.started}
+              {d.finished > 0 ? (
+                <small className="text-[13px] font-normal text-fg-2">
+                  {" "}
+                  · {d.failed} of {d.finished} failed
+                </small>
+              ) : null}
+            </>
+          ))}
+        </BoardFact>
+        <BoardFact label="Previews live" href="/environments">
+          {shown(previews, (p) => (
+            <>
+              {p.live}
+              {p.ending > 0 ? <small className="text-[13px] font-medium text-warn-fg"> · {p.ending} {p.ending === 1 ? "ends" : "end"} soon</small> : null}
+            </>
+          ))}
+        </BoardFact>
+        <BoardFact label="Clusters" href="/clusters">
+          {shown(clusters, (cl) =>
+            cl.length === 0 ? (
+              "None"
+            ) : needLook > 0 ? (
+              <span className="font-medium text-warn-fg">
+                {needLook} of {cl.length} {needLook === 1 ? "needs" : "need"} a look
+              </span>
+            ) : (
+              `${cl.length} healthy`
+            ),
+          )}
+        </BoardFact>
+      </dl>
+    </section>
+  );
+}
+
+const envName = { production: "Production", staging: "Staging" };
+const swatch = { production: "bg-env-production", staging: "bg-env-staging" };
+
+function BoardEnv({ row, divided }: { row: BoardRow; divided: boolean }) {
+  const problems = [row.unhealthy ? `${row.unhealthy} unhealthy` : "", row.outOfSync ? `${row.outOfSync} out of sync` : ""].filter(Boolean).join(" · ");
+  const tone = row.unhealthy ? "text-bad-fg" : row.outOfSync ? "text-warn-fg" : "text-fg-2";
+  return (
+    <div className={`grid grid-cols-[170px_minmax(0,1fr)] items-start gap-6 px-6 py-4 ${divided ? "border-t border-line" : ""} max-[700px]:grid-cols-1 max-[700px]:gap-2.5 max-[700px]:px-4`}>
+      <div>
+        <h3 className="flex items-center gap-2 font-display text-[17px] font-semibold [font-stretch:108%]">
+          <span aria-hidden="true" className={`size-[9px] flex-none rounded-[2px] ${swatch[row.env]}`} />
+          {envName[row.env]}
+        </h3>
+        {row.tiles.length > 0 ? (
+          <>
+            <p className={`mt-1 text-[13.5px] font-medium ${tone}`}>{problems || `All ${row.tiles.length} healthy`}</p>
+            <p className="mt-px text-[12.5px] text-fg-3">
+              {row.tiles.length} running{row.notDeployed ? ` · ${row.notDeployed} not deployed` : ""}
+            </p>
+          </>
+        ) : null}
+      </div>
+      {row.tiles.length === 0 ? (
+        <p className="self-center text-[13.5px] text-fg-2">Nothing is deployed to {row.env} yet.</p>
+      ) : (
+        <ul aria-label={envName[row.env]} className="grid min-w-0 grid-cols-[repeat(auto-fill,minmax(158px,1fr))] gap-1.5 max-[700px]:grid-cols-[repeat(auto-fill,minmax(136px,1fr))]">
+          {row.tiles.map((t) => (
+            <li key={t.service} className="min-w-0">
+              <BoardTile tile={t} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+const tileLook: Record<Tile["severity"], { box: string; dot: string; word: string }> = {
+  bad: { box: "bg-bad-bg border-bad-dot/35", dot: "bg-bad-dot rounded-[2px]", word: "font-medium text-bad-fg" },
+  warn: { box: "bg-warn-bg border-warn-dot/45", dot: "bg-warn-dot rounded-full", word: "font-medium text-warn-fg" },
+  ok: { box: "bg-surface-2 border-transparent hover:border-line-strong", dot: "bg-ok-dot rounded-full", word: "text-fg-3" },
+};
+
+// A tile is a service in one environment. Only a problem has colour; a
+// healthy tile names what runs, and says it is healthy to a screen reader.
+function BoardTile({ tile }: { tile: Tile }) {
+  const look = tileLook[tile.severity];
+  return (
+    <Link href={tile.href} className={`flex min-w-0 flex-col gap-0.5 rounded-md border px-2.5 py-2 no-underline ${look.box}`}>
+      <span className="flex min-w-0 items-center gap-[7px] font-mono text-[12.5px] font-medium">
+        <span aria-hidden="true" className={`size-[7px] flex-none ${look.dot}`} />
+        <span className="truncate">{tile.service}</span>
+      </span>
+      <span className={`truncate pl-3.5 text-[12px] ${look.word}`}>
+        {tile.severity === "ok" ? <span className="sr-only">Healthy, running </span> : null}
+        {tile.severity === "ok" ? <span className="font-mono">{tile.word}</span> : tile.word}
+        {tile.when ? ` · ${tile.when}` : ""}
+      </span>
+    </Link>
+  );
+}
+
+function BoardFact({ label, href, children }: { label: string; href: string; children: ReactNode }) {
+  return (
+    <div className="flex min-w-0 flex-col-reverse justify-end gap-0.5 px-6 py-3 not-first:border-l not-first:border-line max-[700px]:px-4 max-[700px]:not-first:border-t max-[700px]:not-first:border-l-0">
+      <dt className="text-[12.5px] text-fg-3">
+        <Link href={href} className="text-inherit no-underline hover:underline">
+          {label}
+        </Link>
+      </dt>
+      <dd className="text-[14px] font-semibold tabular-nums">{children}</dd>
+    </div>
   );
 }
 
