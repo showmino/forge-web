@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuditService } from "@/gen/forge/v1/audit_pb";
 import { AuthService } from "@/gen/forge/v1/auth_pb";
 import { ServiceCatalogService } from "@/gen/forge/v1/catalog_pb";
+import { ClusterService } from "@/gen/forge/v1/cluster_pb";
 import { Deployment_Health, Deployment_SyncStatus, DeployService } from "@/gen/forge/v1/deploy_pb";
 import { Environment_State, EnvironmentService } from "@/gen/forge/v1/environment_pb";
 import { OperationService } from "@/gen/forge/v1/operation_pb";
@@ -12,7 +13,8 @@ import { ADMIN, authAs, READER, renderWithApi, signIn } from "@/test/helpers";
 import Overview from "./(app)/page";
 
 // The overview is rendered against an in-memory Forge API with a day of
-// history: one deploy in flight, one failed promotion, a preview about to end.
+// history: one deploy in flight, one failed promotion, a preview about to end,
+// and one of two clusters short of memory.
 
 vi.mock("next/navigation", () => ({
   useParams: () => ({}),
@@ -26,11 +28,12 @@ type World = {
   writer: boolean;
   quiet: boolean; // nothing running, nothing broken, nothing deployed
   auditDown: boolean;
+  clustersDown: boolean;
   extended: string[];
   // Resolved by a test to let the deploy in flight end.
   land: () => void;
 };
-const world = (over: Partial<World> = {}): World => ({ writer: true, quiet: false, auditDown: false, extended: [], land: () => {}, ...over });
+const world = (over: Partial<World> = {}): World => ({ writer: true, quiet: false, auditDown: false, clustersDown: false, extended: [], land: () => {}, ...over });
 
 const outcome = (id: number, minutes: number, action: string, service: string, env: string, code: string, message = "") => ({
   name: `auditEvents/${id}`,
@@ -55,8 +58,9 @@ function forge(w: World) {
         deployments: w.quiet
           ? []
           : [
-              { name: "deployments/payments/staging", service: "services/payments", env: "staging", commit: "abc1234", health: Deployment_Health.HEALTHY, sync: Deployment_SyncStatus.SYNCED },
-              { name: "deployments/checkout-api/production", service: "services/checkout-api", env: "production", commit: "5d20c9e", health: Deployment_Health.DEGRADED, sync: Deployment_SyncStatus.SYNCED, message: "1 of 3 pods is crash-looping" },
+              { name: "deployments/payments/staging", service: "services/payments", env: "staging", commit: "abc1234", health: Deployment_Health.HEALTHY, sync: Deployment_SyncStatus.SYNCED, deployTime: ago(60) },
+              { name: "deployments/checkout-api/production", service: "services/checkout-api", env: "production", commit: "5d20c9e", health: Deployment_Health.DEGRADED, sync: Deployment_SyncStatus.SYNCED, message: "1 of 3 pods is crash-looping", deployTime: ago(31) },
+              { name: "deployments/ledger/production", service: "services/ledger", env: "production", commit: "0f6a2d4", version: "v1.2.0", health: Deployment_Health.HEALTHY, sync: Deployment_SyncStatus.SYNCED, deployTime: ago(180) },
             ],
       }),
     });
@@ -86,6 +90,17 @@ function forge(w: World) {
         await new Promise<void>((resolve) => (w.land = resolve));
         w.quiet = true; // nothing is running any more
         yield { kind: { case: "operation" as const, value: { ...running, done: true, endTime: ago(0) } } };
+      },
+    });
+    router.service(ClusterService, {
+      listClusters: () => {
+        if (w.clustersDown) throw new ConnectError("Kubernetes is away", Code.Unavailable);
+        return {
+          clusters: [
+            { name: "clusters/prod-eu-1", nodes: [{ name: "w-1", condition: "Ready" }] },
+            { name: "clusters/prod-us-1", nodes: [{ name: "w-1", condition: "MemoryPressure" }, { name: "w-2", condition: "Ready" }] },
+          ],
+        };
       },
     });
     router.service(AuditService, {
@@ -128,17 +143,36 @@ afterEach(() => {
   cleanup();
 });
 
-const stat = (label: string) => screen.getByText(label).parentElement!.querySelector("dd")!.textContent;
+// A fact under the board: its label (a link to the page behind it) and its value.
+const stat = (label: string) => screen.getByText(label).closest("div")!.querySelector("dd")!.textContent;
 
 describe("the overview", () => {
-  it("leads with the numbers of the day", async () => {
+  it("says the clusters could not be read, and shows the rest of the board", async () => {
+    renderWithApi(<Overview />, forge(world({ clustersDown: true })));
+    expect(await screen.findByRole("list", { name: "Production" })).toBeTruthy();
+    await waitFor(() => expect(stat("Clusters")).toBe("–"), { timeout: 4000 });
+  });
+
+
+  it("leads with the status of production and staging", async () => {
     renderWithApi(<Overview />, forge(world()));
     expect(await screen.findByRole("heading", { name: "Overview" })).toBeTruthy();
-    await waitFor(() => expect(stat("Services in the catalog")).toBe("3"));
-    // Five deploys were started today; four have ended, two of them failed.
-    await waitFor(() => expect(stat("Deploys today")).toBe("5"));
-    expect(stat("Finished deploys that failed")).toBe("2 of 4");
-    await waitFor(() => expect(stat("Preview environments live")).toBe("2"));
+    const status = within(screen.getByRole("region", { name: "Status" }));
+    // Production first: what is broken leads, a healthy tile names its version.
+    const production = within(await status.findByRole("list", { name: "Production" }));
+    const tiles = production.getAllByRole("link").map((a) => a.textContent);
+    expect(tiles).toEqual(["checkout-apiDegraded · 31 min ago", "ledgerHealthy, running v1.2.0 · 3 h ago"]);
+    expect(production.getByRole("link", { name: /checkout-api/ }).getAttribute("href")).toBe("/services/checkout-api");
+    expect(status.getByText("1 unhealthy")).toBeTruthy();
+    // Three services are in the catalog: one has nothing in production yet.
+    expect(status.getByText("2 running · 1 not deployed")).toBeTruthy();
+    const staging = within(status.getByRole("list", { name: "Staging" }));
+    expect(staging.getAllByRole("link").map((a) => a.textContent)).toEqual(["paymentsHealthy, running abc1234 · 1 h ago"]);
+    expect(status.getByText("All 1 healthy")).toBeTruthy();
+    // Under the rows, the day: five deploys started, four ended, two of them failed.
+    await waitFor(() => expect(stat("Deploys today")).toBe("5 · 2 of 4 failed"));
+    expect(stat("Previews live")).toBe("2 · 1 ends soon");
+    await waitFor(() => expect(stat("Clusters")).toBe("1 of 2 needs a look"));
     // The page names its command, and a writer can start a service from it.
     expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge deploy status");
     expect((await screen.findByRole("link", { name: "Create service" })).getAttribute("href")).toBe("/create");
@@ -215,14 +249,17 @@ describe("the overview", () => {
     expect(await screen.findByText("Nothing needs you right now.")).toBeTruthy();
     expect(screen.getByText("No deploy has ended in the last 24 hours.")).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "In flight" })).toBeNull();
+    expect(await screen.findByText("Nothing is deployed to production yet.")).toBeTruthy();
+    expect(screen.getByText("Nothing is deployed to staging yet.")).toBeTruthy();
     await waitFor(() => expect(stat("Deploys today")).toBe("0"));
-    expect(stat("Finished deploys that failed")).toBe("0 of 0");
+    expect(stat("Previews live")).toBe("0");
   });
 
   it("says what could not be read, and still shows the rest", async () => {
     renderWithApi(<Overview />, forge(world({ auditDown: true })));
     await waitFor(() => expect(screen.getAllByRole("alert").length).toBeGreaterThan(0), { timeout: 4000 });
-    await waitFor(() => expect(stat("Services in the catalog")).toBe("3"));
+    // The board still stands, without the numbers of the day.
+    expect(await screen.findByRole("list", { name: "Production" })).toBeTruthy();
     expect(stat("Deploys today")).toBe("–");
   });
 });
