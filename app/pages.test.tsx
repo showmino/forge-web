@@ -1,7 +1,7 @@
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { Code, ConnectError, type ConnectRouter } from "@connectrpc/connect";
 import { readFileSync } from "node:fs";
-import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuditService } from "@/gen/forge/v1/audit_pb";
 import { AuthService } from "@/gen/forge/v1/auth_pb";
@@ -621,6 +621,24 @@ describe("the frame around every page", () => {
     expect(screen.getByTitle(`ana@example.com · ${word}`)).toBeTruthy();
     // Only an admin sees the clusters.
     expect(screen.queryByRole("link", { name: "Clusters" }) !== null).toBe(word === "Admin");
+    // Whoever may create a service has the way to it on every page, beside the theme switch.
+    if (word === "Reader") {
+      await act(() => new Promise((r) => setTimeout(r, 0)));
+      expect(screen.queryByRole("link", { name: "Create service" })).toBeNull();
+    } else {
+      expect((await screen.findByRole("link", { name: "Create service" })).getAttribute("href")).toBe("/create");
+    }
+  });
+
+  it("offers no Create button on the Create page itself", async () => {
+    nav.pathname = "/create";
+    renderWithApi(<AppShell>content</AppShell>, (router) => {
+      router.service(AuthService, authAs(ADMIN));
+    });
+    expect(await screen.findByText("Admin")).toBeTruthy();
+    await act(() => new Promise((r) => setTimeout(r, 0)));
+    expect(screen.queryByRole("link", { name: "Create service" })).toBeNull();
+    nav.pathname = "/";
   });
 
   it("finds pages of the docs from the palette by what they say", async () => {

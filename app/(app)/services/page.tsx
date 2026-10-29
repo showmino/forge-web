@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { usePermissions } from "@/components/app-shell";
 import { useApi } from "@/components/providers";
-import { ButtonLink, Icon, NameLink } from "@/components/ui/button";
+import { NameLink } from "@/components/ui/button";
 import { Empty, ErrorNote, Loading, PageHeader, TableFrame, td, th, tr } from "@/components/ui/layout";
 import { Life, StatusBadge } from "@/components/ui/status";
 import type { Deployment } from "@/gen/forge/v1/deploy_pb";
@@ -24,9 +24,9 @@ export default function Catalog() {
     queryKey: ["deployments"],
     queryFn: () => api.deploys.listDeployments({}).then((r) => r.deployments),
   });
+  const canCreate = usePermissions().can("service.create");
   const [filter, setFilter] = useState("");
   const [team, setTeam] = useState("");
-  const canCreate = usePermissions().can("service.create");
 
   const byEnv = useMemo(() => {
     const m = new Map<string, Deployment>();
@@ -49,21 +49,14 @@ export default function Catalog() {
         title="Services"
         lead="Every service in the catalog, and how its environments are doing."
         cli={team ? `forge service list --team ${team}` : "forge service list"}
-      >
-        {canCreate ? (
-          <ButtonLink kind="primary" href="/create">
-            <Icon name="plus" />
-            Create service
-          </ButtonLink>
-        ) : null}
-      </PageHeader>
+      />
 
       {services.isPending ? (
         <Loading what="services" />
       ) : services.error ? (
         <ErrorNote error={services.error} />
       ) : all.length === 0 ? (
-        <Empty>No services yet. {canCreate ? "Create the first one from a template." : "Members of a team create one from a template."}</Empty>
+        <Empty>No services yet. {canCreate ? "Create the first one with Create service, above." : "Members of a team create one from a template."}</Empty>
       ) : (
         <>
           <div className="flex flex-wrap items-center gap-2">

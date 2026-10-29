@@ -7,7 +7,7 @@ import { usePermissions } from "@/components/app-shell";
 import { StepLog, type Step, useOperation } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
 import { ExtendDialog } from "@/components/service-actions";
-import { Button, ButtonLink, Icon, TextLink } from "@/components/ui/button";
+import { Button, ButtonLink, TextLink } from "@/components/ui/button";
 import { ErrorNote, Loading, PageHeader, Panel, Widget } from "@/components/ui/layout";
 import { MiniLine, StageLine } from "@/components/ui/pipeline";
 import { StatusBadge, Tag } from "@/components/ui/status";
@@ -41,7 +41,6 @@ const mono = "font-mono text-[0.92em] font-medium";
 // shipping, what is broken and what needs someone, from what the API already knows.
 export default function Overview() {
   const api = useApi();
-  const canCreate = usePermissions().can("service.create");
   const queries = useQueryClient();
   const [extending, setExtending] = useState<Environment | null>(null);
 
@@ -88,14 +87,7 @@ export default function Overview() {
         title="Overview"
         lead="What is shipping, what is broken and what needs you, in staging and production."
         cli="forge deploy status"
-      >
-        {canCreate ? (
-          <ButtonLink kind="primary" href="/create">
-            <Icon name="plus" />
-            Create service
-          </ButtonLink>
-        ) : null}
-      </PageHeader>
+      />
 
       <StatusBoard
         rows={deployments.data ? board(deployments.data, services.data?.length) : undefined}

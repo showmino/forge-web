@@ -63,6 +63,9 @@ the others. The server only serves the pages and
   forge-api's `--prometheus-url`; without it the page says so.
 - **Jump to** (top bar, Ctrl+K or ⌘K): a command palette over the pages,
   the services and the previews.
+- **Create service** (top bar, beside the theme switch): on every page except
+  the Create pages, for whoever may create a service; the plus alone at phone
+  width.
 - **Docs** (`/docs`, and a Docs tab on a service that has docs): a service's
   Markdown under `docs/` in its repo, read through `DocsService` (Forge's
   TechDocs). `/docs/<service>/<path>` is one page: the pages on the left, the
