@@ -173,9 +173,8 @@ describe("the overview", () => {
     await waitFor(() => expect(stat("Deploys today")).toBe("5 · 2 of 4 failed"));
     expect(stat("Previews live")).toBe("2 · 1 ends soon");
     await waitFor(() => expect(stat("Clusters")).toBe("1 of 2 needs a look"));
-    // The page names its command, and a writer can start a service from it.
+    // The page names its command. Creating a service is in the top bar, on every page.
     expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge deploy status");
-    expect((await screen.findByRole("link", { name: "Create service" })).getAttribute("href")).toBe("/create");
   });
 
   it("shows what is in flight, live, with the stage it is at", async () => {
@@ -227,7 +226,6 @@ describe("the overview", () => {
     renderWithApi(<Overview />, forge(world({ writer: false })));
     expect((await screen.findByRole("link", { name: "Open pr-388" })).getAttribute("href")).toBe("/services/checkout-api");
     expect(screen.queryByRole("button", { name: "Extend pr-388" })).toBeNull();
-    expect(screen.queryByRole("link", { name: "Create service" })).toBeNull();
   });
 
   it("lists the deploys that ended, with how", async () => {

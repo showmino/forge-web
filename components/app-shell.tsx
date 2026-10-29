@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { CommandPalette } from "@/components/command-palette";
+import { ButtonLink, Icon } from "@/components/ui/button";
 import { useApi } from "@/components/providers";
 import { listAllServices } from "@/lib/api";
 import { clearSession, loadSession, SESSION_KEY, type Session } from "@/lib/auth/session";
@@ -413,6 +414,21 @@ function toggleTheme() {
 const iconButton =
   "inline-grid size-8 cursor-pointer place-items-center rounded-md border border-transparent text-fg-2 hover:bg-surface-2 hover:text-fg";
 
+// CreateButton is the way to a new service from every page, for whoever may
+// create one. The Create pages themselves do not need it. At phone width it
+// is the plus alone, and keeps its name for screen readers.
+function CreateButton() {
+  const can = usePermissions().can("service.create");
+  const path = usePathname();
+  if (!can || path === "/create" || path.endsWith("/create")) return null;
+  return (
+    <ButtonLink kind="primary" href="/create" aria-label="Create service">
+      <Icon name="plus" />
+      <span className="hidden sm:inline">Create service</span>
+    </ButtonLink>
+  );
+}
+
 function TopBar({
   onMenu,
   onJump,
@@ -459,6 +475,7 @@ function TopBar({
         <kbd className="hidden rounded-sm border border-b-2 border-line bg-surface-2 px-[5px] font-mono text-[11px] text-fg-2 rail:inline">{mac ? "⌘K" : "Ctrl K"}</kbd>
       </button>
       <div className="ml-auto flex items-center gap-2">
+        <CreateButton />
         <button type="button" onClick={toggleTheme} aria-label="Switch color theme" className={iconButton}>
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
             <circle cx="12" cy="12" r="8" />
