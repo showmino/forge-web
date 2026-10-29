@@ -10,7 +10,10 @@ The web dashboard of Forge: the catalog, a page per service, the templates,
 environments, deployments, operations, ownership and the audit log. The
 members of a service's team (and an admin) also deploy, promote, roll back,
 manage previews and change its contacts and lifecycle from it; a member of
-any team creates a service of their team from a template; moving a service to
+any team creates a service of their team from a template, or from an image
+someone else built (no repo: the API keeps its `forge.yaml` in the deploy repo,
+and the page then deploys it to staging, as `forge create --image` does);
+moving a service to
 another team, its address and deleting it are an admin's. Each is behind a
 confirmation, with the work shown live (`WatchOperation`) and a toast that
 names the CLI command. It is a thin client of the Forge API, like the CLI: every call
@@ -119,7 +122,10 @@ the others. The server only serves the pages and
   it: Services, a service, Templates (cards), Docs, Environments, Deployments,
   Operations, Ownership, the Audit log and Create (in steps: template,
   details, visibility, runtime, review; the whole command is shown beside
-  every step as the form is filled in). What the mockup shows that Forge
+  every step as the form is filled in). Create's first step also chooses
+  where to start: from a template, or from an image, which skips the
+  template inputs and may set every run option. A service without a repo
+  deploys an image tag instead of a branch and has no previews. What the mockup shows that Forge
   does not know is left out: rules and approvals, the golden path, tiers
   and SLOs, team members and on-call, template lint. The Docs page searches
   every service's pages (`SearchDocs`, forge-api with TechDocs milestone 3).

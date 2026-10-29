@@ -49,5 +49,8 @@ export function exact(ts: Timestamp | undefined): string | undefined {
 
 // shortCommit shortens a commit to the seven characters people read aloud.
 export function shortCommit(commit: string): string {
+  // A service without a repo runs an image digest; Forge shows 12 of its hex digits.
+  const digest = /^sha256:([0-9a-f]{12})[0-9a-f]*$/.exec(commit);
+  if (digest) return `sha256:${digest[1]}`;
   return /^[0-9a-f]{8,}$/.test(commit) ? commit.slice(0, 7) : commit;
 }

@@ -68,6 +68,8 @@ type World = {
   internalDomain?: string;
   // Whether the API cuts versions: staging then runs a release candidate.
   versions: boolean;
+  // The service runs an image and has no repo.
+  noRepo?: boolean;
 };
 
 function world(over: Partial<World> = {}): World {
@@ -100,7 +102,7 @@ function forge(w: World) {
       },
     });
     router.service(ServiceCatalogService, {
-      getService: () => ({ service: payments }),
+      getService: () => ({ service: w.noRepo ? { ...payments, repoUrl: "" } : payments }),
       listServices: () => ({ services: [payments, { name: "services/ledger", ownerTeam: "finance" }] }),
       updateService: (req) => {
         record("update", req);
@@ -113,6 +115,18 @@ function forge(w: World) {
       },
       async *createService(req) {
         record("create", req);
+        if (req.image) {
+          // As the API: the image rules refuse latest before anything is written.
+          yield { event: { case: "step" as const, value: { name: "check_image", state: CreateStep_State.STARTED } } };
+          if (req.image.endsWith(":latest")) {
+            throw new ConnectError('image nginx:latest: the tag "latest" moves; name a version, such as nginx:1.27', Code.InvalidArgument);
+          }
+          yield { event: { case: "step" as const, value: { name: "check_image", state: CreateStep_State.DONE, detail: `docker.io/library/${req.image} is sha256:0123456789ab` } } };
+          yield { event: { case: "step" as const, value: { name: "write_manifest", state: CreateStep_State.DONE, detail: `deploy repo: services/${req.serviceId}/forge.yaml` } } };
+          yield { event: { case: "step" as const, value: { name: "register", state: CreateStep_State.DONE, detail: `services/${req.serviceId}` } } };
+          yield { event: { case: "service" as const, value: { name: `services/${req.serviceId}`, ownerTeam: req.ownerTeam } } };
+          return;
+        }
         yield { event: { case: "step" as const, value: { name: "fetch", state: CreateStep_State.STARTED } } };
         if (w.dropCreate-- > 0) throw new ConnectError("connection reset", Code.Unavailable);
         yield { event: { case: "step" as const, value: { name: "fetch", state: CreateStep_State.DONE, detail: "nextjs@v1.3.1" } } };
@@ -705,6 +719,19 @@ describe("deploy and roll back", () => {
     expect((w.calls.deploy[0] as { requestId: string }).requestId).toMatch(/^[A-Za-z0-9_-]{43}$/);
   });
 
+  it("deploys an image tag to a service without a repo, which has no previews", async () => {
+    const w = world({ noRepo: true });
+    await openService(w);
+    click(await screen.findByRole("button", { name: "Deploy to staging" }));
+    expect(screen.queryByRole("button", { name: /Preview env/ })).toBeNull();
+    // Left empty, the tag in its forge.yaml: the API picks it.
+    const tag = dialog().getByLabelText("Image tag") as HTMLInputElement;
+    expect(tag.value).toBe("");
+    click(dialog().getByRole("button", { name: "Deploy to staging" }));
+    await waitFor(() => expect(w.calls.deploy).toHaveLength(1));
+    expect(w.calls.deploy[0]).toMatchObject({ service: "services/payments", env: "staging", ref: "" });
+  });
+
   it("rolls back to the deploy the writer picks", async () => {
     const w = world({ production: Deployment_Health.HEALTHY });
     await openService(w);
@@ -896,6 +923,75 @@ describe("create a service", () => {
     // Only what the writer set, plus the required choice. The module default
     // refers to the repo and must be left for the API to fill in.
     expect((w.calls.create[0] as { parameters: object }).parameters).toEqual({ port: "8080", region: "eu", metrics: "true" });
+  });
+
+  it("creates a service from an image, without a repo, and deploys it to staging", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    click(await screen.findByRole("radio", { name: "From an image" }));
+    const steps = within(screen.getByRole("navigation", { name: "Steps" }));
+    expect(steps.getAllByRole("button").map((b) => b.textContent)).toEqual(["1Image", "2Name and owner", "3How it runs", "4Review"]);
+    // An image is needed before going on.
+    next();
+    expect(screen.getByRole("alert").textContent).toContain("Name the image");
+    fireEvent.change(screen.getByLabelText("Image"), { target: { value: " nginx:1.27 " } });
+    fireEvent.change(screen.getByLabelText("Port"), { target: { value: "80" } });
+    fireEvent.change(screen.getByLabelText("Health path"), { target: { value: "/" } });
+    next();
+    fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "web" } });
+    await screen.findByRole("option", { name: /^finance/ });
+    fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "finance" } });
+    expect(screen.getByRole("radiogroup", { name: "Who can reach it" })).toBeTruthy();
+    next();
+    // Every run option, not only a template's.
+    expect(screen.getByLabelText("Pods in production")).toBeTruthy();
+    expect(screen.getByLabelText("CPU request")).toBeTruthy();
+    const command = screen.getByLabelText("The same from the terminal").textContent!;
+    for (const flag of ["forge create web", "--image nginx:1.27", "--port 80", "--health /", "--team finance"]) {
+      expect(command).toContain(flag);
+    }
+    expect(command).not.toContain("--template");
+    toReview();
+    const review = within(screen.getByRole("list", { name: "Review" }));
+    expect(review.getByText("nginx:1.27")).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Edit template inputs" })).toBeNull();
+    expect(w.calls.create).toBeUndefined();
+    click(screen.getByRole("button", { name: "Create service" }));
+
+    expect(await screen.findByRole("heading", { name: "web was created" })).toBeTruthy();
+    expect(screen.getByText("Checked the image: docker.io/library/nginx:1.27 is sha256:0123456789ab")).toBeTruthy();
+    expect(screen.getByText("Wrote forge.yaml to the deploy repo: services/web/forge.yaml")).toBeTruthy();
+    expect(w.calls.create[0]).toMatchObject({ serviceId: "web", image: "nginx:1.27", template: "", ownerTeam: "finance", runOptions: { port: 80, health: "/" } });
+    // Then, as forge create --image, the deploy to staging, followed live.
+    await waitFor(() => expect(w.calls.deploy).toHaveLength(1));
+    expect(w.calls.deploy[0]).toMatchObject({ service: "services/web", env: "staging", ref: "" });
+    expect(await screen.findByRole("region", { name: "Deploy to staging" })).toBeTruthy();
+    expect(await screen.findByText("Rendered the manifests")).toBeTruthy();
+  });
+
+  it("says why the image rules refuse an image, and deploys nothing when asked not to", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    click(await screen.findByRole("radio", { name: "From an image" }));
+    fireEvent.change(screen.getByLabelText("Image"), { target: { value: "nginx:latest" } });
+    next();
+    fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "web" } });
+    await screen.findByRole("option", { name: /^finance/ });
+    fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "finance" } });
+    toReview();
+    click(screen.getByLabelText("Deploy it to staging once it is created"));
+    expect(screen.getByLabelText("The same from the terminal").textContent).toContain("--deploy=false");
+    click(screen.getByRole("button", { name: "Create service" }));
+    expect(await screen.findByText(/the tag "latest" moves/)).toBeTruthy();
+    // Fixed, it is created, and not deployed.
+    click(screen.getByRole("button", { name: "Edit image" }));
+    fireEvent.change(screen.getByLabelText("Image"), { target: { value: "nginx:1.27" } });
+    toReview();
+    click(screen.getByRole("button", { name: "Create service" }));
+    expect(await screen.findByRole("heading", { name: "web was created" })).toBeTruthy();
+    expect(screen.getByText(/Deploy it to staging from its page/)).toBeTruthy();
+    expect(w.calls.create).toHaveLength(2);
+    expect(w.calls.deploy).toBeUndefined();
   });
 
   it("sends no defaults back when the writer changes nothing", async () => {

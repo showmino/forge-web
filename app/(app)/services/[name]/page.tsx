@@ -195,6 +195,8 @@ function ServiceView({ id }: { id: string }) {
   const staging = deployment("staging");
   // Staging is ahead when it runs a commit production does not: that commit can be promoted.
   const ahead = deployed("staging") && staging?.commit !== deployment("production")?.commit;
+  // A service without a repo runs an image someone else built: no branches, so no previews.
+  const noRepo = !s.repoUrl;
 
   return (
     <>
@@ -229,7 +231,7 @@ function ServiceView({ id }: { id: string }) {
                 <Icon name="gear" />
               </Button>
             ) : null}
-            {can("environment.create") ? (
+            {can("environment.create") && !noRepo ? (
               <Button onClick={() => setOpen({ kind: "preview" })}>
                 <Icon name="plus" />
                 Preview env
@@ -342,7 +344,8 @@ function ServiceView({ id }: { id: string }) {
                       <div className="min-w-0 flex-[1_1_280px]">
                         <b className="font-semibold">Delete service</b>
                         <p className="mt-0.5 text-[13.5px] text-fg-2">
-                          Takes down staging, production and any previews, and removes {id} from the catalog. The repository is kept.
+                          Takes down staging, production and any previews, and removes {id} from the catalog.{" "}
+                          {noRepo ? "Its forge.yaml is removed from the deploy repo." : "The repository is kept."}
                         </p>
                       </div>
                       <Button kind="danger" onClick={() => setOpen({ kind: "delete" })}>
@@ -391,7 +394,7 @@ function ServiceView({ id }: { id: string }) {
           }}
         />
       ) : null}
-      {open?.kind === "deploy" ? <DeployDialog id={id} onClose={close} onStarted={onStarted} /> : null}
+      {open?.kind === "deploy" ? <DeployDialog id={id} noRepo={noRepo} onClose={close} onStarted={onStarted} /> : null}
       {open?.kind === "promote" ? (
         <PromoteDialog id={id} staging={deployment("staging")} onClose={close} onStarted={onStarted} />
       ) : null}
@@ -458,7 +461,9 @@ function OverviewTab({
           deployments.data && deployed("staging")
             ? ahead
               ? "Staging is ahead of production"
-              : "Both run the same commit"
+              : s.repoUrl
+                ? "Both run the same commit"
+                : "Both run the same image"
             : undefined
         }
       >
@@ -544,8 +549,14 @@ function OverviewTab({
               <ErrorNote error={previews.error} />
             ) : previews.data.length === 0 ? (
               <Panel className="p-6 text-center text-[13.5px] text-fg-2">
-                No previews. Create one for any branch with{" "}
-                <span className="font-mono text-[12.5px]">forge env create &lt;name&gt; --service {id}</span>.
+                {s.repoUrl ? (
+                  <>
+                    No previews. Create one for any branch with{" "}
+                    <span className="font-mono text-[12.5px]">forge env create &lt;name&gt; --service {id}</span>.
+                  </>
+                ) : (
+                  `No previews: ${id} runs an image and has no repo, so it has no branches to preview.`
+                )}
               </Panel>
             ) : (
               <Panel>
