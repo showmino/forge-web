@@ -12,7 +12,9 @@ permissions:
   contents: read
 
 # The tests run once, on the pull request. A merge to `main` builds the image
-# and deploys it without running them again: `main` only changes through pull
+# and deploys it to staging (forge-staging.showmino.com, a Forge service
+# that is never promoted: production is the forge chart's dashboard) without
+# running them again: `main` only changes through pull
 # requests, and a branch is merged only when it contains the current `main`
 # and `test` passed (AGENTS.md), so the merge commit is the tree that was
 # tested. The image build still compiles and type-checks the app.

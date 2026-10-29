@@ -10,9 +10,10 @@ service:
 run:
   port: 3000
   health: /api/healthz
-  replicas: 2
-  # The dashboard is "forge", not "forge-web", to the people who open it:
-  # forge.<domain> in production, forge-staging.<domain> in staging.
+  # This service is forge-web's staging only: forge-staging.<domain>.
+  # Production is the forge chart's dashboard (forge.<domain>, web.image.tag).
+  # NEVER promote it: its production address would be forge.<domain> too,
+  # which is the chart's, with the chart's DNS record.
   host: forge
   # The Forge API the pages call, from a browser: showmino's own. Another
   # Forge runs the same image with its own address here.
