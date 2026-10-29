@@ -127,7 +127,8 @@ the others. The server only serves the pages and
   details, visibility, runtime, review; the whole command is shown beside
   every step as the form is filled in). Create's first step also chooses
   where to start: from a template, or from an image, which skips the
-  template inputs and may set every run option. A service without a repo
+  template inputs and may set every run option, and the folders it writes
+  besides `/tmp` (`run.writable`). A service without a repo
   deploys an image tag instead of a branch and has no previews. What the mockup shows that Forge
   does not know is left out: rules and approvals, the golden path, tiers
   and SLOs, team members and on-call, template lint. The Docs page searches

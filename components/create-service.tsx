@@ -179,7 +179,7 @@ const sources: { value: Source; title: string; text: string }[] = [
   {
     value: "image",
     title: "From an image",
-    text: "Run an image someone else built, such as nginx:1.27. No repo: its forge.yaml is kept in the deploy repo.",
+    text: "Run an image someone else built, that runs as a non-root user. No repo: its forge.yaml is kept in the deploy repo.",
   },
 ];
 // An image reference has no spaces; its tag and the registry are the API's to check.
@@ -290,6 +290,8 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   const [image, setImage] = useState("");
   const [port, setPort] = useState("");
   const [health, setHealth] = useState("");
+  // Folders it writes besides /tmp, comma-separated as typed: forge.yaml's run.writable.
+  const [writable, setWritable] = useState("");
   const [imageChecked, setImageChecked] = useState(false);
   const [deployNow, setDeployNow] = useState(true);
   const [reach, setReach] = useState<Reach>("public");
@@ -341,6 +343,10 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   const badImage = imageChecked && !IMAGE.test(image.trim());
   const badPort = imageChecked && !!port.trim() && !(Number.isInteger(portNumber) && portNumber >= 1 && portNumber <= 65535);
   const badHealth = imageChecked && !!health.trim() && !health.trim().startsWith("/");
+  const folders = writable.split(",").map((f) => f.trim()).filter(Boolean);
+  // The API checks the rest (not /tmp, /proc and the like); here, that each is a path.
+  const writableOk = folders.every((f) => f.startsWith("/"));
+  const badWritable = imageChecked && !writableOk;
   const badName = checked && !SERVICE_NAME.test(name);
   const badTeam = checked && !team.trim();
   const problems = (fromImage ? [] : (template?.parameters ?? [])).flatMap((p): [TemplateParameter, string][] => {
@@ -400,6 +406,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     ["--image", image.trim() || "<image>"],
     ...(port.trim() ? ([["--port", port.trim()]] as [string, string][]) : []),
     ...(health.trim() ? ([["--health", health.trim()]] as [string, string][]) : []),
+    ...(folders.length ? ([["--writable", folders.join(",")]] as [string, string][]) : []),
     ["--team", team.trim() || "<team>"],
     ...runAsked.flags,
     ...address.flags,
@@ -433,6 +440,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     const imageRun = {
       ...(port.trim() ? { port: portNumber } : {}),
       ...(health.trim() ? { health: health.trim() } : {}),
+      ...(folders.length ? { writable: folders } : {}),
     };
     const request = fromImage
       ? {
@@ -570,7 +578,9 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
         ? "service-port"
         : health.trim() && !health.trim().startsWith("/")
           ? "service-health"
-          : "";
+          : !writableOk
+            ? "service-writable"
+            : "";
     if (bad) document.getElementById(bad)?.focus();
     return !bad;
   }
@@ -694,6 +704,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
               ["Image", mono(image.trim())],
               ["Port", port.trim() ? mono(port.trim()) : <span className="text-fg-2">8080, the default</span>],
               ["Health", health.trim() ? mono(health.trim()) : <span className="text-fg-2">/healthz, the default</span>],
+              ["Writable", folders.length ? mono(folders.join(", ")) : <span className="text-fg-2">/tmp only</span>],
             ],
           ],
         ] as [Stage, string, [string, ReactNode][]][])
@@ -880,7 +891,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                   <Field
                     id="service-image"
                     label="Image"
-                    hint="With its tag, such as nginx:1.27 or ghcr.io/acme/tool:2.3. Not latest: Forge pins the tag to its digest."
+                    hint="With its tag, such as nginxinc/nginx-unprivileged:1.27. Not latest: Forge pins the tag to its digest. It must run as a non-root user, given by number."
                     error={badImage ? "Name the image and its tag, without spaces." : undefined}
                   >
                     <input
@@ -890,7 +901,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                       onChange={(e) => setImage(e.target.value)}
                       aria-invalid={badImage}
                       aria-describedby="service-image-note"
-                      placeholder="nginx:1.27"
+                      placeholder="nginxinc/nginx-unprivileged:1.27"
                       autoComplete="off"
                       spellCheck={false}
                     />
@@ -926,6 +937,24 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                       aria-invalid={badHealth}
                       aria-describedby="service-health-note"
                       placeholder="/healthz"
+                    />
+                  </Field>
+                  <Field
+                    id="service-writable"
+                    label="Writable folders"
+                    hint="The filesystem is read-only except /tmp. Folders it writes besides, separated by commas; each starts empty."
+                    error={badWritable ? "Give each folder as an absolute path, such as /var/cache/nginx." : undefined}
+                  >
+                    <input
+                      id="service-writable"
+                      className={`${inputClass} font-mono`}
+                      value={writable}
+                      onChange={(e) => setWritable(e.target.value)}
+                      aria-invalid={badWritable}
+                      aria-describedby="service-writable-note"
+                      placeholder="/var/cache/nginx"
+                      autoComplete="off"
+                      spellCheck={false}
                     />
                   </Field>
                 </div>

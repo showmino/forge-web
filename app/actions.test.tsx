@@ -937,6 +937,11 @@ describe("create a service", () => {
     fireEvent.change(screen.getByLabelText("Image"), { target: { value: " nginx:1.27 " } });
     fireEvent.change(screen.getByLabelText("Port"), { target: { value: "80" } });
     fireEvent.change(screen.getByLabelText("Health path"), { target: { value: "/" } });
+    // Folders it writes besides /tmp: each one an absolute path.
+    fireEvent.change(screen.getByLabelText("Writable folders"), { target: { value: "var/cache" } });
+    next();
+    expect(screen.getByRole("alert").textContent).toContain("absolute");
+    fireEvent.change(screen.getByLabelText("Writable folders"), { target: { value: " /var/cache/nginx, /var/run ," } });
     next();
     fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "web" } });
     await screen.findByRole("option", { name: /^finance/ });
@@ -947,7 +952,7 @@ describe("create a service", () => {
     expect(screen.getByLabelText("Pods in production")).toBeTruthy();
     expect(screen.getByLabelText("CPU request")).toBeTruthy();
     const command = screen.getByLabelText("The same from the terminal").textContent!;
-    for (const flag of ["forge create web", "--image nginx:1.27", "--port 80", "--health /", "--team finance"]) {
+    for (const flag of ["forge create web", "--image nginx:1.27", "--port 80", "--health /", "--writable /var/cache/nginx,/var/run", "--team finance"]) {
       expect(command).toContain(flag);
     }
     expect(command).not.toContain("--template");
@@ -961,7 +966,7 @@ describe("create a service", () => {
     expect(await screen.findByRole("heading", { name: "web was created" })).toBeTruthy();
     expect(screen.getByText("Checked the image: docker.io/library/nginx:1.27 is sha256:0123456789ab")).toBeTruthy();
     expect(screen.getByText("Wrote forge.yaml to the deploy repo: services/web/forge.yaml")).toBeTruthy();
-    expect(w.calls.create[0]).toMatchObject({ serviceId: "web", image: "nginx:1.27", template: "", ownerTeam: "finance", runOptions: { port: 80, health: "/" } });
+    expect(w.calls.create[0]).toMatchObject({ serviceId: "web", image: "nginx:1.27", template: "", ownerTeam: "finance", runOptions: { port: 80, health: "/", writable: ["/var/cache/nginx", "/var/run"] } });
     // Then, as forge create --image, the deploy to staging, followed live.
     await waitFor(() => expect(w.calls.deploy).toHaveLength(1));
     expect(w.calls.deploy[0]).toMatchObject({ service: "services/web", env: "staging", ref: "" });
