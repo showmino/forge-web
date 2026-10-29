@@ -149,26 +149,33 @@ The image runs the standalone server (`node .next/standalone/server.js`); `npm s
 ## Ship
 
 CI tests every pull request, once: the tests do not run again after the merge.
-On `main` it builds and pushes `ghcr.io/showmino/forge-web:<short-sha>`.
-Nothing deploys it: every Forge runs the dashboard from the `forge` chart,
-at the version the chart's `web.image.tag` names. The image has no API address
-built in: the server reads `FORGE_API_URL` when it starts and puts it into each
-page, so the same image serves any Forge.
+On `main` it builds and pushes `ghcr.io/showmino/forge-web:<short-sha>`, then
+a `deploy` job deploys that commit to staging through Forge
+(`https://forge-web-staging.showmino.com`, `run.host: forge-web`). It logs in
+with the job's GitHub OIDC token, and needs the organization variable
+`FORGE_API_URL`. The image has no API address built in: the server reads
+`FORGE_API_URL` when it starts and puts it into each page, so the same image
+serves any Forge.
 
-To ship a change:
+Production is not this service: every Forge runs the dashboard from the
+`forge` chart, at the version its `web.image.tag` names. Never promote the
+forge-web service. To ship a change:
 
-1. Merge it, then push a tag on that commit of `main`:
+1. Merge it, and check it on staging.
+2. Push a tag on that commit of `main`:
    `git tag v0.1.36 <commit> && git push origin v0.1.36`. `release.yml` gives
    that commit's image the version: `ghcr.io/showmino/forge-web:v0.1.36`.
-2. showmino's install: a pull request in `showmino/kubernetes` that sets
+3. showmino's install: a pull request in `showmino/kubernetes` that sets
    `web.image.tag: v0.1.36` in `apps/helm/forge/production/app.yaml`, with the
    render, `kubectl diff` and a server dry run. Merging it (the owner) is the
    rollout: Argo CD restarts the dashboard pod.
-3. Every other Forge: bump `web.image.tag` in `showmino/forge`'s
+4. Every other Forge: bump `web.image.tag` in `showmino/forge`'s
    `deploy/platform/chart/values.yaml`, which ships with the next chart
    release.
 
-There is no staging: try a change with `npm run dev:mock` before tagging.
+- `forge deploy status forge-web --env staging`: what staging runs.
+- `forge env create <name> --service forge-web --ref <branch>`: a preview of
+  a branch with its own URL.
 
 The server listens on `$PORT` (`run:` in `forge.yaml`). In Forge the root
 filesystem is read-only, and Next's cache (`.next/cache`) is a link to the

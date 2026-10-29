@@ -1,11 +1,11 @@
 name: release
 
-# A release is a tag vX.Y.Z pushed on a commit of main. This adds that
-# version to the image CI built for the commit, so
-# ghcr.io/showmino/forge-web:v0.3.1 is the image a Forge runs: the forge
-# chart's web.image.tag names it (its default, and showmino's values in
-# showmino/kubernetes). Tags up to v0.1.35 were cut by Forge itself, while
-# the dashboard was deployed as a Forge service.
+# Every tag vX.Y.Z or vX.Y.Z-rc.N gets its version on the image CI built for
+# its commit, so ghcr.io/showmino/forge-web:v0.3.1 is the image a Forge runs.
+# Forge cuts a release candidate (v0.3.1-rc.2) on each staging deploy; a
+# release (v0.3.1) is a tag pushed by hand once staging looks right, and the
+# forge chart's web.image.tag names it (its default, and showmino's values in
+# showmino/kubernetes).
 on:
   push:
     tags: ["v[0-9]*"]

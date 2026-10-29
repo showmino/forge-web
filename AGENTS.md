@@ -8,8 +8,9 @@ files (`CLAUDE.md`, `.github/copilot-instructions.md`) only point here.
 
 The web dashboard of Forge, the `showmino` internal developer platform. Every
 Forge runs it from the `forge` chart (`web.image`, an image of this repo); at
-showmino that is `https://forge.showmino.com`. Since 2026-10-29 it is no longer
-deployed as a Forge service of its own, so there is no staging copy. It is a
+showmino that is `https://forge.showmino.com` (production). Staging is this
+repo as a Forge service of its own, `https://forge-web-staging.showmino.com`,
+which every merge to `main` deploys and which is never promoted. It is a
 Next.js app and a thin
 client of the Forge API: every call goes from the browser to forge-api with the
 reader's own token, and the API decides what they may see and do. The server
@@ -24,19 +25,22 @@ says how this app is built, page by page.
 
 ## Rules
 
-- **Merging to `main` builds the image** `ghcr.io/showmino/forge-web:<sha7>`;
-  nothing is deployed. The tests run once, on the pull request, and not again
-  after the merge (the owner's rule), so never push to `main` directly, and
-  before merging make sure the branch contains the current `main`
+- **Merging to `main` deploys to staging.** CI builds the image
+  `ghcr.io/showmino/forge-web:<sha7>` and deploys it to
+  `forge-web-staging.showmino.com` through Forge, as a release candidate. The
+  tests run once, on the pull request, and not again after the merge (the
+  owner's rule), so never push to `main` directly, and before merging make
+  sure the branch contains the current `main`
   (`gh api repos/showmino/forge-web/compare/main...<branch> --jq .behind_by`
   must be 0; if not, merge `main` into the branch and wait for `test` again).
   That is the normal path and needs no extra OK. Merge only when every check
   of the commit has passed (a job skipped by design on a pull request does not
   count against it); read the result, do not assume it.
-- **A release is a tag** `vX.Y.Z` on a merged commit of `main` (free to do,
-  as in `showmino/forge`): `release.yml` gives that commit's image the
-  version. Check locally with `npm run dev:mock` before tagging: there is no
-  staging.
+- **Never promote the forge-web service.** Its production would be a second
+  dashboard at `forge-web.showmino.com`; production is the chart's.
+- **A release is a tag** `vX.Y.Z` on a merged commit of `main` that staging
+  ran and that looked right there (free to do, as in `showmino/forge`):
+  `release.yml` gives that commit's image the version.
 - **Production needs the owner.** It changes when the forge chart names the
   new version: a pull request in `showmino/kubernetes` that sets
   `web.image.tag` in `apps/helm/forge/production/app.yaml`, with the render,
