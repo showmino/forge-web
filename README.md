@@ -151,7 +151,7 @@ The image runs the standalone server (`node .next/standalone/server.js`); `npm s
 CI tests every pull request, once: the tests do not run again after the merge.
 On `main` it builds and pushes `ghcr.io/showmino/forge-web:<short-sha>`, then
 a `deploy` job deploys that commit to staging through Forge
-(`https://forge-web-staging.showmino.com`, `run.host: forge-web`). It logs in
+(`https://forge-staging.showmino.com`, `run.host: forge`). It logs in
 with the job's GitHub OIDC token, and needs the organization variable
 `FORGE_API_URL`. The image has no API address built in: the server reads
 `FORGE_API_URL` when it starts and puts it into each page, so the same image
@@ -159,7 +159,8 @@ serves any Forge.
 
 Production is not this service: every Forge runs the dashboard from the
 `forge` chart, at the version its `web.image.tag` names. Never promote the
-forge-web service. To ship a change:
+forge-web service: its production address would be `forge.showmino.com`, the
+chart's. To ship a change:
 
 1. Merge it, and check it on staging.
 2. Push a tag on that commit of `main`:

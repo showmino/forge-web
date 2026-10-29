@@ -9,7 +9,7 @@ files (`CLAUDE.md`, `.github/copilot-instructions.md`) only point here.
 The web dashboard of Forge, the `showmino` internal developer platform. Every
 Forge runs it from the `forge` chart (`web.image`, an image of this repo); at
 showmino that is `https://forge.showmino.com` (production). Staging is this
-repo as a Forge service of its own, `https://forge-web-staging.showmino.com`,
+repo as a Forge service of its own, `https://forge-staging.showmino.com`,
 which every merge to `main` deploys and which is never promoted. It is a
 Next.js app and a thin
 client of the Forge API: every call goes from the browser to forge-api with the
@@ -27,7 +27,7 @@ says how this app is built, page by page.
 
 - **Merging to `main` deploys to staging.** CI builds the image
   `ghcr.io/showmino/forge-web:<sha7>` and deploys it to
-  `forge-web-staging.showmino.com` through Forge, as a release candidate. The
+  `forge-staging.showmino.com` through Forge, as a release candidate. The
   tests run once, on the pull request, and not again after the merge (the
   owner's rule), so never push to `main` directly, and before merging make
   sure the branch contains the current `main`
@@ -36,8 +36,9 @@ says how this app is built, page by page.
   That is the normal path and needs no extra OK. Merge only when every check
   of the commit has passed (a job skipped by design on a pull request does not
   count against it); read the result, do not assume it.
-- **Never promote the forge-web service.** Its production would be a second
-  dashboard at `forge-web.showmino.com`; production is the chart's.
+- **Never promote the forge-web service.** Its production address would be
+  `forge.showmino.com`, which is the chart's dashboard with the chart's DNS
+  record: a promotion would fight over it and can take production down.
 - **A release is a tag** `vX.Y.Z` on a merged commit of `main` that staging
   ran and that looked right there (free to do, as in `showmino/forge`):
   `release.yml` gives that commit's image the version.
