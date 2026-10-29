@@ -33,6 +33,10 @@ export const emptyRunForm: RunForm = {
 
 type Init = MessageInitShape<typeof RunOptionsSchema>;
 
+// Every run option the form has. A service from an image may set them all;
+// a template offers some of them.
+export const RUN_OPTIONS = ["replicas", "autoscaling", "resources", "env", "secrets", "jobs"];
+
 // runOptions turns the form into the API's RunOptions, and the matching
 // forge create flags. Only offered options count; empty rows are skipped.
 // The API checks the values by forge.yaml's rules.

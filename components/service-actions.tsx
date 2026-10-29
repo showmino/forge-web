@@ -68,25 +68,43 @@ const code = (text: string) => <span className="type-code">{text}</span>;
 const built = (r: { version: string; commit: string }) =>
   r.version ? `${r.version}, ${shortCommit(r.commit)}` : shortCommit(r.commit);
 
-export function DeployDialog({ id, onClose, onStarted }: Common) {
+// DeployDialog deploys a ref to staging. A service without a repo (noRepo)
+// runs an image: the ref is the image tag, and left empty it is the tag its
+// forge.yaml names.
+export function DeployDialog({ id, noRepo = false, onClose, onStarted }: Common & { noRepo?: boolean }) {
   const api = useApi();
   const toast = useToast();
-  const [ref, setRef] = useState("main");
+  const [ref, setRef] = useState(noRepo ? "" : "main");
   const [requestId] = useState(randomString);
   const action = useAction(
     () => api.deploys.startDeploy({ service: `services/${id}`, env: "staging", ref: ref.trim(), requestId }),
     (res) => {
-      toast(`Deploying ${id} to staging`, `forge deploy start ${id} --env staging --ref ${ref.trim()}`);
+      toast(`Deploying ${id} to staging`, `forge deploy start ${id} --env staging${ref.trim() ? ` --ref ${ref.trim()}` : ""}`);
       onStarted(res.operation?.name);
     },
   );
   return (
     <Dialog title={`Deploy ${id} to staging?`} onClose={onClose}>
       <form onSubmit={action.run} className="flex flex-col gap-4">
-        <p>Staging will run the image CI built for this commit.</p>
-        <Field id="deploy-ref" label="Branch, tag or commit" hint="CI must have pushed an image for it.">
-          <input id="deploy-ref" className={`${inputClass} type-code`} value={ref} onChange={(e) => setRef(e.target.value)} required />
-        </Field>
+        {noRepo ? (
+          <>
+            <p>Staging will run the image at this tag, pinned to the digest the tag has now.</p>
+            <Field
+              id="deploy-ref"
+              label="Image tag"
+              hint="Left empty, the tag in its forge.yaml. A new tag is written into forge.yaml once the deploy has succeeded."
+            >
+              <input id="deploy-ref" className={`${inputClass} type-code`} value={ref} onChange={(e) => setRef(e.target.value)} placeholder="1.28" />
+            </Field>
+          </>
+        ) : (
+          <>
+            <p>Staging will run the image CI built for this commit.</p>
+            <Field id="deploy-ref" label="Branch, tag or commit" hint="CI must have pushed an image for it.">
+              <input id="deploy-ref" className={`${inputClass} type-code`} value={ref} onChange={(e) => setRef(e.target.value)} required />
+            </Field>
+          </>
+        )}
         {action.error ? <ErrorNote error={action.error} /> : null}
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>

@@ -182,6 +182,18 @@ export function mockRoutes(router: ConnectRouter) {
       return {};
     },
     async *createService(req) {
+      if (req.image) {
+        // From an image: no repo; its forge.yaml is kept in the deploy repo.
+        yield { event: { case: "step" as const, value: { name: "check_image", state: CreateStep_State.STARTED } } };
+        await sleep(300);
+        yield { event: { case: "step" as const, value: { name: "check_image", state: CreateStep_State.DONE, detail: `${req.image} is sha256:0123456789ab` } } };
+        yield { event: { case: "step" as const, value: { name: "write_manifest", state: CreateStep_State.DONE, detail: `deploy repo: services/${req.serviceId}/forge.yaml` } } };
+        const name = `services/${req.serviceId}`;
+        services.push({ name, ownerTeam: req.ownerTeam || "platform-engineering", owners: [], lifecycle: Lifecycle.EXPERIMENTAL, repoUrl: "", dependencies: [], updateTime: ago(0), createTime: ago(0) });
+        yield { event: { case: "step" as const, value: { name: "register", state: CreateStep_State.DONE, detail: name } } };
+        yield { event: { case: "service" as const, value: { name, ownerTeam: req.ownerTeam } } };
+        return;
+      }
       yield { event: { case: "step" as const, value: { name: "fetch", state: CreateStep_State.STARTED } } };
       await sleep(300);
       yield { event: { case: "step" as const, value: { name: "fetch", state: CreateStep_State.DONE, detail: `${req.template.replace("templates/", "")}@v1.3.1` } } };

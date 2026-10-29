@@ -37,4 +37,8 @@ describe("shortCommit", () => {
     expect(shortCommit("main")).toBe("main");
     expect(shortCommit("")).toBe("");
   });
+
+  it("shortens an image digest, which a service without a repo runs instead of a commit", () => {
+    expect(shortCommit("sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).toBe("sha256:0123456789ab");
+  });
 });

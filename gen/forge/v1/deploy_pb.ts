@@ -296,7 +296,9 @@ export type StartDeployRequest = Message<"forge.v1.StartDeployRequest"> & {
   env: string;
 
   /**
-   * Branch, tag or commit; default main.
+   * Branch, tag or commit; default main. For a service without a repo,
+   * the image tag to run: default the one its forge.yaml names, and a new
+   * tag is written there.
    *
    * @generated from field: string ref = 3;
    */
