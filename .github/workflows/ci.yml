@@ -12,10 +12,11 @@ permissions:
   contents: read
 
 # The tests run once, on the pull request. A merge to `main` builds the image
-# and deploys it without running them again: `main` only changes through pull
-# requests, and a branch is merged only when it contains the current `main`
-# and `test` passed (AGENTS.md), so the merge commit is the tree that was
-# tested. The image build still compiles and type-checks the app.
+# without running them again: `main` only changes through pull requests, and
+# a branch is merged only when it contains the current `main` and `test`
+# passed (AGENTS.md), so the merge commit is the tree that was tested. The
+# image build still compiles and type-checks the app. Nothing deploys it: the
+# forge chart runs the dashboard, at the version its values name (release.yml).
 jobs:
   test:
     if: github.event_name == 'pull_request'
@@ -54,40 +55,3 @@ jobs:
           image=ghcr.io/showmino/forge-web:${GITHUB_SHA::7}
           docker build -t "$image" .
           docker push "$image"
-
-  # Deploys main to staging through Forge, logging in with this job's GitHub
-  # OIDC token: the token only lets it deploy this service to staging, at this
-  # commit. GitHub-hosted runners reach the API at its public address.
-  deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: image
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    concurrency:
-      group: forge-deploy-staging
-      cancel-in-progress: false
-    permissions:
-      contents: read
-      id-token: write
-    env:
-      FORGE_API_URL: ${{ vars.FORGE_WEB_API_URL || vars.FORGE_API_URL }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Get the forge CLI from the Forge API
-        run: |
-          if [ -z "$FORGE_API_URL" ]; then
-            echo "::error::set the organization variable FORGE_API_URL to the Forge API (for example http://forge.10.150.1.221.nip.io)"
-            exit 1
-          fi
-          case $(uname -m) in
-            x86_64) arch=amd64 ;;
-            aarch64|arm64) arch=arm64 ;;
-            *) echo "::error::unsupported runner architecture $(uname -m)"; exit 1 ;;
-          esac
-          url="$FORGE_API_URL/cli/forge-linux-$arch"
-          echo "downloading $url"
-          curl -fsS --retry 3 --max-time 120 -o "$RUNNER_TEMP/forge" "$url"
-          chmod +x "$RUNNER_TEMP/forge"
-          "$RUNNER_TEMP/forge" version
-      - name: Deploy to staging
-        run: '"$RUNNER_TEMP/forge" deploy start --env staging'
