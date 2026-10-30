@@ -173,7 +173,12 @@ export type Tile = {
 
 export type BoardRow = {
   env: (typeof BOARD_ENVS)[number];
+  // The tiles shown: at most BOARD_TILES, what is broken first, then what
+  // was deployed last.
   tiles: Tile[];
+  // Services deployed here, and how many of them have no tile.
+  running: number;
+  more: number;
   unhealthy: number;
   outOfSync: number;
   // Services in the catalog with nothing in this environment; undefined
@@ -189,29 +194,45 @@ function tileWord(d: Deployment, grade: Severity): string {
   return d.version || shortCommit(d.commit);
 }
 
-// board groups the deployments by environment, worst first, then by name.
+// BOARD_TILES is how many tiles an environment shows: one line at 1440px.
+// With hundreds of services, the board is a summary; the Services page has
+// every one.
+export const BOARD_TILES = 6;
+
+// board groups the deployments by environment: what is broken first (worst,
+// then by name), then the rest, last deployed first.
 export function board(deployments: Deployment[], services: number | undefined, now = new Date()): BoardRow[] {
   return BOARD_ENVS.map((env) => {
-    const tiles: Tile[] = [];
+    const all: (Tile & { at: number })[] = [];
     for (const d of deployments) {
       const grade = severity(d);
       if (d.env !== env || grade === "none") continue;
       const service = serviceId(d.service);
-      tiles.push({
+      const at = d.deployTime ? timestampDate(d.deployTime) : undefined;
+      all.push({
         service,
         severity: grade,
         word: tileWord(d, grade),
-        when: d.deployTime ? timeAgo(timestampDate(d.deployTime), now) : "",
+        when: at ? timeAgo(at, now) : "",
         href: `/services/${service}`,
+        at: at?.getTime() ?? 0,
       });
     }
-    tiles.sort((a, b) => SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] || a.service.localeCompare(b.service));
+    all.sort(
+      (a, b) =>
+        SEVERITY_RANK[a.severity] - SEVERITY_RANK[b.severity] ||
+        (a.severity === "ok" ? b.at - a.at : 0) ||
+        a.service.localeCompare(b.service),
+    );
+    const tiles: Tile[] = all.slice(0, BOARD_TILES).map((t) => ({ service: t.service, severity: t.severity, word: t.word, when: t.when, href: t.href }));
     return {
       env,
       tiles,
-      unhealthy: tiles.filter((t) => t.severity === "bad").length,
-      outOfSync: tiles.filter((t) => t.severity === "warn").length,
-      notDeployed: services === undefined ? undefined : Math.max(0, services - tiles.length),
+      running: all.length,
+      more: all.length - tiles.length,
+      unhealthy: all.filter((t) => t.severity === "bad").length,
+      outOfSync: all.filter((t) => t.severity === "warn").length,
+      notDeployed: services === undefined ? undefined : Math.max(0, services - all.length),
     };
   });
 }
