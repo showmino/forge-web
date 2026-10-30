@@ -115,6 +115,35 @@ function forge(w: World) {
       },
       async *createService(req) {
         record("create", req);
+        if (req.repoUrl) {
+          // As the API: a connect registers the service and opens a pull request in the repo.
+          yield { event: { case: "step" as const, value: { name: "check_repo", state: CreateStep_State.STARTED } } };
+          if (req.repoUrl.endsWith("/theirs")) {
+            throw new ConnectError("the team finance cannot write to github.com/showmino/theirs: only a repo the team can write to may become its service; ask a Forge admin to connect it", Code.PermissionDenied);
+          }
+          yield { event: { case: "step" as const, value: { name: "check_repo", state: CreateStep_State.DONE, detail: "github.com/showmino/tool on main, no Dockerfile: Forge proposes one for go" } } };
+          const files = ["forge.yaml", "Dockerfile", ".github/workflows/forge.yml", ".github/workflows/forge-release.yml"];
+          if (req.validateOnly) {
+            yield { event: { case: "plan" as const, value: { repoUrl: "https://github.com/showmino/tool", files, dockerfile: "go" } } };
+            return;
+          }
+          yield { event: { case: "step" as const, value: { name: "register", state: CreateStep_State.DONE, detail: `services/${req.serviceId}` } } };
+          yield { event: { case: "step" as const, value: { name: "pull_request", state: CreateStep_State.DONE, detail: "https://github.com/showmino/tool/pull/12" } } };
+          yield {
+            event: {
+              case: "change" as const,
+              value: {
+                repoUrl: "https://github.com/showmino/tool",
+                branch: "forge/connect",
+                pullRequestUrl: "https://github.com/showmino/tool/pull/12",
+                files,
+                service: { name: `services/${req.serviceId}`, ownerTeam: req.ownerTeam, repoUrl: "https://github.com/showmino/tool" },
+                dockerfile: "go",
+              },
+            },
+          };
+          return;
+        }
         if (req.image) {
           // As the API: the image rules refuse latest before anything is written.
           yield { event: { case: "step" as const, value: { name: "check_image", state: CreateStep_State.STARTED } } };
@@ -972,6 +1001,51 @@ describe("create a service", () => {
     expect(w.calls.deploy[0]).toMatchObject({ service: "services/web", env: "staging", ref: "" });
     expect(await screen.findByRole("region", { name: "Deploy to staging" })).toBeTruthy();
     expect(await screen.findByText("Rendered the manifests")).toBeTruthy();
+  });
+
+  it("connects an existing repo, and ends with its pull request", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    click(await screen.findByRole("radio", { name: "From a repo" }));
+    const steps = within(screen.getByRole("navigation", { name: "Steps" }));
+    expect(steps.getAllByRole("button").map((b) => b.textContent)).toEqual(["1Repo", "2Name and owner", "3Review"]);
+    next();
+    expect(screen.getByRole("alert").textContent).toContain("github.com/");
+    fireEvent.change(screen.getByLabelText("Repository"), { target: { value: " https://github.com/showmino/Tool " } });
+    fireEvent.change(screen.getByLabelText("Port"), { target: { value: "9090" } });
+    next();
+    // The name starts as the repo's; no reach to choose: forge.yaml says it.
+    expect((screen.getByLabelText("Service name") as HTMLInputElement).value).toBe("tool");
+    expect(screen.queryByRole("radiogroup", { name: "Who can reach it" })).toBeNull();
+    await screen.findByRole("option", { name: /^finance/ });
+    fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "finance" } });
+    const command = screen.getByLabelText("The same from the terminal").textContent!;
+    for (const flag of ["forge service connect github.com/showmino/Tool", "--team finance", "--port 9090"]) {
+      expect(command).toContain(flag);
+    }
+    expect(command).not.toContain("--name");
+    toReview();
+    expect(within(screen.getByRole("list", { name: "Review" })).getByText("github.com/showmino/Tool")).toBeTruthy();
+    click(screen.getByRole("button", { name: "Connect repo" }));
+
+    expect(await screen.findByRole("heading", { name: "Pull request opened for tool" })).toBeTruthy();
+    expect(screen.getByText(/Merge it: its workflow builds the image and deploys main to staging/)).toBeTruthy();
+    expect(screen.getByText(/proposes a Dockerfile for go/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Open tool" }).getAttribute("href")).toBe("/services/tool");
+    expect(w.calls.create[0]).toMatchObject({ serviceId: "tool", repoUrl: "github.com/showmino/Tool", template: "", image: "", ownerTeam: "finance", runOptions: { port: 9090 } });
+  });
+
+  it("says why a repo cannot be connected", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    click(await screen.findByRole("radio", { name: "From a repo" }));
+    fireEvent.change(screen.getByLabelText("Repository"), { target: { value: "github.com/showmino/theirs" } });
+    next();
+    await screen.findByRole("option", { name: /^finance/ });
+    fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "finance" } });
+    toReview();
+    click(screen.getByRole("button", { name: "Connect repo" }));
+    expect(await screen.findByText(/cannot write to github.com\/showmino\/theirs/)).toBeTruthy();
   });
 
   it("says why the image rules refuse an image, and deploys nothing when asked not to", async () => {

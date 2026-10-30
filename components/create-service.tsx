@@ -30,11 +30,21 @@ const words: Record<string, [doing: string, done: string]> = {
   push: ["Pushing the first commit", "Pushed the first commit"],
   register: ["Registering the service", "Registered"],
   pull_request: ["Opening the pull request", "Opened"],
+  check_repo: ["Checking the repo", "Checked"],
   check_image: ["Checking the image", "Checked the image:"],
   write_manifest: ["Writing forge.yaml", "Wrote forge.yaml to the"],
 };
 
-type Change = { repoUrl: string; branch: string; pullRequestUrl: string; files: string[] };
+type Change = {
+  repoUrl: string;
+  branch: string;
+  pullRequestUrl: string;
+  files: string[];
+  // A connected repo's: the service it became, and what the pull request proposes.
+  service?: Service;
+  dockerfile?: string;
+  needsRegistrySecrets?: boolean;
+};
 type Outcome = {
   service?: Service;
   change?: Change;
@@ -173,7 +183,7 @@ const stageNames: Record<Stage, string> = {
 
 // Where a new service starts from: a template (a new repo) or an image someone
 // else built (no repo; its forge.yaml is kept in the deploy repo).
-type Source = "template" | "image";
+type Source = "template" | "image" | "repo";
 const sources: { value: Source; title: string; text: string }[] = [
   { value: "template", title: "From a template", text: "Forge makes a repo from a template, with the CI that builds and deploys it." },
   {
@@ -181,7 +191,18 @@ const sources: { value: Source; title: string; text: string }[] = [
     title: "From an image",
     text: "Run an image someone else built, that runs as a non-root user. No repo: its forge.yaml is kept in the deploy repo.",
   },
+  {
+    value: "repo",
+    title: "From a repo",
+    text: "Connect a repo of the organization that has a Dockerfile, or Go, Node or Python code. Forge opens a pull request that adds its CI.",
+  },
 ];
+// A repo of the organization, as forge service connect takes it.
+const REPO = /^github\.com\/[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+?(\.git)?\/?$/;
+// repoName is the repo's own name, lower case: the service's name by default.
+function repoName(url: string): string {
+  return (url.replace(/\/$/, "").replace(/\.git$/, "").split("/").at(-1) ?? "").toLowerCase();
+}
 // An image reference has no spaces; its tag and the registry are the API's to check.
 const IMAGE = /^\S+$/;
 
@@ -207,7 +228,7 @@ const sub = "text-[11.5px] font-semibold tracking-[.06em] text-fg-3 uppercase";
 
 // A short mark for a template's card: the part of its name that says what it is.
 function mark(id: string): string {
-  const known: Record<string, string> = { "go-grpc": "gRPC", nextjs: "WEB", opentofu: "IaC", image: "IMG" };
+  const known: Record<string, string> = { "go-grpc": "gRPC", nextjs: "WEB", opentofu: "IaC", image: "IMG", repo: "GIT" };
   return known[id] ?? (id.split("-").at(-1) ?? id).slice(0, 4).toUpperCase();
 }
 
@@ -287,6 +308,12 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   // A link that names a template, or a template's own page, starts from a template.
   const [source, setSource] = useState<Source>("template");
   const fromImage = !fixed && source === "image";
+  const fromRepo = !fixed && source === "repo";
+  // Not a template: the template's choices, inputs and checks do not apply.
+  const noTemplate = fromImage || fromRepo;
+  const [repoInput, setRepoInput] = useState("");
+  // The repo as forge service connect takes it: github.com/<org>/<repo>.
+  const repoUrl = repoInput.trim().replace(/^https?:\/\//, "");
   const [image, setImage] = useState("");
   const [port, setPort] = useState("");
   const [health, setHealth] = useState("");
@@ -341,6 +368,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   const runAsked = runOptions(run, offered);
   const portNumber = Number(port.trim());
   const badImage = imageChecked && !IMAGE.test(image.trim());
+  const badRepo = imageChecked && !REPO.test(repoUrl);
   const badPort = imageChecked && !!port.trim() && !(Number.isInteger(portNumber) && portNumber >= 1 && portNumber <= 65535);
   const badHealth = imageChecked && !!health.trim() && !health.trim().startsWith("/");
   const folders = writable.split(",").map((f) => f.trim()).filter(Boolean);
@@ -349,14 +377,14 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   const badWritable = imageChecked && !writableOk;
   const badName = checked && !SERVICE_NAME.test(name);
   const badTeam = checked && !team.trim();
-  const problems = (fromImage ? [] : (template?.parameters ?? [])).flatMap((p): [TemplateParameter, string][] => {
+  const problems = (noTemplate ? [] : (template?.parameters ?? [])).flatMap((p): [TemplateParameter, string][] => {
     const problem = paramProblem(p, sent(p, own(p)));
     return problem ? [[p, problem]] : [];
   });
   const required = template?.parameters.filter((p) => p.required) ?? [];
   const optional = template?.parameters.filter((p) => !p.required) ?? [];
   // A file template is a form: its inputs in its own order, under their groups.
-  const isFile = !fromImage && template?.type === "file";
+  const isFile = !noTemplate && template?.type === "file";
   const groups = [...new Set((template?.parameters ?? []).map((p) => p.group))];
   const field = (p: TemplateParameter) => {
     const key = `${template?.name}/${p.name}`;
@@ -412,7 +440,15 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     ...address.flags,
     ...(deployNow ? [] : ([["--deploy=false", ""]] as [string, string][])),
   ];
-  const flags: [string, string][] = fromImage
+  const repoFlags: [string, string][] = [
+    ...(name && name !== repoName(repoUrl) ? ([["--name", name]] as [string, string][]) : []),
+    ["--team", team.trim() || "<team>"],
+    ...(port.trim() ? ([["--port", port.trim()]] as [string, string][]) : []),
+    ...(health.trim() ? ([["--health", health.trim()]] as [string, string][]) : []),
+  ];
+  const flags: [string, string][] = fromRepo
+    ? repoFlags
+    : fromImage
     ? imageFlags
     : [
     ["--template", tplId || "<template>"],
@@ -427,12 +463,12 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   ];
 
   async function create() {
-    if (!fromImage && !template) return;
+    if (!noTemplate && !template) return;
     setBusy(true);
     setSteps([]);
     setOutcome(null);
     const parameters: Record<string, string> = {};
-    for (const p of fromImage ? [] : (template?.parameters ?? [])) {
+    for (const p of noTemplate ? [] : (template?.parameters ?? [])) {
       const value = sent(p, own(p));
       if (value !== undefined) parameters[p.name] = value;
     }
@@ -442,7 +478,18 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
       ...(health.trim() ? { health: health.trim() } : {}),
       ...(folders.length ? { writable: folders } : {}),
     };
-    const request = fromImage
+    const repoRun = {
+      ...(port.trim() ? { port: portNumber } : {}),
+      ...(health.trim() ? { health: health.trim() } : {}),
+    };
+    const request = fromRepo
+      ? {
+          serviceId: name,
+          repoUrl,
+          ownerTeam: team.trim(),
+          runOptions: Object.keys(repoRun).length > 0 ? repoRun : undefined,
+        }
+      : fromImage
       ? {
           serviceId: name,
           image: image.trim(),
@@ -530,7 +577,9 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     setBusy(false);
   }
 
-  const stages: Stage[] = fromImage
+  const stages: Stage[] = fromRepo
+    ? ["template", "details", "review"]
+    : fromImage
     ? ["template", "details", "runtime", "review"]
     : [
         ...(fixed ? [] : (["template"] as const)),
@@ -539,7 +588,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
         ...(template && !isFile && template.options.length > 0 ? (["runtime"] as const) : []),
         "review",
       ];
-  const stageName = (s: Stage) => (s === "template" && fromImage ? "Image" : stageNames[s]);
+  const stageName = (s: Stage) => (s === "template" && fromImage ? "Image" : s === "template" && fromRepo ? "Repo" : stageNames[s]);
   const at = Math.max(0, stages.indexOf(stage));
 
   // detailsOk checks the name and the owner, shows what is wrong and puts the focus on it.
@@ -585,8 +634,25 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     return !bad;
   }
 
+  // repoOk checks the repo, its port and its health path, and names the
+  // service after the repo when it has no name yet.
+  function repoOk(): boolean {
+    setImageChecked(true);
+    const bad = !REPO.test(repoUrl)
+      ? "service-repo"
+      : port.trim() && !(Number.isInteger(portNumber) && portNumber >= 1 && portNumber <= 65535)
+        ? "service-port"
+        : health.trim() && !health.trim().startsWith("/")
+          ? "service-health"
+          : "";
+    if (bad) document.getElementById(bad)?.focus();
+    else if (!name) setName(repoName(repoUrl));
+    return !bad;
+  }
+
   const checks: [Stage, () => boolean][] = [
     ...(fromImage ? ([["template", imageOk]] as [Stage, () => boolean][]) : []),
+    ...(fromRepo ? ([["template", repoOk]] as [Stage, () => boolean][]) : []),
     ["details", detailsOk],
     ["inputs", inputsOk],
   ];
@@ -626,13 +692,29 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
 
   if (outcome?.change) {
     const ch = outcome.change;
+    const connected = ch.service ? serviceId(ch.service.name) : "";
     return (
       <>
         <PageHeader
           title={`Pull request opened for ${name}`}
-          lead={`It adds ${ch.files.length === 1 ? "one file" : `${ch.files.length} files`} to ${ch.repoUrl.replace("https://github.com/", "")}. Review and merge it there.`}
-          cli={`forge create ${name} --template ${tplId || "<template>"}`}
+          lead={
+            connected
+              ? `${connected} is in the catalog. The pull request adds Forge's CI to ${ch.repoUrl.replace("https://github.com/", "")}. Merge it: its workflow builds the image and deploys main to staging.`
+              : `It adds ${ch.files.length === 1 ? "one file" : `${ch.files.length} files`} to ${ch.repoUrl.replace("https://github.com/", "")}. Review and merge it there.`
+          }
+          cli={connected ? `forge service get ${connected}` : `forge create ${name} --template ${tplId || "<template>"}`}
         />
+        {ch.dockerfile ? (
+          <p className="text-fg-2">
+            The repo had no Dockerfile, so Forge proposes a Dockerfile for {ch.dockerfile} in the pull request. Check it before merging: it runs as a
+            non-root user, only /tmp is writable, and the app listens on $PORT.
+          </p>
+        ) : null}
+        {ch.needsRegistrySecrets ? (
+          <p className="text-fg-2">
+            Add the repo secrets FORGE_REGISTRY_USERNAME and FORGE_REGISTRY_PASSWORD before merging: the workflow logs in to the registry with them.
+          </p>
+        ) : null}
         <Panel>
           <StepLog steps={steps} />
         </Panel>
@@ -641,7 +723,8 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
             <li key={f}>{f}</li>
           ))}
         </ul>
-        <p>
+        <p className="flex flex-wrap items-center gap-4">
+          {connected ? <TextLink href={`/services/${connected}`}>Open {connected}</TextLink> : null}
           <Addr href={ch.pullRequestUrl} />
         </p>
       </>
@@ -709,7 +792,20 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
           ],
         ] as [Stage, string, [string, ReactNode][]][])
       : []),
-    ...(template && !fixed && !fromImage
+    ...(fromRepo
+      ? ([
+          [
+            "template",
+            "Repo",
+            [
+              ["Repo", mono(repoUrl)],
+              ["Port", port.trim() ? mono(port.trim()) : <span className="text-fg-2">8080, the default</span>],
+              ["Health", health.trim() ? mono(health.trim()) : <span className="text-fg-2">/healthz, the default</span>],
+            ],
+          ],
+        ] as [Stage, string, [string, ReactNode][]][])
+      : []),
+    ...(template && !fixed && !noTemplate
       ? ([
           [
             "template",
@@ -731,7 +827,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
       [
         ["Name", mono(name)],
         [isFile ? "GitHub team" : "Owner", team.trim()],
-        ...(isFile
+        ...(isFile || fromRepo
           ? []
           : ([
               ["Reach", chosen.title],
@@ -740,7 +836,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
             ] as [string, ReactNode][])),
       ],
     ],
-    ...(fromImage
+    ...(noTemplate
       ? []
       : ([
           [
@@ -796,6 +892,8 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
         lead={
           isFile
             ? "Forge renders the template's files and opens a pull request that adds them."
+            : fromRepo
+            ? "Forge registers the service and opens a pull request in the repo that adds its forge.yaml and Forge's CI. Merging it is the first deploy."
             : fromImage
               ? "Forge checks the image, keeps its forge.yaml in the deploy repo, adds it to the catalog and deploys it to staging."
               : "Forge makes the repo from a template, starts its CI and adds it to the catalog."
@@ -886,6 +984,57 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                 </fieldset>
               ) : null}
 
+              {stage === "template" && fromRepo ? (
+                <div className="flex max-w-[520px] flex-col gap-5">
+                  <Field
+                    id="service-repo"
+                    label="Repository"
+                    hint="A repo of the organization your team can write to, such as github.com/my-org/tool. It needs a Dockerfile, or Go, Node or Python code: Forge then proposes one."
+                    error={badRepo ? "Give the repo as github.com/<org>/<repo>." : undefined}
+                  >
+                    <input
+                      id="service-repo"
+                      className={`${inputClass} font-mono`}
+                      value={repoInput}
+                      onChange={(e) => setRepoInput(e.target.value)}
+                      aria-invalid={badRepo}
+                      aria-describedby="service-repo-note"
+                      placeholder="github.com/my-org/tool"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </Field>
+                  <Field id="service-port" label="Port" hint="The port the app listens on. Left empty, it is 8080." error={badPort ? "Use a port from 1 to 65535." : undefined}>
+                    <input
+                      id="service-port"
+                      className={`${inputClass} font-mono`}
+                      inputMode="numeric"
+                      value={port}
+                      onChange={(e) => setPort(e.target.value)}
+                      aria-invalid={badPort}
+                      aria-describedby="service-port-note"
+                      placeholder="8080"
+                    />
+                  </Field>
+                  <Field
+                    id="service-health"
+                    label="Health path"
+                    hint="The path Kubernetes asks to know it is ready. Left empty, it is /healthz."
+                    error={badHealth ? "Start the path with /." : undefined}
+                  >
+                    <input
+                      id="service-health"
+                      className={`${inputClass} font-mono`}
+                      value={health}
+                      onChange={(e) => setHealth(e.target.value)}
+                      aria-invalid={badHealth}
+                      aria-describedby="service-health-note"
+                      placeholder="/healthz"
+                    />
+                  </Field>
+                </div>
+              ) : null}
+
               {stage === "template" && fromImage ? (
                 <div className="flex max-w-[520px] flex-col gap-5">
                   <Field
@@ -960,7 +1109,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                 </div>
               ) : null}
 
-              {stage === "template" && !fromImage ? (
+              {stage === "template" && !noTemplate ? (
                 <fieldset className="flex min-w-0 flex-col gap-3">
                   <legend className="sr-only">Template</legend>
                   <p className="text-[13.5px] text-fg-2">
@@ -1026,7 +1175,9 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                     hint={
                       isFile
                         ? "Lowercase letters, digits and hyphens. The template puts it in the file names."
-                        : fromImage
+                        : fromRepo
+                          ? "Lowercase letters, digits and hyphens. This becomes the catalog name and the image's name; it starts as the repo's."
+                          : fromImage
                           ? "Lowercase letters, digits and hyphens. This becomes the catalog name and part of its address."
                           : "Lowercase letters, digits and hyphens. This becomes the repo name and the catalog name."
                     }
@@ -1097,7 +1248,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                       </select>
                     </Field>
                   )}
-                  {(fromImage || template) && !isFile ? (
+                  {(fromImage || (template && !fromRepo)) && !isFile ? (
                     <fieldset className="flex min-w-0 flex-col gap-3">
                       <legend className="mb-1.5 text-[13px] font-medium">Who can reach it</legend>
                       <div role="radiogroup" aria-label="Who can reach it" className="flex flex-col gap-2">
@@ -1236,7 +1387,18 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                   <div className="px-0.5">
                     <h3 className="text-[14px] font-semibold">What happens next</h3>
                     <ol className="mt-2 flex list-decimal flex-col gap-1 pl-5 text-[13.5px] text-fg-2">
-                      {fromImage ? (
+                      {fromRepo ? (
+                        <>
+                          <li>
+                            Forge checks <span className="font-mono">{repoUrl}</span> and adds {name} to the catalog, with the repo as its repo.
+                          </li>
+                          <li>
+                            It opens a pull request there that adds <span className="font-mono">forge.yaml</span>, Forge&apos;s workflow and, when the repo has
+                            none, a Dockerfile.
+                          </li>
+                          <li>Merging it is the first deploy: the workflow builds the image and deploys main to staging. Production waits for your first promote.</li>
+                        </>
+                      ) : fromImage ? (
                         <>
                           <li>
                             Forge checks <span className="font-mono">{image.trim()}</span> against the image rules and pins its tag to the digest it has now.
@@ -1283,7 +1445,9 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                           `${outcome.failure.message} ${
                             outcome.failure.rolledBack
                               ? "Nothing was left behind: fix it and create again."
-                              : fromImage
+                              : fromRepo
+                                ? `The service is still in the catalog: delete ${name} before connecting the repo again.`
+                                : fromImage
                                 ? `Its forge.yaml is still in the deploy repo (services/${name}/forge.yaml): the next create overwrites it.`
                                 : "The repo could not be deleted: delete it on GitHub before trying again."
                           }`,
@@ -1291,7 +1455,16 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                       }
                     />
                   ) : null}
-                  {outcome?.error ? <ErrorNote error={outcome.error} /> : null}
+                  {outcome?.error ? (
+                    <ErrorNote
+                      error={
+                        // Refused for a repo, the API names the repo and who may connect it: say that, not a generic "no access".
+                        fromRepo && ConnectError.from(outcome.error).code === Code.PermissionDenied
+                          ? new Error(ConnectError.from(outcome.error).rawMessage)
+                          : outcome.error
+                      }
+                    />
+                  ) : null}
                 </div>
               ) : null}
 
@@ -1312,11 +1485,11 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                   </ButtonLink>
                 )}
                 {stage === "review" ? (
-                  <Button kind="primary" type="submit" className="ml-auto" disabled={busy || !canCreate || teamRefused || (!fromImage && !template)}>
-                    {busy ? "Creating" : isFile ? "Create pull request" : "Create service"}
+                  <Button kind="primary" type="submit" className="ml-auto" disabled={busy || !canCreate || teamRefused || (!noTemplate && !template)}>
+                    {busy ? (fromRepo ? "Connecting" : "Creating") : fromRepo ? "Connect repo" : isFile ? "Create pull request" : "Create service"}
                   </Button>
                 ) : (
-                  <Button kind="primary" type="submit" className="ml-auto" disabled={!fromImage && !template}>
+                  <Button kind="primary" type="submit" className="ml-auto" disabled={!noTemplate && !template}>
                     Continue
                   </Button>
                 )}
@@ -1326,17 +1499,17 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
             <aside className="min-w-0 min-[1080px]:sticky min-[1080px]:top-[76px]">
               <Panel className="flex flex-col gap-4 p-4">
                 <div className="flex min-w-0 items-center gap-3">
-                  {fromImage ? <Mark id="image" /> : tplId ? <Mark id={tplId} /> : null}
+                  {fromRepo ? <Mark id="repo" /> : fromImage ? <Mark id="image" /> : tplId ? <Mark id={tplId} /> : null}
                   <div className="min-w-0">
                     <div className="truncate font-mono font-semibold">{name || "<name>"}</div>
                     <div className="truncate text-[12.5px] text-fg-3">
-                      {fromImage ? image.trim() || "<image>" : tplId || "<template>"} · {team.trim() || "No owner yet"}
+                      {fromRepo ? repoUrl || "<repo>" : fromImage ? image.trim() || "<image>" : tplId || "<template>"} · {team.trim() || "No owner yet"}
                     </div>
                   </div>
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[13px] font-medium">From the terminal</span>
-                  <CommandBlock command={`forge create ${name || "<name>"}`} flags={flags} />
+                  <CommandBlock command={fromRepo ? `forge service connect ${repoUrl || "<repo>"}` : `forge create ${name || "<name>"}`} flags={flags} />
                 </div>
               </Panel>
             </aside>
