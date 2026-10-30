@@ -173,8 +173,8 @@ export type Tile = {
 
 export type BoardRow = {
   env: (typeof BOARD_ENVS)[number];
-  // The tiles shown: at most BOARD_TILES, what is broken first, then what
-  // was deployed last.
+  // The tiles shown: what is broken first, then what was deployed last; at
+  // most BOARD_TILES, the last of them a link to the rest when there are more.
   tiles: Tile[];
   // Services deployed here, and how many of them have no tile.
   running: number;
@@ -194,10 +194,11 @@ function tileWord(d: Deployment, grade: Severity): string {
   return d.version || shortCommit(d.commit);
 }
 
-// BOARD_TILES is how many tiles an environment shows: one line at 1440px.
-// With hundreds of services, the board is a summary; the Services page has
-// every one.
-export const BOARD_TILES = 6;
+// BOARD_TILES is how many tiles fit one line of the board at 1440px. With
+// more services than that, an environment shows one tile fewer and a tile
+// that links to the rest: with hundreds of services the board is a summary,
+// and the Services page has every one.
+export const BOARD_TILES = 5;
 
 // board groups the deployments by environment: what is broken first (worst,
 // then by name), then the rest, last deployed first.
@@ -224,7 +225,7 @@ export function board(deployments: Deployment[], services: number | undefined, n
         (a.severity === "ok" ? b.at - a.at : 0) ||
         a.service.localeCompare(b.service),
     );
-    const tiles: Tile[] = all.slice(0, BOARD_TILES).map((t) => ({ service: t.service, severity: t.severity, word: t.word, when: t.when, href: t.href }));
+    const tiles: Tile[] = all.slice(0, all.length > BOARD_TILES ? BOARD_TILES - 1 : BOARD_TILES).map((t) => ({ service: t.service, severity: t.severity, word: t.word, when: t.when, href: t.href }));
     return {
       env,
       tiles,

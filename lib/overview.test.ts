@@ -207,9 +207,10 @@ describe("the status board", () => {
       ["search", "bad", "Not running"],
       ["web", "warn", "Out of sync"],
       ["identity", "ok", "4b7d1c0"],
-      ["notifications", "ok", "Progressing"],
-      ["payments", "ok", "v0.4.1"],
     ]);
+    // The other two healthy ones are behind the link to the rest.
+    expect(p.more).toBe(2);
+    expect(p.running).toBe(6);
     expect(p.tiles[0].when).toBe("31 min ago");
     expect(p.tiles[0].href).toBe("/services/checkout-api");
     expect(p.unhealthy).toBe(2);
@@ -228,19 +229,26 @@ describe("the status board", () => {
       dep("drifted", "production", { sync: Deployment_SyncStatus.OUT_OF_SYNC, deployTime: ago(800) }),
     );
     const [p] = board(many, 410, NOW);
-    expect(p.tiles.map((t) => t.service)).toEqual(["broken", "drifted", "rolling", "fresh", "svc-000", "svc-001"]);
+    expect(p.tiles.map((t) => t.service)).toEqual(["broken", "drifted", "rolling", "fresh"]);
     expect(p.running).toBe(404);
-    expect(p.more).toBe(398);
+    expect(p.more).toBe(400);
     expect(p.unhealthy).toBe(1);
     expect(p.outOfSync).toBe(1);
     expect(p.notDeployed).toBe(6);
   });
 
+  it("shows every tile when they fit on one line", () => {
+    const five = ["a", "b", "c", "d", "e"].map((n) => dep(n, "staging"));
+    const [, s] = board(five, undefined, NOW);
+    expect(s.tiles).toHaveLength(5);
+    expect(s.more).toBe(0);
+  });
+
   it("shows only problems when there are more of them than fit, and counts the rest", () => {
     const broken = Array.from({ length: 9 }, (_, i) => dep(`b${i}`, "staging", { health: Deployment_Health.MISSING }));
     const [, s] = board([...broken, dep("fine", "staging")], undefined, NOW);
-    expect(s.tiles.map((t) => t.service)).toEqual(["b0", "b1", "b2", "b3", "b4", "b5"]);
-    expect(s.more).toBe(4);
+    expect(s.tiles.map((t) => t.service)).toEqual(["b0", "b1", "b2", "b3"]);
+    expect(s.more).toBe(6);
     expect(s.unhealthy).toBe(9);
   });
 

@@ -170,10 +170,10 @@ describe("the overview", () => {
     const status = within(await screen.findByRole("region", { name: "Status" }));
     const staging = within(await status.findByRole("list", { name: "Staging" }));
     const links = staging.getAllByRole("link");
-    // Six tiles, the last deployed first, and one link to the other fifteen.
-    expect(links).toHaveLength(7);
+    // Four tiles, the last deployed first, and one link to the other seventeen.
+    expect(links).toHaveLength(5);
     expect(links[0].textContent).toContain("payments");
-    const more = staging.getByRole("link", { name: /15 more/ });
+    const more = staging.getByRole("link", { name: /17 more/ });
     expect(more.getAttribute("href")).toBe("/services");
     expect(status.getByText("All 21 healthy")).toBeTruthy();
   });
