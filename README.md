@@ -10,9 +10,10 @@ The web dashboard of Forge: the catalog, a page per service, the templates,
 environments, deployments, operations, ownership and the audit log. The
 members of a service's team (and an admin) also deploy, promote, roll back,
 manage previews and change its contacts and lifecycle from it; a member of
-any team creates a service of their team from a template, or from an image
-someone else built (no repo: the API keeps its `forge.yaml` in the deploy repo,
-and the page then deploys it to staging, as `forge create --image` does);
+any team creates a service of their team from a template, from an image
+someone else built, or from a published Helm chart (no repo: the API keeps its
+`forge.yaml` in the deploy repo, and the page then deploys it to staging, as
+`forge create --image` and `--chart` do);
 moving a service to
 another team, its address and deleting it are an admin's. Each is behind a
 confirmation, with the work shown live (`WatchOperation`) and a toast that
@@ -133,8 +134,12 @@ the others. The server only serves the pages and
   template inputs and may set every run option, and the folders it writes
   besides `/tmp` (`run.writable`). Or from a repo of the organization (`forge service
   connect`): Repo, Name and owner, Review; the API registers the service and
-  opens a pull request in the repo, and the page ends with it. A service without a repo
-  deploys an image tag instead of a branch and has no previews. What the mockup shows that Forge
+  opens a pull request in the repo, and the page ends with it. Or from a
+  Helm chart (`forge create --chart`): Chart (repository, name, version,
+  the Service that gets the address, values for every environment and
+  production's), Name and owner, Review. A service without a repo
+  deploys an image tag (or, for a chart, a chart version) instead of a
+  branch and has no previews. What the mockup shows that Forge
   does not know is left out: rules and approvals, the golden path, tiers
   and SLOs, team members and on-call, template lint. The Docs page searches
   every service's pages (`SearchDocs`, forge-api with TechDocs milestone 3).

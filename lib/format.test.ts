@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { shortCommit, timeAgo, timeUntil } from "./format";
+import { isChartRef, shortCommit, timeAgo, timeUntil } from "./format";
 
 const now = new Date("2026-10-11T12:00:00Z");
 const at = (iso: string) => new Date(iso);
@@ -40,5 +40,14 @@ describe("shortCommit", () => {
 
   it("shortens an image digest, which a service without a repo runs instead of a commit", () => {
     expect(shortCommit("sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef")).toBe("sha256:0123456789ab");
+  });
+});
+
+describe("isChartRef", () => {
+  it("tells a chart from an image", () => {
+    expect(isChartRef("oci://ghcr.io/stefanprodan/charts/podinfo:6.7.1")).toBe(true);
+    expect(isChartRef("https://charts.example.com/podinfo:1.0.0")).toBe(true);
+    expect(isChartRef("docker.io/library/nginx@sha256:0123")).toBe(false);
+    expect(isChartRef("ghcr.io/showmino/payments:1a2b3c4")).toBe(false);
   });
 });

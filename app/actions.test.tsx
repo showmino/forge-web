@@ -70,6 +70,8 @@ type World = {
   versions: boolean;
   // The service runs an image and has no repo.
   noRepo?: boolean;
+  // The service runs a published chart: its deployments show the chart.
+  chart?: boolean;
 };
 
 function world(over: Partial<World> = {}): World {
@@ -144,6 +146,23 @@ function forge(w: World) {
           };
           return;
         }
+        if (req.chart) {
+          // As the API: the version must be in the repository.
+          yield { event: { case: "step" as const, value: { name: "check_chart", state: CreateStep_State.STARTED } } };
+          if (req.chart.version === "9.9.9") {
+            throw new ConnectError(`${req.chart.repo} has no chart ${req.chart.name} at version 9.9.9: check the repository, the name and the version`, Code.FailedPrecondition);
+          }
+          yield {
+            event: {
+              case: "step" as const,
+              value: { name: "check_chart", state: CreateStep_State.DONE, detail: `${req.chart.repo}/${req.chart.name}:${req.chart.version} is in its repository` },
+            },
+          };
+          yield { event: { case: "step" as const, value: { name: "write_manifest", state: CreateStep_State.DONE, detail: `deploy repo: services/${req.serviceId}/forge.yaml` } } };
+          yield { event: { case: "step" as const, value: { name: "register", state: CreateStep_State.DONE, detail: `services/${req.serviceId}` } } };
+          yield { event: { case: "service" as const, value: { name: `services/${req.serviceId}`, ownerTeam: req.ownerTeam } } };
+          return;
+        }
         if (req.image) {
           // As the API: the image rules refuse latest before anything is written.
           yield { event: { case: "step" as const, value: { name: "check_image", state: CreateStep_State.STARTED } } };
@@ -200,7 +219,7 @@ function forge(w: World) {
             health: Deployment_Health.HEALTHY,
             sync: Deployment_SyncStatus.SYNCED,
             commit: COMMIT,
-            image: "ghcr.io/showmino/payments:18b1232",
+            image: w.chart ? "oci://ghcr.io/stefanprodan/charts/podinfo:6.7.1" : "ghcr.io/showmino/payments:18b1232",
             deployTime: ago(12),
             version: w.versions ? "v0.3.1-rc.2" : "",
             argoUrl: "https://argocd.example.com/applications/argocd/payments-staging",
@@ -761,6 +780,17 @@ describe("deploy and roll back", () => {
     expect(w.calls.deploy[0]).toMatchObject({ service: "services/payments", env: "staging", ref: "" });
   });
 
+  it("deploys a chart version to a service that runs a chart", async () => {
+    const w = world({ noRepo: true, chart: true });
+    await openService(w);
+    click(await screen.findByRole("button", { name: "Deploy to staging" }));
+    expect(dialog().getByText("Staging will run the chart at this version, with the values in its forge.yaml.")).toBeTruthy();
+    fireEvent.change(dialog().getByLabelText("Chart version"), { target: { value: " 6.8.0 " } });
+    click(dialog().getByRole("button", { name: "Deploy to staging" }));
+    await waitFor(() => expect(w.calls.deploy).toHaveLength(1));
+    expect(w.calls.deploy[0]).toMatchObject({ service: "services/payments", env: "staging", ref: "6.8.0" });
+  });
+
   it("rolls back to the deploy the writer picks", async () => {
     const w = world({ production: Deployment_Health.HEALTHY });
     await openService(w);
@@ -1001,6 +1031,90 @@ describe("create a service", () => {
     expect(w.calls.deploy[0]).toMatchObject({ service: "services/web", env: "staging", ref: "" });
     expect(await screen.findByRole("region", { name: "Deploy to staging" })).toBeTruthy();
     expect(await screen.findByText("Rendered the manifests")).toBeTruthy();
+  });
+
+  it("creates a service from a Helm chart, without a repo, and deploys it to staging", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    click(await screen.findByRole("radio", { name: "From a Helm chart" }));
+    const steps = within(screen.getByRole("navigation", { name: "Steps" }));
+    expect(steps.getAllByRole("button").map((b) => b.textContent)).toEqual(["1Chart", "2Name and owner", "3Review"]);
+    // The repository, the chart, an exact version and what gets the address are needed.
+    next();
+    expect(screen.getAllByRole("alert")[0].textContent).toContain("oci://");
+    fireEvent.change(screen.getByLabelText("Repository"), { target: { value: " oci://ghcr.io/stefanprodan/charts " } });
+    fireEvent.change(screen.getByLabelText("Chart"), { target: { value: "podinfo" } });
+    fireEvent.change(screen.getByLabelText("Version"), { target: { value: "^6.7" } });
+    next();
+    expect(screen.getAllByRole("alert").map((a) => a.textContent).join(" ")).toContain("exact version");
+    fireEvent.change(screen.getByLabelText("Version"), { target: { value: "6.7.1" } });
+    fireEvent.change(screen.getByLabelText("Service that gets the address"), { target: { value: "podinfo" } });
+    fireEvent.change(screen.getByLabelText("Its port"), { target: { value: "9898" } });
+    fireEvent.change(screen.getByLabelText("Values"), { target: { value: "replicaCount: 2\n" } });
+    fireEvent.change(screen.getByLabelText("Production values"), { target: { value: "replicaCount: 3\n" } });
+    next();
+    // The name starts as the chart's; it has an address to choose.
+    expect((screen.getByLabelText("Service name") as HTMLInputElement).value).toBe("podinfo");
+    expect(screen.getByRole("radiogroup", { name: "Who can reach it" })).toBeTruthy();
+    await screen.findByRole("option", { name: /^finance/ });
+    fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "finance" } });
+    const command = screen.getByLabelText("The same from the terminal").textContent!;
+    for (const flag of [
+      "forge create podinfo",
+      "--chart podinfo",
+      "--chart-repo oci://ghcr.io/stefanprodan/charts",
+      "--chart-version 6.7.1",
+      "--expose podinfo:9898",
+      "--values values.yaml",
+      "--production-values production.yaml",
+      "--team finance",
+    ]) {
+      expect(command).toContain(flag);
+    }
+    toReview();
+    const review = within(screen.getByRole("list", { name: "Review" }));
+    expect(review.getByText("podinfo 6.7.1")).toBeTruthy();
+    expect(review.getByText("podinfo:9898")).toBeTruthy();
+    click(screen.getByRole("button", { name: "Create service" }));
+
+    expect(await screen.findByRole("heading", { name: "podinfo was created" })).toBeTruthy();
+    expect(screen.getByText("Checked the chart: oci://ghcr.io/stefanprodan/charts/podinfo:6.7.1 is in its repository")).toBeTruthy();
+    expect(w.calls.create[0]).toMatchObject({
+      serviceId: "podinfo",
+      ownerTeam: "finance",
+      image: "",
+      template: "",
+      chart: {
+        repo: "oci://ghcr.io/stefanprodan/charts",
+        name: "podinfo",
+        version: "6.7.1",
+        values: "replicaCount: 2\n",
+        productionValues: "replicaCount: 3\n",
+        exposeService: "podinfo",
+        exposePort: 9898,
+      },
+    });
+    // Then, as forge create --chart, the deploy to staging.
+    await waitFor(() => expect(w.calls.deploy).toHaveLength(1));
+    expect(w.calls.deploy[0]).toMatchObject({ service: "services/podinfo", env: "staging" });
+  });
+
+  it("says why a chart was refused, and creates nothing", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    click(await screen.findByRole("radio", { name: "From a Helm chart" }));
+    fireEvent.change(screen.getByLabelText("Repository"), { target: { value: "oci://ghcr.io/stefanprodan/charts" } });
+    fireEvent.change(screen.getByLabelText("Chart"), { target: { value: "podinfo" } });
+    fireEvent.change(screen.getByLabelText("Version"), { target: { value: "9.9.9" } });
+    fireEvent.change(screen.getByLabelText("Service that gets the address"), { target: { value: "podinfo" } });
+    fireEvent.change(screen.getByLabelText("Its port"), { target: { value: "9898" } });
+    next();
+    await screen.findByRole("option", { name: /^finance/ });
+    fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "finance" } });
+    toReview();
+    click(screen.getByRole("button", { name: "Create service" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("has no chart podinfo at version 9.9.9");
+    expect(w.calls.deploy).toBeUndefined();
   });
 
   it("connects an existing repo, and ends with its pull request", async () => {

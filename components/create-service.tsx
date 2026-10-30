@@ -32,6 +32,7 @@ const words: Record<string, [doing: string, done: string]> = {
   pull_request: ["Opening the pull request", "Opened"],
   check_repo: ["Checking the repo", "Checked"],
   check_image: ["Checking the image", "Checked the image:"],
+  check_chart: ["Checking the chart", "Checked the chart:"],
   write_manifest: ["Writing forge.yaml", "Wrote forge.yaml to the"],
 };
 
@@ -183,7 +184,7 @@ const stageNames: Record<Stage, string> = {
 
 // Where a new service starts from: a template (a new repo) or an image someone
 // else built (no repo; its forge.yaml is kept in the deploy repo).
-type Source = "template" | "image" | "repo";
+type Source = "template" | "image" | "repo" | "chart";
 const sources: { value: Source; title: string; text: string }[] = [
   { value: "template", title: "From a template", text: "Forge makes a repo from a template, with the CI that builds and deploys it." },
   {
@@ -196,7 +197,16 @@ const sources: { value: Source; title: string; text: string }[] = [
     title: "From a repo",
     text: "Connect a repo of the organization that has a Dockerfile, or Go, Node or Python code. Forge opens a pull request that adds its CI.",
   },
+  {
+    value: "chart",
+    title: "From a Helm chart",
+    text: "Run a published Helm chart, with its values. No repo: its forge.yaml is kept in the deploy repo. It may only make resources in its own namespace.",
+  },
 ];
+// A chart repository, name and exact version, as forge.yaml's chart takes them.
+const CHART_REPO = /^(oci|https):\/\/[^/@?#\s]+(\/[^@?#\s]*[^/@?#\s])?$/;
+const CHART_NAME = /^[a-z0-9]([a-z0-9._-]{0,98}[a-z0-9])?$/;
+const CHART_VERSION = /^v?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$/;
 // A repo of the organization, as forge service connect takes it.
 const REPO = /^github\.com\/[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+?(\.git)?\/?$/;
 // repoName is the repo's own name, lower case: the service's name by default.
@@ -309,8 +319,11 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   const [source, setSource] = useState<Source>("template");
   const fromImage = !fixed && source === "image";
   const fromRepo = !fixed && source === "repo";
+  const fromChart = !fixed && source === "chart";
+  // No repo: an image or a chart, deployed by Forge once it is created.
+  const repoless = fromImage || fromChart;
   // Not a template: the template's choices, inputs and checks do not apply.
-  const noTemplate = fromImage || fromRepo;
+  const noTemplate = fromImage || fromRepo || fromChart;
   const [repoInput, setRepoInput] = useState("");
   // The repo as forge service connect takes it: github.com/<org>/<repo>.
   const repoUrl = repoInput.trim().replace(/^https?:\/\//, "");
@@ -319,6 +332,14 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   const [health, setHealth] = useState("");
   // Folders it writes besides /tmp, comma-separated as typed: forge.yaml's run.writable.
   const [writable, setWritable] = useState("");
+  const [chartRepo, setChartRepo] = useState("");
+  const [chartName, setChartName] = useState("");
+  const [chartVersion, setChartVersion] = useState("");
+  const [exposeService, setExposeService] = useState("");
+  const [exposePort, setExposePort] = useState("");
+  // The chart's values, as YAML: for every environment, and production's own.
+  const [chartValues, setChartValues] = useState("");
+  const [productionValues, setProductionValues] = useState("");
   const [imageChecked, setImageChecked] = useState(false);
   const [deployNow, setDeployNow] = useState(true);
   const [reach, setReach] = useState<Reach>("public");
@@ -371,6 +392,13 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   const badRepo = imageChecked && !REPO.test(repoUrl);
   const badPort = imageChecked && !!port.trim() && !(Number.isInteger(portNumber) && portNumber >= 1 && portNumber <= 65535);
   const badHealth = imageChecked && !!health.trim() && !health.trim().startsWith("/");
+  const exposePortNumber = Number(exposePort.trim());
+  const exposePortOk = Number.isInteger(exposePortNumber) && exposePortNumber >= 1 && exposePortNumber <= 65535;
+  const badChartRepo = imageChecked && !CHART_REPO.test(chartRepo.trim());
+  const badChartName = imageChecked && !CHART_NAME.test(chartName.trim());
+  const badChartVersion = imageChecked && !CHART_VERSION.test(chartVersion.trim());
+  const badExposeService = imageChecked && !SERVICE_NAME.test(exposeService.trim());
+  const badExposePort = imageChecked && !exposePortOk;
   const folders = writable.split(",").map((f) => f.trim()).filter(Boolean);
   // The API checks the rest (not /tmp, /proc and the like); here, that each is a path.
   const writableOk = folders.every((f) => f.startsWith("/"));
@@ -446,8 +474,21 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     ...(port.trim() ? ([["--port", port.trim()]] as [string, string][]) : []),
     ...(health.trim() ? ([["--health", health.trim()]] as [string, string][]) : []),
   ];
+  const chartFlags: [string, string][] = [
+    ["--chart", chartName.trim() || "<chart>"],
+    ["--chart-repo", chartRepo.trim() || "<repo>"],
+    ["--chart-version", chartVersion.trim() || "<version>"],
+    ["--expose", `${exposeService.trim() || "<service>"}:${exposePort.trim() || "<port>"}`],
+    ...(chartValues.trim() ? ([["--values", "values.yaml"]] as [string, string][]) : []),
+    ...(productionValues.trim() ? ([["--production-values", "production.yaml"]] as [string, string][]) : []),
+    ["--team", team.trim() || "<team>"],
+    ...address.flags,
+    ...(deployNow ? [] : ([["--deploy=false", ""]] as [string, string][])),
+  ];
   const flags: [string, string][] = fromRepo
     ? repoFlags
+    : fromChart
+    ? chartFlags
     : fromImage
     ? imageFlags
     : [
@@ -488,6 +529,21 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
           repoUrl,
           ownerTeam: team.trim(),
           runOptions: Object.keys(repoRun).length > 0 ? repoRun : undefined,
+        }
+      : fromChart
+      ? {
+          serviceId: name,
+          ownerTeam: team.trim(),
+          chart: {
+            repo: chartRepo.trim(),
+            name: chartName.trim(),
+            version: chartVersion.trim(),
+            values: chartValues,
+            productionValues,
+            exposeService: exposeService.trim(),
+            exposePort: exposePortNumber,
+          },
+          runOptions: Object.keys(address.options).length > 0 ? address.options : undefined,
         }
       : fromImage
       ? {
@@ -550,8 +606,8 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
       if (!ended && round === 0) show({ key: "reconnect", tone: "neutral", text: "The connection dropped. Asking Forge what happened." });
     }
     settle();
-    if (ended?.service && fromImage && deployNow) {
-      // As forge create --image: once the service is there, deploy it to staging.
+    if (ended?.service && repoless && deployNow) {
+      // As forge create --image and --chart: once the service is there, deploy it to staging.
       show({ key: "deploy", tone: "progress", text: "Starting the deploy to staging" });
       try {
         const res = await api.deploys.startDeploy({ service: ended.service.name, env: "staging", requestId: randomString() });
@@ -577,7 +633,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     setBusy(false);
   }
 
-  const stages: Stage[] = fromRepo
+  const stages: Stage[] = fromRepo || fromChart
     ? ["template", "details", "review"]
     : fromImage
     ? ["template", "details", "runtime", "review"]
@@ -588,7 +644,8 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
         ...(template && !isFile && template.options.length > 0 ? (["runtime"] as const) : []),
         "review",
       ];
-  const stageName = (s: Stage) => (s === "template" && fromImage ? "Image" : s === "template" && fromRepo ? "Repo" : stageNames[s]);
+  const stageName = (s: Stage) =>
+    s === "template" && fromImage ? "Image" : s === "template" && fromRepo ? "Repo" : s === "template" && fromChart ? "Chart" : stageNames[s];
   const at = Math.max(0, stages.indexOf(stage));
 
   // detailsOk checks the name and the owner, shows what is wrong and puts the focus on it.
@@ -650,8 +707,29 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     return !bad;
   }
 
+  // chartOk checks the chart's repository, name, version and the Service that
+  // gets the address. The API finds the version, and checks the values.
+  function chartOk(): boolean {
+    setImageChecked(true);
+    const bad = !CHART_REPO.test(chartRepo.trim())
+      ? "chart-repo"
+      : !CHART_NAME.test(chartName.trim())
+        ? "chart-name"
+        : !CHART_VERSION.test(chartVersion.trim())
+          ? "chart-version"
+          : !SERVICE_NAME.test(exposeService.trim())
+            ? "expose-service"
+            : !exposePortOk
+              ? "expose-port"
+              : "";
+    if (bad) document.getElementById(bad)?.focus();
+    else if (!name) setName(chartName.trim());
+    return !bad;
+  }
+
   const checks: [Stage, () => boolean][] = [
     ...(fromImage ? ([["template", imageOk]] as [Stage, () => boolean][]) : []),
+    ...(fromChart ? ([["template", chartOk]] as [Stage, () => boolean][]) : []),
     ...(fromRepo ? ([["template", repoOk]] as [Stage, () => boolean][]) : []),
     ["details", detailsOk],
     ["inputs", inputsOk],
@@ -738,7 +816,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
         <PageHeader
           title={`${id} was created`}
           lead={
-            !fromImage
+            !repoless
               ? "Its CI is running: it tests the code, builds the image and deploys it to staging."
               : outcome.deploy
                 ? "Forge is deploying it to staging. Production waits for your first promote."
@@ -746,7 +824,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                   ? "It is in the catalog, but its deploy to staging did not start."
                   : "It is in the catalog. Deploy it to staging from its page when you are ready."
           }
-          cli={fromImage && outcome.deploy ? `forge deploy status ${id} --env staging` : `forge service get ${id}`}
+          cli={repoless && outcome.deploy ? `forge deploy status ${id} --env staging` : `forge service get ${id}`}
         />
         <Panel>
           <StepLog steps={steps} />
@@ -788,6 +866,21 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
               ["Port", port.trim() ? mono(port.trim()) : <span className="text-fg-2">8080, the default</span>],
               ["Health", health.trim() ? mono(health.trim()) : <span className="text-fg-2">/healthz, the default</span>],
               ["Writable", folders.length ? mono(folders.join(", ")) : <span className="text-fg-2">/tmp only</span>],
+            ],
+          ],
+        ] as [Stage, string, [string, ReactNode][]][])
+      : []),
+    ...(fromChart
+      ? ([
+          [
+            "template",
+            "Chart",
+            [
+              ["Chart", mono(`${chartName.trim()} ${chartVersion.trim()}`)],
+              ["Repository", mono(chartRepo.trim())],
+              ["Address goes to", mono(`${exposeService.trim()}:${exposePort.trim()}`)],
+              ["Values", chartValues.trim() ? mono(`${chartValues.trim().split("\n").length} lines`) : <span className="text-fg-2">The chart&apos;s defaults</span>],
+              ...(productionValues.trim() ? ([["Production values", mono(`${productionValues.trim().split("\n").length} lines`)]] as [string, ReactNode][]) : []),
             ],
           ],
         ] as [Stage, string, [string, ReactNode][]][])
@@ -894,6 +987,8 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
             ? "Forge renders the template's files and opens a pull request that adds them."
             : fromRepo
             ? "Forge registers the service and opens a pull request in the repo that adds its forge.yaml and Forge's CI. Merging it is the first deploy."
+            : fromChart
+              ? "Forge checks the chart, keeps its forge.yaml in the deploy repo, adds it to the catalog and deploys it to staging."
             : fromImage
               ? "Forge checks the image, keeps its forge.yaml in the deploy repo, adds it to the catalog and deploys it to staging."
               : "Forge makes the repo from a template, starts its CI and adds it to the catalog."
@@ -1109,6 +1204,126 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                 </div>
               ) : null}
 
+              {stage === "template" && fromChart ? (
+                <div className="flex max-w-[520px] flex-col gap-5">
+                  <Field
+                    id="chart-repo"
+                    label="Repository"
+                    hint="An OCI registry path, oci://ghcr.io/my-org/charts, or an HTTPS chart repository."
+                    error={badChartRepo ? "Start with oci:// or https://, with no login or trailing slash." : undefined}
+                  >
+                    <input
+                      id="chart-repo"
+                      className={`${inputClass} font-mono`}
+                      value={chartRepo}
+                      onChange={(e) => setChartRepo(e.target.value)}
+                      aria-invalid={badChartRepo}
+                      aria-describedby="chart-repo-note"
+                      placeholder="oci://ghcr.io/stefanprodan/charts"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </Field>
+                  <Field
+                    id="chart-name"
+                    label="Chart"
+                    hint="Its name in the repository."
+                    error={badChartName ? "Use the chart's name: lowercase letters, digits, dots, underscores and hyphens." : undefined}
+                  >
+                    <input
+                      id="chart-name"
+                      className={`${inputClass} font-mono`}
+                      value={chartName}
+                      onChange={(e) => setChartName(e.target.value)}
+                      aria-invalid={badChartName}
+                      aria-describedby="chart-name-note"
+                      placeholder="podinfo"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </Field>
+                  <Field
+                    id="chart-version"
+                    label="Version"
+                    hint="One exact version, such as 6.7.1: not a range or latest."
+                    error={badChartVersion ? "Give one exact version, such as 6.7.1." : undefined}
+                  >
+                    <input
+                      id="chart-version"
+                      className={`${inputClass} font-mono`}
+                      value={chartVersion}
+                      onChange={(e) => setChartVersion(e.target.value)}
+                      aria-invalid={badChartVersion}
+                      aria-describedby="chart-version-note"
+                      placeholder="6.7.1"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </Field>
+                  <div className="grid grid-cols-[minmax(0,1fr)_120px] gap-3 max-[520px]:grid-cols-1">
+                  <Field
+                    id="expose-service"
+                    label="Service that gets the address"
+                    hint="The chart's Service. The chart is installed with the service's name as its release."
+                    error={badExposeService ? "Name a Service: lowercase letters, digits and hyphens." : undefined}
+                  >
+                    <input
+                      id="expose-service"
+                      className={`${inputClass} font-mono`}
+                      value={exposeService}
+                      onChange={(e) => setExposeService(e.target.value)}
+                      aria-invalid={badExposeService}
+                      aria-describedby="expose-service-note"
+                      placeholder="podinfo"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </Field>
+                  <Field
+                    id="expose-port"
+                    label="Its port"
+                    hint="The Service's port."
+                    error={badExposePort ? "Use a port from 1 to 65535." : undefined}
+                  >
+                    <input
+                      id="expose-port"
+                      className={`${inputClass} font-mono`}
+                      value={exposePort}
+                      onChange={(e) => setExposePort(e.target.value)}
+                      aria-invalid={badExposePort}
+                      aria-describedby="expose-port-note"
+                      placeholder="9898"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </Field>
+                  </div>
+                  <Field id="chart-values" label="Values" hint="The chart's values for every environment, as YAML. Left empty, the chart's defaults.">
+                    <textarea
+                      id="chart-values"
+                      className={`${inputClass} min-h-[120px] py-2 font-mono text-[12.5px]`}
+                      value={chartValues}
+                      onChange={(e) => setChartValues(e.target.value)}
+                      aria-describedby="chart-values-note"
+                      placeholder={"replicaCount: 2"}
+                      spellCheck={false}
+                    />
+                  </Field>
+                  <Field id="production-values" label="Production values" hint="Values for production only, merged over the ones above.">
+                    <textarea
+                      id="production-values"
+                      className={`${inputClass} min-h-[80px] py-2 font-mono text-[12.5px]`}
+                      value={productionValues}
+                      onChange={(e) => setProductionValues(e.target.value)}
+                      aria-describedby="production-values-note"
+                      placeholder={"replicaCount: 3"}
+                      spellCheck={false}
+                    />
+                  </Field>
+                </div>
+              ) : null}
+
               {stage === "template" && !noTemplate ? (
                 <fieldset className="flex min-w-0 flex-col gap-3">
                   <legend className="sr-only">Template</legend>
@@ -1177,7 +1392,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                         ? "Lowercase letters, digits and hyphens. The template puts it in the file names."
                         : fromRepo
                           ? "Lowercase letters, digits and hyphens. This becomes the catalog name and the image's name; it starts as the repo's."
-                          : fromImage
+                          : repoless
                           ? "Lowercase letters, digits and hyphens. This becomes the catalog name and part of its address."
                           : "Lowercase letters, digits and hyphens. This becomes the repo name and the catalog name."
                     }
@@ -1248,7 +1463,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                       </select>
                     </Field>
                   )}
-                  {(fromImage || (template && !fromRepo)) && !isFile ? (
+                  {(repoless || (template && !noTemplate)) && !isFile ? (
                     <fieldset className="flex min-w-0 flex-col gap-3">
                       <legend className="mb-1.5 text-[13px] font-medium">Who can reach it</legend>
                       <div role="radiogroup" aria-label="Who can reach it" className="flex flex-col gap-2">
@@ -1398,6 +1613,23 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                           </li>
                           <li>Merging it is the first deploy: the workflow builds the image and deploys main to staging. Production waits for your first promote.</li>
                         </>
+                      ) : fromChart ? (
+                        <>
+                          <li>
+                            Forge checks <span className="font-mono">{chartRepo.trim()}</span> against the chart rules and finds{" "}
+                            <span className="font-mono">
+                              {chartName.trim()} {chartVersion.trim()}
+                            </span>{" "}
+                            there.
+                          </li>
+                          <li>
+                            It writes <span className="font-mono">services/{name}/forge.yaml</span> into the deploy repo and adds {name} to the catalog. No repo is made.
+                          </li>
+                          <li>
+                            {deployNow ? "It deploys the chart to staging" : "Nothing is deployed until you deploy it from its page"}: in its own namespace, where it may not
+                            make cluster-wide resources or privileged pods. Production waits for your first promote.
+                          </li>
+                        </>
                       ) : fromImage ? (
                         <>
                           <li>
@@ -1426,7 +1658,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                         </>
                       )}
                     </ol>
-                    {fromImage ? (
+                    {repoless ? (
                       <label className="mt-3 flex items-center gap-2">
                         <input type="checkbox" className="size-4 accent-ember" checked={deployNow} onChange={(e) => setDeployNow(e.target.checked)} />
                         <span className="type-small">Deploy it to staging once it is created</span>
@@ -1447,7 +1679,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                               ? "Nothing was left behind: fix it and create again."
                               : fromRepo
                                 ? `The service is still in the catalog: delete ${name} before connecting the repo again.`
-                                : fromImage
+                                : repoless
                                 ? `Its forge.yaml is still in the deploy repo (services/${name}/forge.yaml): the next create overwrites it.`
                                 : "The repo could not be deleted: delete it on GitHub before trying again."
                           }`,
@@ -1499,11 +1731,18 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
             <aside className="min-w-0 min-[1080px]:sticky min-[1080px]:top-[76px]">
               <Panel className="flex flex-col gap-4 p-4">
                 <div className="flex min-w-0 items-center gap-3">
-                  {fromRepo ? <Mark id="repo" /> : fromImage ? <Mark id="image" /> : tplId ? <Mark id={tplId} /> : null}
+                  {fromRepo ? <Mark id="repo" /> : fromChart ? <Mark id="chart" /> : fromImage ? <Mark id="image" /> : tplId ? <Mark id={tplId} /> : null}
                   <div className="min-w-0">
                     <div className="truncate font-mono font-semibold">{name || "<name>"}</div>
                     <div className="truncate text-[12.5px] text-fg-3">
-                      {fromRepo ? repoUrl || "<repo>" : fromImage ? image.trim() || "<image>" : tplId || "<template>"} · {team.trim() || "No owner yet"}
+                      {fromRepo
+                        ? repoUrl || "<repo>"
+                        : fromChart
+                          ? `${chartName.trim() || "<chart>"} ${chartVersion.trim()}`.trim()
+                          : fromImage
+                            ? image.trim() || "<image>"
+                            : tplId || "<template>"}{" "}
+                      · {team.trim() || "No owner yet"}
                     </div>
                   </div>
                 </div>
