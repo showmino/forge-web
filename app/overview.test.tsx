@@ -30,6 +30,8 @@ type World = {
   auditDown: boolean;
   clustersDown: boolean;
   extended: string[];
+  // More healthy services in staging, for a board with many.
+  many?: number;
   // Resolved by a test to let the deploy in flight end.
   land: () => void;
 };
@@ -61,6 +63,15 @@ function forge(w: World) {
               { name: "deployments/payments/staging", service: "services/payments", env: "staging", commit: "abc1234", health: Deployment_Health.HEALTHY, sync: Deployment_SyncStatus.SYNCED, deployTime: ago(60) },
               { name: "deployments/checkout-api/production", service: "services/checkout-api", env: "production", commit: "5d20c9e", health: Deployment_Health.DEGRADED, sync: Deployment_SyncStatus.SYNCED, message: "1 of 3 pods is crash-looping", deployTime: ago(31) },
               { name: "deployments/ledger/production", service: "services/ledger", env: "production", commit: "0f6a2d4", version: "v1.2.0", health: Deployment_Health.HEALTHY, sync: Deployment_SyncStatus.SYNCED, deployTime: ago(180) },
+              ...Array.from({ length: w.many ?? 0 }, (_, i) => ({
+                name: `deployments/svc-${i}/staging`,
+                service: `services/svc-${i}`,
+                env: "staging",
+                commit: "1a2b3c4",
+                health: Deployment_Health.HEALTHY,
+                sync: Deployment_SyncStatus.SYNCED,
+                deployTime: ago(600 + i),
+              })),
             ],
       }),
     });
@@ -153,6 +164,19 @@ describe("the overview", () => {
     await waitFor(() => expect(stat("Clusters")).toBe("–"), { timeout: 4000 });
   });
 
+
+  it("shows a few services per environment and links to the rest", async () => {
+    renderWithApi(<Overview />, forge(world({ many: 20 })));
+    const status = within(await screen.findByRole("region", { name: "Status" }));
+    const staging = within(await status.findByRole("list", { name: "Staging" }));
+    const links = staging.getAllByRole("link");
+    // Four tiles, the last deployed first, and one link to the other seventeen.
+    expect(links).toHaveLength(5);
+    expect(links[0].textContent).toContain("payments");
+    const more = staging.getByRole("link", { name: /17 more/ });
+    expect(more.getAttribute("href")).toBe("/services");
+    expect(status.getByText("All 21 healthy")).toBeTruthy();
+  });
 
   it("leads with the status of production and staging", async () => {
     renderWithApi(<Overview />, forge(world()));

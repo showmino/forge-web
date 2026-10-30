@@ -163,8 +163,9 @@ export default function Overview() {
 type Loaded<T> = T | "error" | undefined;
 
 // StatusBoard is the head of the page: a row each for production and
-// staging, one tile per service deployed there with what is broken first, and
-// under them the day's deploys, the previews and the clusters.
+// staging, with a few tiles each (what is broken, then what was deployed
+// last) and a link to the rest, and under them the day's deploys, the
+// previews and the clusters.
 function StatusBoard({
   rows,
   error,
@@ -254,16 +255,16 @@ function BoardEnv({ row, divided }: { row: BoardRow; divided: boolean }) {
           <span aria-hidden="true" className={`size-[9px] flex-none rounded-[2px] ${swatch[row.env]}`} />
           {envName[row.env]}
         </h3>
-        {row.tiles.length > 0 ? (
+        {row.running > 0 ? (
           <>
-            <p className={`mt-1 text-[13.5px] font-medium ${tone}`}>{problems || `All ${row.tiles.length} healthy`}</p>
+            <p className={`mt-1 text-[13.5px] font-medium ${tone}`}>{problems || `All ${row.running} healthy`}</p>
             <p className="mt-px text-[12.5px] text-fg-3">
-              {row.tiles.length} running{row.notDeployed ? ` · ${row.notDeployed} not deployed` : ""}
+              {row.running} running{row.notDeployed ? ` · ${row.notDeployed} not deployed` : ""}
             </p>
           </>
         ) : null}
       </div>
-      {row.tiles.length === 0 ? (
+      {row.running === 0 ? (
         <p className="self-center text-[13.5px] text-fg-2">Nothing is deployed to {row.env} yet.</p>
       ) : (
         <ul aria-label={envName[row.env]} className="grid min-w-0 grid-cols-[repeat(auto-fill,minmax(158px,1fr))] gap-1.5 max-[700px]:grid-cols-[repeat(auto-fill,minmax(136px,1fr))]">
@@ -272,6 +273,19 @@ function BoardEnv({ row, divided }: { row: BoardRow; divided: boolean }) {
               <BoardTile tile={t} />
             </li>
           ))}
+          {row.more > 0 ? (
+            <li className="min-w-0">
+              <Link
+                href="/services"
+                className="flex h-full min-w-0 flex-col justify-center gap-0.5 rounded-md border border-dashed border-line-strong px-2.5 py-2 text-fg-2 no-underline hover:border-fg-3 hover:text-fg"
+              >
+                <span className="text-[12.5px] font-medium">{row.more} more</span>
+                <span className="text-[12px] text-fg-3">
+                  <span className="sr-only">in {row.env}, </span>in Services
+                </span>
+              </Link>
+            </li>
+          ) : null}
         </ul>
       )}
     </div>

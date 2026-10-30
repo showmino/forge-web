@@ -25,7 +25,10 @@ the others. The server only serves the pages and
 `/api/healthz`; it holds no secrets.
 
 - **Overview** (`/`): what is shipping, what is broken and what needs
-  someone. The numbers of the day and the recent deploys come from the audit
+  someone. Its status board has a row for production and one for staging:
+  their counts, and one line of tiles each (what is broken first, then what
+  was deployed last), the last a link to the Services page for the rest, so it
+  stays one screen with a thousand services. The numbers of the day and the recent deploys come from the audit
   log of the last 24 hours, which outlives a restart of the API; what is in
   flight is followed live; "needs attention" is deployments Argo CD does not
   call healthy, deploy targets whose last deploy failed, and previews that
