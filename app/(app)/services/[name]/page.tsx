@@ -32,7 +32,7 @@ import { type Deployment, Deployment_Health } from "@/gen/forge/v1/deploy_pb";
 import type { Environment } from "@/gen/forge/v1/environment_pb";
 import { environmentId, isCode, listAllServices, serviceId } from "@/lib/api";
 import { START } from "@/lib/docs";
-import { actorText, exact, shortCommit, timeUntil, when } from "@/lib/format";
+import { actorText, exact, isChartRef, shortCommit, timeUntil, when } from "@/lib/format";
 import { auditStatus, deploymentStatus, environmentStatus } from "@/lib/status";
 
 type Open =
@@ -197,6 +197,8 @@ function ServiceView({ id }: { id: string }) {
   const ahead = deployed("staging") && staging?.commit !== deployment("production")?.commit;
   // A service without a repo runs an image someone else built: no branches, so no previews.
   const noRepo = !s.repoUrl;
+  // A service that runs a published chart shows the chart where an image would be.
+  const runsChart = noRepo && !!deployments.data?.some((d) => isChartRef(d.image));
 
   return (
     <>
@@ -394,7 +396,7 @@ function ServiceView({ id }: { id: string }) {
           }}
         />
       ) : null}
-      {open?.kind === "deploy" ? <DeployDialog id={id} noRepo={noRepo} onClose={close} onStarted={onStarted} /> : null}
+      {open?.kind === "deploy" ? <DeployDialog id={id} noRepo={noRepo} chart={runsChart} onClose={close} onStarted={onStarted} /> : null}
       {open?.kind === "promote" ? (
         <PromoteDialog id={id} staging={deployment("staging")} onClose={close} onStarted={onStarted} />
       ) : null}

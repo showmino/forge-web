@@ -54,3 +54,10 @@ export function shortCommit(commit: string): string {
   if (digest) return `sha256:${digest[1]}`;
   return /^[0-9a-f]{8,}$/.test(commit) ? commit.slice(0, 7) : commit;
 }
+
+// isChartRef reports whether what a deployment runs is a published Helm chart
+// (oci://ghcr.io/acme/charts/podinfo:6.7.1, https://charts.example.com/podinfo:1.0.0)
+// rather than an image.
+export function isChartRef(image: string): boolean {
+  return image.startsWith("oci://") || image.startsWith("https://");
+}

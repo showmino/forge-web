@@ -69,9 +69,9 @@ const built = (r: { version: string; commit: string }) =>
   r.version ? `${r.version}, ${shortCommit(r.commit)}` : shortCommit(r.commit);
 
 // DeployDialog deploys a ref to staging. A service without a repo (noRepo)
-// runs an image: the ref is the image tag, and left empty it is the tag its
-// forge.yaml names.
-export function DeployDialog({ id, noRepo = false, onClose, onStarted }: Common & { noRepo?: boolean }) {
+// runs an image or, with chart, a published chart: the ref is the image tag
+// or the chart version, and left empty it is the one its forge.yaml names.
+export function DeployDialog({ id, noRepo = false, chart = false, onClose, onStarted }: Common & { noRepo?: boolean; chart?: boolean }) {
   const api = useApi();
   const toast = useToast();
   const [ref, setRef] = useState(noRepo ? "" : "main");
@@ -86,7 +86,18 @@ export function DeployDialog({ id, noRepo = false, onClose, onStarted }: Common 
   return (
     <Dialog title={`Deploy ${id} to staging?`} onClose={onClose}>
       <form onSubmit={action.run} className="flex flex-col gap-4">
-        {noRepo ? (
+        {noRepo && chart ? (
+          <>
+            <p>Staging will run the chart at this version, with the values in its forge.yaml.</p>
+            <Field
+              id="deploy-ref"
+              label="Chart version"
+              hint="Left empty, the version in its forge.yaml. A new version is written into forge.yaml once the deploy has succeeded."
+            >
+              <input id="deploy-ref" className={`${inputClass} type-code`} value={ref} onChange={(e) => setRef(e.target.value)} placeholder="6.8.0" />
+            </Field>
+          </>
+        ) : noRepo ? (
           <>
             <p>Staging will run the image at this tag, pinned to the digest the tag has now.</p>
             <Field
