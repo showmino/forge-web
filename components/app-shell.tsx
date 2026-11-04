@@ -33,6 +33,12 @@ const icon = {
     </>
   ),
   operations: <path d="M3 12h4l3-8 4 16 3-8h4" />,
+  approvals: (
+    <>
+      <path d="M12 3l7 3v5c0 4.5-3 8.5-7 10-4-1.5-7-5.5-7-10V6z" />
+      <path d="M8.5 12l2.5 2.5 4.5-5" />
+    </>
+  ),
   clusters: (
     <>
       <rect x="3" y="4" width="18" height="7" rx="1.5" />
@@ -95,6 +101,7 @@ const groups: { label: string; items: Item[] }[] = [
     items: [
       { href: "/environments", label: "Environments", icon: "environments", match: (p) => p.startsWith("/environments") },
       { href: "/deployments", label: "Deployments", icon: "deployments", match: (p) => p.startsWith("/deployments") },
+      { href: "/approvals", label: "Approvals", icon: "approvals", match: (p) => p.startsWith("/approvals") },
       { href: "/operations", label: "Operations", icon: "operations", match: (p) => p.startsWith("/operations") },
       { href: "/clusters", label: "Clusters", icon: "clusters", match: (p) => p.startsWith("/clusters"), adminOnly: true },
     ],

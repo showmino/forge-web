@@ -1,6 +1,7 @@
 import { timestampNow } from "@bufbuild/protobuf/wkt";
 import { Code, ConnectError, createClient, type Client, type Interceptor, type Transport } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
+import { ApprovalService } from "@/gen/forge/v1/approval_pb";
 import { type AuditEvent, AuditService } from "@/gen/forge/v1/audit_pb";
 import { AuthService } from "@/gen/forge/v1/auth_pb";
 import { ServiceCatalogService } from "@/gen/forge/v1/catalog_pb";
@@ -28,6 +29,7 @@ export type Api = {
   operations: Client<typeof OperationService>;
   docs: Client<typeof DocsService>;
   clusters: Client<typeof ClusterService>;
+  approvals: Client<typeof ApprovalService>;
 };
 
 const bearer: Interceptor = (next) => async (req) => {
@@ -70,6 +72,7 @@ export function makeApi(transport: Transport): Api {
     audit: createClient(AuditService, transport),
     operations: createClient(OperationService, transport),
     docs: createClient(DocsService, transport),
+    approvals: createClient(ApprovalService, transport),
     clusters: createClient(ClusterService, transport),
   };
 }
@@ -155,4 +158,9 @@ export async function listAllServices(api: Api) {
     pageToken = res.nextPageToken;
   } while (pageToken);
   return all;
+}
+
+// approvalId turns "approvals/apr_x" into "apr_x".
+export function approvalId(name: string): string {
+  return name.replace(/^approvals\//, "");
 }

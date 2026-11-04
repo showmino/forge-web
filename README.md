@@ -55,6 +55,18 @@ the others. The server only serves the pages and
 - **Deployments** (`/deployments`): deploys, promotions and rollbacks of the
   last 7 days from the audit log, and the running ones from the operations.
   `/operations` stays: it also lists creates, previews and deletes.
+- **Approvals** (`/approvals`): the production runs of infrastructure repos
+  (Forge phase 12, `ApprovalService`) waiting for an approval, and all of
+  them; Approve and Reject ask for a reason, and the API refuses the person
+  who pushed the commit or started the run unless the repo's team has an
+  exception. An approved run Forge could not start shows "Run not started"
+  and can be started again. Below: the exceptions and whether each holds
+  (hidden on a Forge without them). An infrastructure repo's own page shows
+  its target, environments and exception instead of deploys, an Approvals
+  tab instead of Deployments, and no Deploy, Promote or Preview buttons. The
+  Create page asks an infrastructure template for a target
+  (`TemplateService.ListTargets`, those open to the team) and its
+  environments instead of run options.
 - **Ownership** (`/ownership`): the organization's teams (`TeamService`)
   joined with the catalog: which team owns which service, services whose
   team is not a team on GitHub, services with no contacts, teams with no

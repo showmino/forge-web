@@ -1,3 +1,4 @@
+import { type Approval, Approval_State } from "@/gen/forge/v1/approval_pb";
 import { Lifecycle } from "@/gen/forge/v1/catalog_pb";
 import { Deployment_Health, Deployment_SyncStatus, type Deployment } from "@/gen/forge/v1/deploy_pb";
 import { Environment_State, type Environment } from "@/gen/forge/v1/environment_pb";
@@ -96,4 +97,23 @@ export function operationTitle(op: Operation): string {
   const service = /^services\/(.+)$/.exec(op.target);
   if (service) return `${kind} ${service[1]}`;
   return op.target ? `${kind} ${op.target}` : kind;
+}
+
+// approvalStatus is an approval's state as a status pill.
+export function approvalStatus(a: Approval): Status {
+  if (a.state === Approval_State.APPROVED && a.dispatchError) return { tone: "danger", word: "Run not started" };
+  switch (a.state) {
+    case Approval_State.PENDING:
+      return { tone: "warning", word: "Waiting" };
+    case Approval_State.APPROVED:
+      return { tone: "progress", word: "Approved" };
+    case Approval_State.CLAIMED:
+      return { tone: "success", word: "Deployed" };
+    case Approval_State.REJECTED:
+      return { tone: "danger", word: "Rejected" };
+    case Approval_State.SUPERSEDED:
+      return { tone: "neutral", word: "Superseded" };
+    default:
+      return { tone: "neutral", word: "Unknown" };
+  }
 }

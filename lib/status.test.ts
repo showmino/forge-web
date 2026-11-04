@@ -1,9 +1,10 @@
 import { create } from "@bufbuild/protobuf";
 import { describe, expect, it } from "vitest";
+import { Approval_State, ApprovalSchema } from "@/gen/forge/v1/approval_pb";
 import { Deployment_Health, Deployment_SyncStatus, DeploymentSchema } from "@/gen/forge/v1/deploy_pb";
 import { Environment_State, EnvironmentSchema } from "@/gen/forge/v1/environment_pb";
 import { OperationSchema } from "@/gen/forge/v1/operation_pb";
-import { auditStatus, deploymentStatus, environmentStatus, operationStatus, operationTitle } from "./status";
+import { approvalStatus, auditStatus, deploymentStatus, environmentStatus, operationStatus, operationTitle } from "./status";
 
 describe("deploymentStatus", () => {
   const d = (health: Deployment_Health, sync = Deployment_SyncStatus.SYNCED) => create(DeploymentSchema, { health, sync });
@@ -70,5 +71,19 @@ describe("operations", () => {
     ["", "", "Operation"],
   ])("%s on %s is %j", (kind, target, want) => {
     expect(operationTitle(op({ kind, target }))).toBe(want);
+  });
+});
+
+describe("approvalStatus", () => {
+  const a = (state: Approval_State, dispatchError = "") => create(ApprovalSchema, { state, dispatchError });
+  it("names each state", () => {
+    expect(approvalStatus(a(Approval_State.PENDING))).toEqual({ tone: "warning", word: "Waiting" });
+    expect(approvalStatus(a(Approval_State.APPROVED))).toEqual({ tone: "progress", word: "Approved" });
+    expect(approvalStatus(a(Approval_State.CLAIMED))).toEqual({ tone: "success", word: "Deployed" });
+    expect(approvalStatus(a(Approval_State.REJECTED))).toEqual({ tone: "danger", word: "Rejected" });
+    expect(approvalStatus(a(Approval_State.SUPERSEDED))).toEqual({ tone: "neutral", word: "Superseded" });
+  });
+  it("says when the run could not start", () => {
+    expect(approvalStatus(a(Approval_State.APPROVED, "403"))).toEqual({ tone: "danger", word: "Run not started" });
   });
 });

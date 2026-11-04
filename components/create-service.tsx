@@ -343,6 +343,15 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   const [imageChecked, setImageChecked] = useState(false);
   const [deployNow, setDeployNow] = useState(true);
   const [reach, setReach] = useState<Reach>("public");
+  // An infrastructure template's target and environments (null: every one
+  // the target has).
+  const [target, setTarget] = useState("");
+  const [chosenEnvs, setChosenEnvs] = useState<string[] | null>(null);
+  const targets = useQuery({
+    queryKey: ["targets"],
+    queryFn: () => api.templates.listTargets({}).then((r) => r.targets),
+    staleTime: 5 * 60_000,
+  });
   // The public domains the API offers, the default first, and the domain of
   // the internal addresses. An API that predates the list gives no choice:
   // the service gets the default.
@@ -413,6 +422,13 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   const optional = template?.parameters.filter((p) => !p.required) ?? [];
   // A file template is a form: its inputs in its own order, under their groups.
   const isFile = !noTemplate && template?.type === "file";
+  // An infrastructure template makes a repo that deploys itself to a target.
+  const isInfra = !noTemplate && template?.type === "infrastructure";
+  const teamTargets = (targets.data ?? []).filter((t) => t.teams.length === 0 || t.teams.includes(team.trim()));
+  const theTarget = teamTargets.find((t) => t.name === target) ?? teamTargets[0];
+  const targetName = theTarget?.name ?? "";
+  const envs = chosenEnvs ?? theTarget?.environments ?? [];
+  const infraReady = !isInfra || (targetName !== "" && envs.length > 0);
   const groups = [...new Set((template?.parameters ?? []).map((p) => p.group))];
   const field = (p: TemplateParameter) => {
     const key = `${template?.name}/${p.name}`;
@@ -434,7 +450,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     );
   };
   // Where it is reached: a file template makes no service.
-  const reachRun = isFile
+  const reachRun = isFile || isInfra
     ? { flags: [] as [string, string][], options: {} }
     : reach === "internal"
       ? { flags: [["--internal", ""]] as [string, string][], options: { networkOnly: true } }
@@ -442,7 +458,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
         ? { flags: [["--internal-staging", ""]] as [string, string][], options: { stagingNetworkOnly: true } }
         : { flags: [] as [string, string][], options: {} };
   // The default domain is left to the API, as forge.yaml leaves it.
-  const ownDomain = !isFile && choosesDomain && domain !== defaultDomain;
+  const ownDomain = !isFile && !isInfra && choosesDomain && domain !== defaultDomain;
   const address = ownDomain
     ? { flags: [...reachRun.flags, ["--domain", domain]] as [string, string][], options: { ...reachRun.options, domain } }
     : reachRun;
@@ -501,6 +517,9 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     }),
     ...runAsked.flags,
     ...address.flags,
+    ...(isInfra
+      ? ([["--target", targetName || "<target>"], ...(chosenEnvs ? [["--environments", envs.join(",")]] : [])] as [string, string][])
+      : []),
   ];
 
   async function create() {
@@ -551,6 +570,15 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
           image: image.trim(),
           ownerTeam: team.trim(),
           runOptions: Object.keys(imageRun).length > 0 ? { ...runAndAddress, ...imageRun } : runAndAddress,
+        }
+      : isInfra
+      ? {
+          serviceId: name,
+          template: template!.name,
+          ownerTeam: team.trim(),
+          parameters,
+          target: targetName,
+          environments: chosenEnvs ? envs : [],
         }
       : {
           serviceId: name,
@@ -920,7 +948,13 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
       [
         ["Name", mono(name)],
         [isFile ? "GitHub team" : "Owner", team.trim()],
-        ...(isFile || fromRepo
+        ...(isInfra
+          ? ([
+              ["Target", theTarget?.title ? `${theTarget.title} (${targetName})` : mono(targetName)],
+              ["Environments", envs.join(", ")],
+            ] as [string, ReactNode][])
+          : []),
+        ...(isFile || fromRepo || isInfra
           ? []
           : ([
               ["Reach", chosen.title],
@@ -1463,7 +1497,54 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                       </select>
                     </Field>
                   )}
-                  {(repoless || (template && !noTemplate)) && !isFile ? (
+                  {isInfra ? (
+                    <fieldset className="flex min-w-0 flex-col gap-3">
+                      <legend className="mb-1.5 text-[13px] font-medium">Where it deploys</legend>
+                      {targets.isPending ? (
+                        <Loading what="targets" />
+                      ) : teamTargets.length === 0 ? (
+                        <p className="text-fg-2">No target is open to {team.trim() || "this team"}: ask the platform team for one.</p>
+                      ) : (
+                        <>
+                          <Field id="create-target" label="Target" hint="A set of cloud accounts, one per environment, that the platform team set up.">
+                            <select
+                              id="create-target"
+                              className={inputClass}
+                              value={targetName}
+                              onChange={(e) => {
+                                setTarget(e.target.value);
+                                setChosenEnvs(null);
+                              }}
+                            >
+                              {teamTargets.map((t) => (
+                                <option key={t.name} value={t.name}>
+                                  {t.title ? `${t.title} (${t.name})` : t.name}
+                                </option>
+                              ))}
+                            </select>
+                          </Field>
+                          <div role="group" aria-label="Environments" className="flex flex-col gap-2">
+                            <span className="type-small font-semibold">Environments</span>
+                            {(theTarget?.environments ?? []).map((e) => (
+                              <label key={e} className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={envs.includes(e)}
+                                  onChange={(ev) => setChosenEnvs(ev.target.checked ? [...new Set([...envs, e])] : envs.filter((x) => x !== e))}
+                                />
+                                <span>
+                                  {e}
+                                  {e === "production" ? <span className="text-fg-2"> · its runs wait for an approval by your team</span> : null}
+                                </span>
+                              </label>
+                            ))}
+                            {envs.length === 0 ? <p className="text-bad-fg">Choose at least one environment.</p> : null}
+                          </div>
+                        </>
+                      )}
+                    </fieldset>
+                  ) : null}
+                  {(repoless || (template && !noTemplate)) && !isFile && !isInfra ? (
                     <fieldset className="flex min-w-0 flex-col gap-3">
                       <legend className="mb-1.5 text-[13px] font-medium">Who can reach it</legend>
                       <div role="radiogroup" aria-label="Who can reach it" className="flex flex-col gap-2">
@@ -1640,6 +1721,16 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                           </li>
                           <li>{deployNow ? "It deploys it to staging." : "Nothing is deployed until you deploy it from its page."} Production waits for your first promote.</li>
                         </>
+                      ) : isInfra ? (
+                        <>
+                          <li>
+                            Forge creates <span className="font-mono">github.com/…/{name}</span> from <span className="font-mono">{tplId}</span> and gives {team.trim()} access.
+                          </li>
+                          <li>
+                            It sets up the GitHub environments {envs.join(" and ")} for <span className="font-mono">{targetName}</span>, with their accounts&apos; secrets, and lets the shared workflow sign in there.
+                          </li>
+                          <li>Nothing deploys until you merge to main. Production then waits for an approval by someone else on your team.</li>
+                        </>
                       ) : isFile ? (
                         <>
                           <li>
@@ -1717,8 +1808,8 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                   </ButtonLink>
                 )}
                 {stage === "review" ? (
-                  <Button kind="primary" type="submit" className="ml-auto" disabled={busy || !canCreate || teamRefused || (!noTemplate && !template)}>
-                    {busy ? (fromRepo ? "Connecting" : "Creating") : fromRepo ? "Connect repo" : isFile ? "Create pull request" : "Create service"}
+                  <Button kind="primary" type="submit" className="ml-auto" disabled={busy || !canCreate || teamRefused || (!noTemplate && !template) || !infraReady}>
+                    {busy ? (fromRepo ? "Connecting" : "Creating") : fromRepo ? "Connect repo" : isFile ? "Create pull request" : isInfra ? "Create repo" : "Create service"}
                   </Button>
                 ) : (
                   <Button kind="primary" type="submit" className="ml-auto" disabled={!noTemplate && !template}>

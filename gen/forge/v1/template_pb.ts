@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file forge/v1/template.proto.
  */
 export const file_forge_v1_template: GenFile = /*@__PURE__*/
-  fileDesc("Chdmb3JnZS92MS90ZW1wbGF0ZS5wcm90bxIIZm9yZ2UudjEizwEKCFRlbXBsYXRlEgwKBG5hbWUYASABKAkSDwoHdmVyc2lvbhgCIAEoCRINCgV0aXRsZRgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIMCgR0YWdzGAUgAygJEg0KBW93bmVyGAYgASgJEi8KCnBhcmFtZXRlcnMYByADKAsyGy5mb3JnZS52MS5UZW1wbGF0ZVBhcmFtZXRlchIPCgdvcHRpb25zGAggAygJEgwKBHR5cGUYCSABKAkSEwoLdGFyZ2V0X3JlcG8YCiABKAkigQMKEVRlbXBsYXRlUGFyYW1ldGVyEgwKBG5hbWUYASABKAkSLgoEdHlwZRgCIAEoDjIgLmZvcmdlLnYxLlRlbXBsYXRlUGFyYW1ldGVyLlR5cGUSEAoIcmVxdWlyZWQYAyABKAgSFQoNZGVmYXVsdF92YWx1ZRgEIAEoCRIPCgdwYXR0ZXJuGAUgASgJEg4KBnZhbHVlcxgGIAMoCRITCgtkZXNjcmlwdGlvbhgHIAEoCRINCgVsYWJlbBgIIAEoCRITCgtwbGFjZWhvbGRlchgJIAEoCRINCgVncm91cBgKIAEoCRIQCgNtaW4YCyABKANIAIgBARIQCgNtYXgYDCABKANIAYgBASJoCgRUeXBlEhQKEFRZUEVfVU5TUEVDSUZJRUQQABIPCgtUWVBFX1NUUklORxABEgwKCFRZUEVfSU5UEAISDQoJVFlQRV9CT09MEAMSDQoJVFlQRV9FTlVNEAQSDQoJVFlQRV9MSVNUEAVCBgoEX21pbkIGCgRfbWF4IjQKFExpc3RUZW1wbGF0ZXNSZXF1ZXN0Eg8KB3ZlcnNpb24YASABKAkSCwoDdGFnGAIgASgJIj4KFUxpc3RUZW1wbGF0ZXNSZXNwb25zZRIlCgl0ZW1wbGF0ZXMYASADKAsyEi5mb3JnZS52MS5UZW1wbGF0ZSIzChJHZXRUZW1wbGF0ZVJlcXVlc3QSDAoEbmFtZRgBIAEoCRIPCgd2ZXJzaW9uGAIgASgJIjsKE0dldFRlbXBsYXRlUmVzcG9uc2USJAoIdGVtcGxhdGUYASABKAsyEi5mb3JnZS52MS5UZW1wbGF0ZTK5AQoPVGVtcGxhdGVTZXJ2aWNlElUKDUxpc3RUZW1wbGF0ZXMSHi5mb3JnZS52MS5MaXN0VGVtcGxhdGVzUmVxdWVzdBofLmZvcmdlLnYxLkxpc3RUZW1wbGF0ZXNSZXNwb25zZSIDkAIBEk8KC0dldFRlbXBsYXRlEhwuZm9yZ2UudjEuR2V0VGVtcGxhdGVSZXF1ZXN0Gh0uZm9yZ2UudjEuR2V0VGVtcGxhdGVSZXNwb25zZSIDkAIBYgZwcm90bzM");
+  fileDesc("Chdmb3JnZS92MS90ZW1wbGF0ZS5wcm90bxIIZm9yZ2UudjEizwEKCFRlbXBsYXRlEgwKBG5hbWUYASABKAkSDwoHdmVyc2lvbhgCIAEoCRINCgV0aXRsZRgDIAEoCRITCgtkZXNjcmlwdGlvbhgEIAEoCRIMCgR0YWdzGAUgAygJEg0KBW93bmVyGAYgASgJEi8KCnBhcmFtZXRlcnMYByADKAsyGy5mb3JnZS52MS5UZW1wbGF0ZVBhcmFtZXRlchIPCgdvcHRpb25zGAggAygJEgwKBHR5cGUYCSABKAkSEwoLdGFyZ2V0X3JlcG8YCiABKAkigQMKEVRlbXBsYXRlUGFyYW1ldGVyEgwKBG5hbWUYASABKAkSLgoEdHlwZRgCIAEoDjIgLmZvcmdlLnYxLlRlbXBsYXRlUGFyYW1ldGVyLlR5cGUSEAoIcmVxdWlyZWQYAyABKAgSFQoNZGVmYXVsdF92YWx1ZRgEIAEoCRIPCgdwYXR0ZXJuGAUgASgJEg4KBnZhbHVlcxgGIAMoCRITCgtkZXNjcmlwdGlvbhgHIAEoCRINCgVsYWJlbBgIIAEoCRITCgtwbGFjZWhvbGRlchgJIAEoCRINCgVncm91cBgKIAEoCRIQCgNtaW4YCyABKANIAIgBARIQCgNtYXgYDCABKANIAYgBASJoCgRUeXBlEhQKEFRZUEVfVU5TUEVDSUZJRUQQABIPCgtUWVBFX1NUUklORxABEgwKCFRZUEVfSU5UEAISDQoJVFlQRV9CT09MEAMSDQoJVFlQRV9FTlVNEAQSDQoJVFlQRV9MSVNUEAVCBgoEX21pbkIGCgRfbWF4IjQKFExpc3RUZW1wbGF0ZXNSZXF1ZXN0Eg8KB3ZlcnNpb24YASABKAkSCwoDdGFnGAIgASgJIj4KFUxpc3RUZW1wbGF0ZXNSZXNwb25zZRIlCgl0ZW1wbGF0ZXMYASADKAsyEi5mb3JnZS52MS5UZW1wbGF0ZSIzChJHZXRUZW1wbGF0ZVJlcXVlc3QSDAoEbmFtZRgBIAEoCRIPCgd2ZXJzaW9uGAIgASgJIjsKE0dldFRlbXBsYXRlUmVzcG9uc2USJAoIdGVtcGxhdGUYASABKAsyEi5mb3JnZS52MS5UZW1wbGF0ZSJKCgZUYXJnZXQSDAoEbmFtZRgBIAEoCRINCgV0aXRsZRgCIAEoCRIUCgxlbnZpcm9ubWVudHMYAyADKAkSDQoFdGVhbXMYBCADKAkiFAoSTGlzdFRhcmdldHNSZXF1ZXN0IjgKE0xpc3RUYXJnZXRzUmVzcG9uc2USIQoHdGFyZ2V0cxgBIAMoCzIQLmZvcmdlLnYxLlRhcmdldDKKAgoPVGVtcGxhdGVTZXJ2aWNlEk8KC0xpc3RUYXJnZXRzEhwuZm9yZ2UudjEuTGlzdFRhcmdldHNSZXF1ZXN0Gh0uZm9yZ2UudjEuTGlzdFRhcmdldHNSZXNwb25zZSIDkAIBElUKDUxpc3RUZW1wbGF0ZXMSHi5mb3JnZS52MS5MaXN0VGVtcGxhdGVzUmVxdWVzdBofLmZvcmdlLnYxLkxpc3RUZW1wbGF0ZXNSZXNwb25zZSIDkAIBEk8KC0dldFRlbXBsYXRlEhwuZm9yZ2UudjEuR2V0VGVtcGxhdGVSZXF1ZXN0Gh0uZm9yZ2UudjEuR2V0VGVtcGxhdGVSZXNwb25zZSIDkAIBYgZwcm90bzM");
 
 /**
  * Template is a service template at one version.
@@ -68,7 +68,8 @@ export type Template = Message<"forge.v1.Template"> & {
   options: string[];
 
   /**
-   * "service" makes a new repo; "file" adds files to target_repo by pull request.
+   * "service" makes a new repo; "file" adds files to target_repo by pull
+   * request; "infrastructure" makes a repo of infrastructure code for a target.
    *
    * @generated from field: string type = 9;
    */
@@ -311,12 +312,93 @@ export const GetTemplateResponseSchema: GenMessage<GetTemplateResponse> = /*@__P
   messageDesc(file_forge_v1_template, 5);
 
 /**
+ * Target is a set of cloud accounts, one per environment, that an
+ * infrastructure repo deploys to.
+ *
+ * @generated from message forge.v1.Target
+ */
+export type Target = Message<"forge.v1.Target"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+
+  /**
+   * Its environments, in deploy order: staging, production or both.
+   *
+   * @generated from field: repeated string environments = 3;
+   */
+  environments: string[];
+
+  /**
+   * The teams that may use it; empty for every team.
+   *
+   * @generated from field: repeated string teams = 4;
+   */
+  teams: string[];
+};
+
+/**
+ * Describes the message forge.v1.Target.
+ * Use `create(TargetSchema)` to create a new message.
+ */
+export const TargetSchema: GenMessage<Target> = /*@__PURE__*/
+  messageDesc(file_forge_v1_template, 6);
+
+/**
+ * @generated from message forge.v1.ListTargetsRequest
+ */
+export type ListTargetsRequest = Message<"forge.v1.ListTargetsRequest"> & {
+};
+
+/**
+ * Describes the message forge.v1.ListTargetsRequest.
+ * Use `create(ListTargetsRequestSchema)` to create a new message.
+ */
+export const ListTargetsRequestSchema: GenMessage<ListTargetsRequest> = /*@__PURE__*/
+  messageDesc(file_forge_v1_template, 7);
+
+/**
+ * @generated from message forge.v1.ListTargetsResponse
+ */
+export type ListTargetsResponse = Message<"forge.v1.ListTargetsResponse"> & {
+  /**
+   * @generated from field: repeated forge.v1.Target targets = 1;
+   */
+  targets: Target[];
+};
+
+/**
+ * Describes the message forge.v1.ListTargetsResponse.
+ * Use `create(ListTargetsResponseSchema)` to create a new message.
+ */
+export const ListTargetsResponseSchema: GenMessage<ListTargetsResponse> = /*@__PURE__*/
+  messageDesc(file_forge_v1_template, 8);
+
+/**
  * TemplateService lists the service templates of a release of the template
  * repo. Resource names follow AIP style: "templates/{template}".
  *
  * @generated from service forge.v1.TemplateService
  */
 export const TemplateService: GenService<{
+  /**
+   * ListTargets returns the targets infrastructure templates deploy to
+   * (phase 12): what 'forge create --target' and the Create page choose
+   * from. Empty when this API has no infrastructure repos.
+   *
+   * @generated from rpc forge.v1.TemplateService.ListTargets
+   */
+  listTargets: {
+    methodKind: "unary";
+    input: typeof ListTargetsRequestSchema;
+    output: typeof ListTargetsResponseSchema;
+  },
   /**
    * ListTemplates returns the templates of one release, the newest by default.
    *
