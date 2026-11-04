@@ -33,7 +33,7 @@ import type { Environment } from "@/gen/forge/v1/environment_pb";
 import { environmentId, isCode, listAllServices, serviceId } from "@/lib/api";
 import { START } from "@/lib/docs";
 import { actorText, exact, isChartRef, shortCommit, timeUntil, when } from "@/lib/format";
-import { auditStatus, deploymentStatus, environmentStatus } from "@/lib/status";
+import { approvalStatus, auditStatus, deploymentStatus, environmentStatus } from "@/lib/status";
 
 type Open =
   | { kind: "deploy" | "promote" | "preview" | "delete" | "address" }
@@ -199,6 +199,9 @@ function ServiceView({ id }: { id: string }) {
   const noRepo = !s.repoUrl;
   // A service that runs a published chart shows the chart where an image would be.
   const runsChart = noRepo && !!deployments.data?.some((d) => isChartRef(d.image));
+  // An infrastructure repo deploys itself from GitHub Actions: no Forge
+  // deploys, previews or promotes; its production runs wait for approvals.
+  const infra = s.infrastructure;
 
   return (
     <>
@@ -233,13 +236,13 @@ function ServiceView({ id }: { id: string }) {
                 <Icon name="gear" />
               </Button>
             ) : null}
-            {can("environment.create") && !noRepo ? (
+            {can("environment.create") && !noRepo && !infra ? (
               <Button onClick={() => setOpen({ kind: "preview" })}>
                 <Icon name="plus" />
                 Preview env
               </Button>
             ) : null}
-            {ahead && staging && can("deploy.promote") ? (
+            {infra ? null : ahead && staging && can("deploy.promote") ? (
               <>
                 {can("deploy.start") ? (
                   <Button onClick={() => setOpen({ kind: "deploy" })} aria-label="Deploy to staging">
@@ -284,7 +287,7 @@ function ServiceView({ id }: { id: string }) {
         onChange={setTab}
         tabs={[
           { value: "overview", label: "Overview" },
-          { value: "deploys", label: "Deployments" },
+          { value: "deploys", label: infra ? "Approvals" : "Deployments" },
           {
             value: "deps",
             label: (
@@ -297,7 +300,7 @@ function ServiceView({ id }: { id: string }) {
           ...(canUpdate ? [{ value: "settings" as const, label: "Settings" }] : []),
         ]}
       >
-        {tab === "deploys" ? <DeployHistory id={id} /> : null}
+        {tab === "deploys" ? infra ? <ServiceApprovals name={s.name} /> : <DeployHistory id={id} /> : null}
         {tab === "deps" ? <Dependencies service={s} /> : null}
         {tab === "docs" && hasDocs ? (
           <>
@@ -360,7 +363,9 @@ function ServiceView({ id }: { id: string }) {
             ) : null}
           </div>
         ) : null}
-        {tab === "overview" ? (
+        {tab === "overview" && infra ? (
+          <InfrastructureOverview service={s} />
+        ) : tab === "overview" ? (
           <OverviewTab
             id={id}
             service={s}
@@ -781,5 +786,101 @@ function Dependencies({ service: s }: { service: Service }) {
         )}
       </Section>
     </>
+  );
+}
+
+// InfrastructureOverview is the overview of an infrastructure repo: where it
+// deploys, how, and whether its team may approve its own runs.
+function InfrastructureOverview({ service: s }: { service: Service }) {
+  const api = useApi();
+  const i = s.infrastructure!;
+  const exception = useQuery({
+    queryKey: ["exceptions", s.name],
+    queryFn: () => api.approvals.listExceptions({ service: s.name }).then((r) => r.exceptions[0] ?? null),
+    retry: false,
+  });
+  const exceptionText = exception.isPending
+    ? "…"
+    : exception.error
+      ? "–"
+      : !exception.data
+        ? "None: who starts a production run may not approve it"
+        : exception.data.granted
+          ? `The team approves its own runs (granted by ${exception.data.grantedBy})`
+          : `Asked, not in force: ${exception.data.problem}`;
+  return (
+    <div className="flex max-w-[720px] flex-col gap-6">
+      <Section title="Infrastructure">
+        <Panel>
+          <div className="p-4">
+            <Facts
+              items={[
+                ["Tool", i.tool],
+                ["Target", <span key="t" className="font-mono">{i.target}</span>],
+                ["Environments", i.environments.join(", ")],
+                ["Repository", s.repoUrl ? <Addr key="r" href={s.repoUrl} /> : "–"],
+                ["Exception", exceptionText],
+              ]}
+            />
+          </div>
+        </Panel>
+      </Section>
+      <p className="text-fg-2">
+        Its own GitHub Actions deploy it: a merge to main deploys to staging (when it has one), then asks for production&apos;s approval, which
+        someone else of team {s.ownerTeam} gives on the Approvals tab. Forge never deploys it itself.
+      </p>
+    </div>
+  );
+}
+
+// ServiceApprovals lists the approvals of one infrastructure repo.
+function ServiceApprovals({ name }: { name: string }) {
+  const api = useApi();
+  const approvals = useQuery({
+    queryKey: ["approvals", name],
+    queryFn: () => api.approvals.listApprovals({ service: name, pageSize: 50 }).then((r) => r.approvals),
+    refetchInterval: 15_000,
+  });
+  if (approvals.isPending) return <Loading what="approvals" />;
+  if (approvals.error) return <ErrorNote error={approvals.error} />;
+  if (approvals.data.length === 0) return <p className="text-fg-2">No production run has asked for an approval yet.</p>;
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-fg-2">
+        Approve or reject waiting runs on <TextLink href="/approvals">Approvals</TextLink>.
+      </p>
+      <TableFrame label="Approvals">
+        <thead>
+          <tr>
+            <th className={th}>Commit</th>
+            <th className={th}>State</th>
+            <th className={th}>Asked by</th>
+            <th className={th}>Decided by</th>
+            <th className={th}>Asked</th>
+          </tr>
+        </thead>
+        <tbody>
+          {approvals.data.map((a) => (
+            <tr key={a.name} className={tr}>
+              <td className={`${td} font-mono`}>
+                {a.runUrl ? (
+                  <a className="underline decoration-line-strong underline-offset-2 hover:decoration-fg" href={a.runUrl} target="_blank" rel="noreferrer">
+                    {shortCommit(a.commit)}
+                  </a>
+                ) : (
+                  shortCommit(a.commit)
+                )}
+              </td>
+              <td className={td}>
+                <StatusBadge status={approvalStatus(a)} title={a.dispatchError || undefined} />
+              </td>
+              <td className={td}>{a.requestedBy}</td>
+              <td className={`${td} text-fg-2`}>{a.decidedBy || "—"}</td>
+              <td className={`${td} text-fg-2`}>{when(a.createTime)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </TableFrame>
+    </div>
   );
 }
