@@ -61,8 +61,12 @@ the others. The server only serves the pages and
   who pushed the commit or started the run unless the repo's team has an
   exception. An approved run Forge could not start shows "Run not started"
   and can be started again. Below: the exceptions and whether each holds
-  (hidden on a Forge without them). An infrastructure repo's own page shows
-  its target, environments and exception instead of deploys, an Approvals
+  (hidden on a Forge without them), each with Revoke for its team or an
+  admin. An infrastructure repo's own page shows
+  its target, environments and exception instead of deploys, with "Ask for
+  an exception" or "Revoke exception" for its team or an admin (a repo with
+  production only; `RequestException` and `RevokeException` open a pull
+  request in the deploy repo, which the dialog links), an Approvals
   tab instead of Deployments, and no Deploy, Promote or Preview buttons. The
   Create page asks an infrastructure template for a target
   (`TemplateService.ListTargets`, those open to the team) and its

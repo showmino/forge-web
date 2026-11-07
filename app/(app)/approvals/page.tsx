@@ -3,6 +3,7 @@
 import { Code } from "@connectrpc/connect";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
+import { ExceptionDialog, useCanAskException } from "@/components/exception-actions";
 import { useApi } from "@/components/providers";
 import { Button, ExternalButton, NameLink } from "@/components/ui/button";
 import { Dialog, DialogActions } from "@/components/ui/dialog";
@@ -11,7 +12,7 @@ import { Empty, ErrorNote, Loading, PageHeader, Section, TableFrame, td, th, tr 
 import { StatusBadge } from "@/components/ui/status";
 import { Tabs } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/toast";
-import { type Approval, Approval_State } from "@/gen/forge/v1/approval_pb";
+import { type Approval, Approval_State, type Exception } from "@/gen/forge/v1/approval_pb";
 import { approvalId, isCode } from "@/lib/api";
 import { shortCommit, when } from "@/lib/format";
 import { approvalStatus } from "@/lib/status";
@@ -194,6 +195,7 @@ function Decide({ approval, approve, onClose }: { approval: Approval; approve: b
 // grants them in the deploy repo. Hidden on a Forge without them.
 function Exceptions() {
   const api = useApi();
+  const [revoking, setRevoking] = useState<Exception | null>(null);
   const exceptions = useQuery({
     queryKey: ["exceptions"],
     queryFn: () => api.approvals.listExceptions({}).then((r) => r.exceptions),
@@ -206,7 +208,7 @@ function Exceptions() {
       {exceptions.error ? (
         <ErrorNote error={exceptions.error} />
       ) : exceptions.data.length === 0 ? (
-        <Empty>No team approves its own runs. A team of one asks with forge approval exception request.</Empty>
+        <Empty>No team approves its own runs. A team of one asks for an exception on its infrastructure repo&apos;s page.</Empty>
       ) : (
         <TableFrame label="Exceptions">
           <thead>
@@ -216,6 +218,9 @@ function Exceptions() {
               <th className={th}>Holds</th>
               <th className={th}>Granted by</th>
               <th className={th}>Reason</th>
+              <th className={th}>
+                <span className="sr-only">Actions</span>
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -232,12 +237,27 @@ function Exceptions() {
                   </td>
                   <td className={`${td} text-fg-2`}>{e.grantedBy || "—"}</td>
                   <td className={`${td} whitespace-normal text-fg-2`}>{e.granted ? e.reason : e.problem}</td>
+                  <td className={`${td} text-right`}>
+                    <RevokeButton service={e.service} onClick={() => setRevoking(e)} />
+                  </td>
                 </tr>
               );
             })}
           </tbody>
         </TableFrame>
       )}
+      {revoking ? <ExceptionDialog service={revoking.service} team={revoking.team} revoke onClose={() => setRevoking(null)} /> : null}
     </Section>
+  );
+}
+
+// RevokeButton is shown only to who may revoke the exception: its team or an admin.
+function RevokeButton({ service, onClick }: { service: string; onClick: () => void }) {
+  const svc = service.replace(/^services\//, "");
+  if (!useCanAskException(service)) return null;
+  return (
+    <Button size="sm" onClick={onClick} aria-label={`Revoke the exception of ${svc}`}>
+      Revoke
+    </Button>
   );
 }
