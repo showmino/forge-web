@@ -8,6 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { usePermissions } from "@/components/app-shell";
 import { DocReader, DocsLink, useHasDocs } from "@/components/doc-reader";
+import { ExceptionDialog, useCanAskException } from "@/components/exception-actions";
 import { OperationLog } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
 import {
@@ -794,6 +795,8 @@ function Dependencies({ service: s }: { service: Service }) {
 function InfrastructureOverview({ service: s }: { service: Service }) {
   const api = useApi();
   const i = s.infrastructure!;
+  const canAsk = useCanAskException(s.name);
+  const [asking, setAsking] = useState(false);
   const exception = useQuery({
     queryKey: ["exceptions", s.name],
     queryFn: () => api.approvals.listExceptions({ service: s.name }).then((r) => r.exceptions[0] ?? null),
@@ -808,6 +811,10 @@ function InfrastructureOverview({ service: s }: { service: Service }) {
         : exception.data.granted
           ? `The team approves its own runs (granted by ${exception.data.grantedBy})`
           : `Asked, not in force: ${exception.data.problem}`;
+  // Only a repo with production has runs to approve; a Forge without
+  // exceptions answers the list with an error, and then nothing is offered.
+  const offer = canAsk && i.environments.includes("production") && !exception.isPending && !exception.error;
+  const pullRequest = exception.data?.pullRequestUrl ?? "";
   return (
     <div className="flex max-w-[720px] flex-col gap-6">
       <Section title="Infrastructure">
@@ -820,11 +827,20 @@ function InfrastructureOverview({ service: s }: { service: Service }) {
                 ["Environments", i.environments.join(", ")],
                 ["Repository", s.repoUrl ? <Addr key="r" href={s.repoUrl} /> : "–"],
                 ["Exception", exceptionText],
+                ...(pullRequest ? ([["Its pull request", <Addr key="p" href={pullRequest} />]] as [string, ReactNode][]) : []),
               ]}
             />
           </div>
+          {offer ? (
+            <div className="border-t border-line px-4 py-3">
+              <Button size="sm" onClick={() => setAsking(true)}>
+                {exception.data ? "Revoke exception" : "Ask for an exception"}
+              </Button>
+            </div>
+          ) : null}
         </Panel>
       </Section>
+      {asking ? <ExceptionDialog service={s.name} team={s.ownerTeam} revoke={!!exception.data} onClose={() => setAsking(false)} /> : null}
       <p className="text-fg-2">
         Its own GitHub Actions deploy it: a merge to main deploys to staging (when it has one), then asks for production&apos;s approval, which
         someone else of team {s.ownerTeam} gives on the Approvals tab. Forge never deploys it itself.
