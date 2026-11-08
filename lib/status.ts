@@ -85,6 +85,8 @@ const kinds: Record<string, string> = {
   create_environment: "Create preview",
   destroy_environment: "Destroy preview",
   delete_service: "Delete",
+  "resource.plan": "Plan resources of",
+  "resource.apply": "Apply resources of",
 };
 
 // operationTitle names an operation by what it does and to what: "Promote forge-web to production".
@@ -92,6 +94,8 @@ export function operationTitle(op: Operation): string {
   const kind = kinds[op.kind] ?? (op.kind ? op.kind.charAt(0).toUpperCase() + op.kind.slice(1).replace(/[_.]/g, " ") : "Operation");
   const deployment = /^deployments\/([^/]+)\/([^/]+)$/.exec(op.target);
   if (deployment) return `${kind} ${deployment[1]} ${op.kind === "rollback" ? "in" : "to"} ${deployment[2]}`;
+  const resources = /^resources\/([^/]+)\/([^/]+)$/.exec(op.target);
+  if (resources) return `${kind} ${resources[1]} in ${resources[2]}`;
   const preview = /^environments\/(.+)$/.exec(op.target);
   if (preview) return `${kind} ${preview[1]}`;
   const service = /^services\/(.+)$/.exec(op.target);

@@ -10,6 +10,7 @@ import { usePermissions } from "@/components/app-shell";
 import { DocReader, DocsLink, useHasDocs } from "@/components/doc-reader";
 import { ExceptionDialog, useCanAskException } from "@/components/exception-actions";
 import { OperationLog } from "@/components/operation-log";
+import { ResourcesTab, useResources } from "@/components/resources";
 import { useApi } from "@/components/providers";
 import {
   ChangeAddressDialog,
@@ -41,7 +42,7 @@ type Open =
   | { kind: "rollback"; env: "staging" | "production" }
   | { kind: "extend" | "destroy"; environment: Environment };
 
-type Tab = "overview" | "deploys" | "deps" | "docs" | "settings";
+type Tab = "overview" | "deploys" | "resources" | "deps" | "docs" | "settings";
 
 const row = "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-t border-line px-4 py-[11px] first:border-t-0";
 
@@ -68,6 +69,8 @@ function ServiceView({ id }: { id: string }) {
   const [docPath, setDocPath] = useState(START);
   const [docHash, setDocHash] = useState("");
   const hasDocs = useHasDocs(id);
+  // The tab shows once the service has a resource or a plan.
+  const hasResources = useResources(id).any;
   // The docs went away (or turned out not to exist) while their tab was open.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -106,7 +109,7 @@ function ServiceView({ id }: { id: string }) {
   });
   const previewNames = new Set((previews.data ?? []).map((e) => e.name));
   const found = (running.data ?? [])
-    .filter((op) => op.target.startsWith(`deployments/${id}/`) || previewNames.has(op.target))
+    .filter((op) => op.target.startsWith(`deployments/${id}/`) || op.target.startsWith(`resources/${id}/`) || previewNames.has(op.target))
     .map((op) => op.name);
   // Once seen, an operation stays on the page: when it ends (and, for a
   // destroy, its preview is gone) its result is still there to read.
@@ -120,7 +123,7 @@ function ServiceView({ id }: { id: string }) {
 
   // What the page shows may have changed: an action was taken or an operation ended.
   function refresh() {
-    for (const key of ["deployments", "environments", "audit", "history"]) void queries.invalidateQueries({ queryKey: [key] });
+    for (const key of ["deployments", "environments", "audit", "history", "resources", "plans"]) void queries.invalidateQueries({ queryKey: [key] });
   }
   function onStarted(operation: string | undefined) {
     setOpen(null);
@@ -289,6 +292,7 @@ function ServiceView({ id }: { id: string }) {
         tabs={[
           { value: "overview", label: "Overview" },
           { value: "deploys", label: infra ? "Approvals" : "Deployments" },
+          ...(hasResources && !infra ? [{ value: "resources" as const, label: "Resources" }] : []),
           {
             value: "deps",
             label: (
@@ -302,6 +306,9 @@ function ServiceView({ id }: { id: string }) {
         ]}
       >
         {tab === "deploys" ? infra ? <ServiceApprovals name={s.name} /> : <DeployHistory id={id} /> : null}
+        {tab === "resources" && !infra ? (
+          <ResourcesTab id={id} canApply={(env) => can(env === "production" ? "resource.apply.production" : "resource.apply")} onStarted={onStarted} />
+        ) : null}
         {tab === "deps" ? <Dependencies service={s} /> : null}
         {tab === "docs" && hasDocs ? (
           <>
