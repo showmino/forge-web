@@ -33,8 +33,8 @@ the others. The server only serves the pages and
   log of the last 24 hours, which outlives a restart of the API; what is in
   flight is followed live; "needs attention" is first the production runs
   of infrastructure repos that wait for the caller's team (pending
-  approvals whose `owner_team` is one of the caller's teams, every one for
-  an admin; `lib/approvals.ts`), then deployments Argo CD does not
+  approvals whose `owner_team` is one of the caller's teams, an admin's
+  too: only the owning team is told; `lib/approvals.ts`), then deployments Argo CD does not
   call healthy, deploy targets whose last deploy failed, and previews that
   failed or end within six hours. The rail counts those waiting runs beside
   Approvals (a dot on the narrow rail). The dashboard does not know the

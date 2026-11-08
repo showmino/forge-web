@@ -95,9 +95,16 @@ describe("the Overview", () => {
     expect(within(rows[0]).getByRole("link", { name: "Open infra-dns" }).getAttribute("href")).toBe("/approvals");
   });
 
-  it("shows an admin every waiting run", async () => {
+  it("shows an admin only their own teams' runs, not every team's", async () => {
+    await openOverview(world({ caller: { ...ADMIN, teams: ["payments"] } }));
+    const rows = within(await screen.findByRole("list", { name: "Needs attention" })).getAllByRole("listitem");
+    expect(rows).toHaveLength(1);
+    expect(rows[0].textContent).toContain("infra-billing");
+  });
+
+  it("shows an admin in no team none", async () => {
     await openOverview(world({ caller: ADMIN }));
-    expect(within(await screen.findByRole("list", { name: "Needs attention" })).getAllByRole("listitem")).toHaveLength(3);
+    expect(await screen.findByText("Nothing needs you right now.")).toBeTruthy();
   });
 
   it("shows a reader none, and says nothing needs them", async () => {

@@ -31,8 +31,9 @@ describe("waitingForTeam", () => {
     expect(waitingForTeam(all, { admin: false, teams: ["network"] }).map((a) => a.name)).toEqual(["approvals/old", "approvals/new"]);
   });
 
-  it("gives an admin every pending run", () => {
-    expect(waitingForTeam(all, { admin: true, teams: [] })).toHaveLength(3);
+  it("gives an admin only their own teams' runs, as anyone else", () => {
+    expect(waitingForTeam(all, { admin: true, teams: [] })).toEqual([]);
+    expect(waitingForTeam(all, { admin: true, teams: ["payments"] }).map((a) => a.name)).toEqual(["approvals/other-team"]);
   });
 
   it("gives a reader, or a caller not known yet, none", () => {
