@@ -3,7 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { type ReactNode, useEffect, useMemo, useState } from "react";
-import { usePermissions } from "@/components/app-shell";
+import { usePermissions, useWaitingApprovals } from "@/components/app-shell";
 import { StepLog, type Step, useOperation } from "@/components/operation-log";
 import { useApi } from "@/components/providers";
 import { ExtendDialog } from "@/components/service-actions";
@@ -16,6 +16,7 @@ import type { Environment } from "@/gen/forge/v1/environment_pb";
 import type { Operation } from "@/gen/forge/v1/operation_pb";
 import { lastDay, listAllServices, operationId, serviceId } from "@/lib/api";
 import { clusterStatus } from "@/lib/cluster";
+import { approvalAttention } from "@/lib/approvals";
 import { timeAgo, when } from "@/lib/format";
 import {
   attention,
@@ -69,9 +70,11 @@ export default function Overview() {
 
   const recent = useMemo(() => recentDeploys(audit.data ?? []), [audit.data]);
   const stats = useMemo(() => dayStats(audit.data ?? []), [audit.data]);
+  const waiting = useWaitingApprovals();
+  // A run that waits for the caller's team leads: it needs someone to act.
   const needs = useMemo(
-    () => attention(deployments.data ?? [], environments.data ?? [], recent),
-    [deployments.data, environments.data, recent],
+    () => [...approvalAttention(waiting), ...attention(deployments.data ?? [], environments.data ?? [], recent)],
+    [waiting, deployments.data, environments.data, recent],
   );
 
   // When something in flight lands, everything it touched is read again.
