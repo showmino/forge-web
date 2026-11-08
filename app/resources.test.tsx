@@ -61,8 +61,12 @@ const productionPlan = { ...stagingPlan, name: "resourcePlans/0c1d2e3f4a5b", env
 const dropPlan = { ...stagingPlan, name: "resourcePlans/aaaaaaaaaaaa", changes: [{ action: "delete", resource: "db", type: "postgres", before: db }], policy: { denied: false }, allowDestroy: true };
 const deniedPlan = { ...stagingPlan, name: "resourcePlans/bbbbbbbbbbbb", state: ResourcePlan_State.DENIED, policy: { denied: true, deny: ["production needs 2 instances"] } };
 const expiredPlan = { ...stagingPlan, name: "resourcePlans/cccccccccccc", expireTime: ago(1) };
+const emptyPlan = { ...stagingPlan, name: "resourcePlans/dddddddddddd", changes: [], policy: { denied: false } };
+const REPAIR = "Forge's records differ from what exists: apply this plan to put them right.";
+const repairPlan = { ...emptyPlan, name: "resourcePlans/eeeeeeeeeeee", message: REPAIR };
+const dropProduction = { ...dropPlan, name: "resourcePlans/ffffffffffff", env: "production" };
 
-type World = { caller: Caller; resources: MessageInitShape<typeof ResourceSchema>[]; plans: MessageInitShape<typeof ResourcePlanSchema>[]; calls: Record<string, unknown[]>; fail?: ConnectError };
+type World = { unimplemented?: boolean; caller: Caller; resources: MessageInitShape<typeof ResourceSchema>[]; plans: MessageInitShape<typeof ResourcePlanSchema>[]; calls: Record<string, unknown[]>; fail?: ConnectError };
 const world = (over: Partial<World> = {}): World => ({ caller: { teams: ["platform-engineering"] }, resources: [ready], plans: [stagingPlan], calls: {}, ...over });
 
 function forge(w: World) {
@@ -80,9 +84,14 @@ function forge(w: World) {
     router.service(ResourceService, {
       listResources: (req) => {
         record("listResources", req);
+        // An older forge-api without ResourceService answers Unimplemented.
+        if (w.unimplemented) throw new ConnectError("unimplemented", Code.Unimplemented);
         return { resources: w.resources };
       },
-      listResourcePlans: () => ({ plans: w.plans }),
+      listResourcePlans: () => {
+        if (w.unimplemented) throw new ConnectError("unimplemented", Code.Unimplemented);
+        return { plans: w.plans };
+      },
       applyResourcePlan: (req) => {
         record("applyResourcePlan", req);
         if (w.fail) throw w.fail;
@@ -136,6 +145,26 @@ describe("the Resources tab", () => {
     expect(screen.queryByRole("tab", { name: "Resources" })).toBeNull();
   });
 
+  it("is not there when the API has no resources at all", async () => {
+    const w = world({ unimplemented: true });
+    nav.params = { name: "payments" };
+    renderWithApi(<ServicePage />, forge(w));
+    await screen.findByRole("heading", { name: "payments" });
+    await waitFor(() => expect(w.calls.listResources).toBeTruthy());
+    await settled();
+    expect(screen.queryByRole("tab", { name: "Resources" })).toBeNull();
+  });
+
+  it("offers no Apply for a plan that changes nothing, but does for one that repairs the records", async () => {
+    await openResources(world({ plans: [emptyPlan, repairPlan] }));
+    expect(await screen.findByRole("button", { name: "Apply plan eeeeeeeeeeee" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Apply plan dddddddddddd" })).toBeNull();
+    // The reason shows in the row, not only on hover.
+    expect(within(screen.getByRole("table", { name: "Plans" })).getByText(REPAIR)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Apply plan eeeeeeeeeeee" }));
+    expect(within(screen.getByRole("dialog")).getByText(REPAIR)).toBeTruthy();
+  });
+
   it("shows why policy denies a plan, and offers no Apply for it or an expired one", async () => {
     await openResources(world({ plans: [deniedPlan, expiredPlan] }));
     await settled();
@@ -168,9 +197,9 @@ describe("applying a plan", () => {
     const dialog = screen.getByRole("dialog");
     const apply = within(dialog).getByRole("button", { name: "Apply to staging" }) as HTMLButtonElement;
     expect(apply.disabled).toBe(true);
-    fireEvent.change(within(dialog).getByLabelText("Type db to delete it and its data"), { target: { value: "dbx" } });
+    fireEvent.change(within(dialog).getByLabelText("Type db to delete it and its data in staging"), { target: { value: "dbx" } });
     expect(apply.disabled).toBe(true);
-    fireEvent.change(within(dialog).getByLabelText("Type db to delete it and its data"), { target: { value: "db" } });
+    fireEvent.change(within(dialog).getByLabelText("Type db to delete it and its data in staging"), { target: { value: "db" } });
     expect(apply.disabled).toBe(false);
   });
 
@@ -194,6 +223,24 @@ describe("who may apply", () => {
   it("lets an admin apply production", async () => {
     await openResources(world({ caller: ADMIN, plans: [productionPlan] }));
     expect(await screen.findByRole("button", { name: "Apply plan 0c1d2e3f4a5b" })).toBeTruthy();
+  });
+
+  it("gives the team no Apply on a production plan that deletes a database", async () => {
+    await openResources(world({ plans: [dropPlan, dropProduction] }));
+    expect(await screen.findByRole("button", { name: "Apply plan aaaaaaaaaaaa" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Apply plan ffffffffffff" })).toBeNull();
+  });
+
+  it("makes an admin type the name before deleting a production database, then applies", async () => {
+    const w = world({ caller: ADMIN, plans: [dropProduction] });
+    await openResources(w);
+    fireEvent.click(await screen.findByRole("button", { name: "Apply plan ffffffffffff" }));
+    const dialog = screen.getByRole("dialog", { name: "Apply plan ffffffffffff to production?" });
+    const apply = within(dialog).getByRole("button", { name: "Apply to production" }) as HTMLButtonElement;
+    expect(apply.disabled).toBe(true);
+    fireEvent.change(within(dialog).getByLabelText("Type db to delete it and its data in production"), { target: { value: "db" } });
+    fireEvent.click(apply);
+    await waitFor(() => expect(w.calls.applyResourcePlan).toEqual([expect.objectContaining({ name: "resourcePlans/ffffffffffff" })]));
   });
 
   it("shows a reader the plans but no Apply", async () => {

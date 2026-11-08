@@ -2,7 +2,7 @@ import { create } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { describe, expect, it } from "vitest";
 import { Resource_State, ResourcePlan_State, ResourcePlanSchema, ResourceSchema, ResourceSettingsSchema } from "@/gen/forge/v1/resource_pb";
-import { applicable, changeSummary, changeText, destructive, healthText, planStatus, resourceStatus, settingsText } from "./resources";
+import { applicable, busy, changeSummary, changeText, destructive, healthText, planStatus, resourceStatus, settingsText } from "./resources";
 
 const db = create(ResourceSettingsSchema, { name: "db", type: "postgres", storageGi: 10, instances: 1 });
 const later = timestampFromDate(new Date(Date.now() + 3600_000));
@@ -38,13 +38,15 @@ describe("settings and changes", () => {
 });
 
 describe("whether a plan can be applied", () => {
+  const change = { changes: [{ action: "create", resource: "db" }] };
+
   it("is ready only while planned, allowed and not expired", () => {
-    expect(applicable(plan())).toBe(true);
+    expect(applicable(plan(change))).toBe(true);
     expect(planStatus(plan())).toEqual({ tone: "success", word: "Ready to apply" });
-    expect(applicable(plan({ expireTime: earlier }))).toBe(false);
+    expect(applicable(plan({ ...change, expireTime: earlier }))).toBe(false);
     expect(planStatus(plan({ expireTime: earlier })).word).toBe("Expired");
-    expect(applicable(plan({ policy: { denied: true, deny: ["no"] } }))).toBe(false);
-    expect(applicable(plan({ state: ResourcePlan_State.APPLIED }))).toBe(false);
+    expect(applicable(plan({ ...change, policy: { denied: true, deny: ["no"] } }))).toBe(false);
+    expect(applicable(plan({ ...change, state: ResourcePlan_State.APPLIED }))).toBe(false);
     expect(planStatus(plan({ state: ResourcePlan_State.APPLY_FAILED }))).toEqual({ tone: "danger", word: "Apply failed" });
   });
 });
@@ -67,5 +69,21 @@ describe("a resource's state", () => {
   it("follows the last apply first", () => {
     expect(resourceStatus(resource({ state: Resource_State.APPLYING })).word).toBe("Applying");
     expect(resourceStatus(resource({ state: Resource_State.FAILED })).word).toBe("Failed");
+  });
+});
+
+describe("a plan with no changes", () => {
+  it("has nothing to apply, unless it repairs Forge's records", () => {
+    expect(applicable(plan())).toBe(false);
+    expect(applicable(plan({ message: "Forge's records differ from what exists: apply this plan to put them right." }))).toBe(true);
+  });
+});
+
+describe("whether the tab should look again soon", () => {
+  it("is busy while a plan or a resource is moving", () => {
+    expect(busy([plan()], [])).toBe(false);
+    expect(busy([plan({ state: ResourcePlan_State.APPLYING })], [])).toBe(true);
+    expect(busy([], [create(ResourceSchema, { state: Resource_State.DELETING })])).toBe(true);
+    expect(busy(undefined, undefined)).toBe(false);
   });
 });

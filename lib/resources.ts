@@ -48,10 +48,21 @@ export function destructive(p: ResourcePlan): string[] {
 const expired = (t: Timestamp | undefined, now: number) => !!t && timestampDate(t).getTime() <= now;
 
 // applicable says whether a plan can still be applied: planned, allowed by
-// policy and not expired. The API checks again (and whether forge.yaml or
-// the resources changed since).
+// policy, not expired, and changing something. A plan with no changes is
+// applied only to repair Forge's records, and then the API gives it a
+// message saying so; without one it refuses ("nothing to apply"). The API
+// checks all of this again (and whether forge.yaml or the resources changed).
 export function applicable(p: ResourcePlan, now = Date.now()): boolean {
-  return p.state === ResourcePlan_State.PLANNED && !p.policy?.denied && !expired(p.expireTime, now);
+  return p.state === ResourcePlan_State.PLANNED && !p.policy?.denied && !expired(p.expireTime, now) && (p.changes.length > 0 || p.message !== "");
+}
+
+// busy says whether a plan or a resource is still moving, so the tab looks
+// again soon rather than at its slow pace.
+export function busy(plans: ResourcePlan[] | undefined, resources: Resource[] | undefined): boolean {
+  return (
+    !!plans?.some((p) => p.state === ResourcePlan_State.PLANNING || p.state === ResourcePlan_State.APPLYING) ||
+    !!resources?.some((r) => r.state === Resource_State.APPLYING || r.state === Resource_State.DELETING)
+  );
 }
 
 // planStatus is a plan's state as a status pill.

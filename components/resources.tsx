@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, type FormEvent } from "react";
 import { useApi } from "@/components/providers";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { EnvTag, StatusBadge } from "@/components/ui/status";
 import { useToast } from "@/components/ui/toast";
 import type { ResourcePlan } from "@/gen/forge/v1/resource_pb";
 import { exact, when } from "@/lib/format";
-import { applicable, CHANGE_SYMBOLS, changeSummary, changeText, destructive, healthText, planStatus, resourceStatus, settingsText } from "@/lib/resources";
+import { applicable, busy, CHANGE_SYMBOLS, changeSummary, changeText, destructive, healthText, planStatus, resourceStatus, settingsText } from "@/lib/resources";
 
 // The Resources tab of a service: what it declares besides its own pods
 // (today, Postgres databases), in each environment, and the plans that change
@@ -27,28 +27,33 @@ const planId = (name: string) => name.replace(/^resourcePlans\//, "");
 const shortName = (name: string) => name.split("/").pop() ?? name;
 
 // useResources is the service's resources and its newest plans, for the tab
-// and for whether the page shows the tab at all.
-export function useResources(id: string) {
+// and for whether the page shows the tab at all. Only the open tab (live)
+// keeps looking: soon while something runs, and now and then for a plan CI
+// made or an apply someone started elsewhere.
+export function useResources(id: string, live = false) {
   const api = useApi();
   const service = `services/${id}`;
+  const qc = useQueryClient();
+  const interval = () =>
+    live ? (busy(qc.getQueryData(["plans", id]), qc.getQueryData(["resources", id])) ? 15_000 : 60_000) : false;
   const resources = useQuery({
     queryKey: ["resources", id],
     queryFn: () => api.resources.listResources({ service }).then((r) => r.resources),
     retry: false,
+    refetchInterval: interval,
   });
   const plans = useQuery({
     queryKey: ["plans", id],
     queryFn: () => api.resources.listResourcePlans({ service, pageSize: 20 }).then((r) => r.plans),
     retry: false,
-    // A plan made by CI shows up, and one being made or applied moves on.
-    refetchInterval: 15_000,
+    refetchInterval: interval,
   });
   const any = (resources.data?.length ?? 0) > 0 || (plans.data?.length ?? 0) > 0;
   return { resources, plans, any };
 }
 
 export function ResourcesTab({ id, canApply, onStarted }: { id: string; canApply: (env: Env) => boolean; onStarted: (operation: string | undefined) => void }) {
-  const { resources, plans } = useResources(id);
+  const { resources, plans } = useResources(id, true);
   const [applying, setApplying] = useState<ResourcePlan | null>(null);
 
   return (
@@ -130,7 +135,8 @@ export function ResourcesTab({ id, canApply, onStarted }: { id: string; canApply
                       <EnvTag kind={env} />
                     </td>
                     <td className={td}>
-                      <StatusBadge status={planStatus(p)} title={p.message || undefined} />
+                      <StatusBadge status={planStatus(p)} />
+                      {p.message ? <div className="mt-1 max-w-[280px] whitespace-normal text-[12.5px] text-fg-2">{p.message}</div> : null}
                     </td>
                     <td className={`${td} font-mono text-[13px]`} title={p.changes.map(changeText).join("\n") || undefined}>
                       {changeSummary(p)}
@@ -214,8 +220,9 @@ export function ApplyPlanDialog({ id, plan, onClose, onStarted }: { id: string; 
         <p>
           Forge makes exactly these changes to the resources of {id} in {env}. A deploy afterwards gives the app its connection string.
         </p>
+        {plan.message ? <p className="text-fg-2">{plan.message}</p> : null}
         {plan.changes.length === 0 ? (
-          <p className="text-fg-2">The plan changes nothing.</p>
+          <p className="text-fg-2">Nothing changes on the cluster.</p>
         ) : (
           <ul aria-label="Changes" className="flex flex-col gap-1 rounded-md bg-surface-2 p-3 font-mono text-[12.5px]">
             {plan.changes.map((c) => (
@@ -233,7 +240,7 @@ export function ApplyPlanDialog({ id, plan, onClose, onStarted }: { id: string; 
           </ul>
         ) : null}
         {lost.map((r) => (
-          <Field key={r} id={`confirm-${r}`} label={`Type ${r} to delete it and its data`}>
+          <Field key={r} id={`confirm-${r}`} label={`Type ${r} to delete it and its data in ${env}`}>
             <input
               id={`confirm-${r}`}
               className={inputClass}
