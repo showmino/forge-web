@@ -4,12 +4,14 @@ import { shortCommit, when } from "@/lib/format";
 import type { Attention } from "@/lib/overview";
 
 // Production runs of infrastructure repos that wait for the caller's team.
-// The owning team approves (approval.decide is the team's role, and an
-// admin's), so a run waits for the caller when they are an admin or in the
-// team that owns its service. Whether they started it, and so may not
-// approve it themselves, the dashboard cannot tell: it does not know their
-// GitHub user. Hence "your team's approval", not "yours".
+// Only the members of the team that owns the service are told: an admin,
+// who may approve any run, hears only of their own teams' runs, as anyone
+// else (the owner's choice; the Approvals page still lists every run).
+// Whether the caller started a run, and so may not approve it themselves,
+// the dashboard cannot tell: it does not know their GitHub user. Hence
+// "your team's approval", not "yours".
 
+// admin is in the type only to show it is ignored here.
 type Caller = Pick<GetStatusResponse, "admin" | "teams">;
 
 // waitingForTeam is the pending approvals the caller's team decides, oldest
@@ -17,7 +19,7 @@ type Caller = Pick<GetStatusResponse, "admin" | "teams">;
 export function waitingForTeam(approvals: Approval[], caller: Caller | undefined): Approval[] {
   if (!caller) return [];
   return approvals
-    .filter((a) => a.state === Approval_State.PENDING && (caller.admin || caller.teams.includes(a.ownerTeam)))
+    .filter((a) => a.state === Approval_State.PENDING && caller.teams.includes(a.ownerTeam))
     .sort((a, b) => Number(a.createTime?.seconds ?? 0) - Number(b.createTime?.seconds ?? 0));
 }
 
