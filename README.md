@@ -39,7 +39,13 @@ the others. The server only serves the pages and
   `/services`.
 - **A service** (`/services/<name>`) has tabs: Overview (what runs in
   staging and production, previews, recent activity, about), Deployments
-  (`ListDeployHistory` of both environments), Dependencies (what it depends
+  (`ListDeployHistory` of both environments), Resources (once it has a
+  resource or a plan: its databases with live health, `ListResources`, and
+  its newest plans with their changes and policy result,
+  `ListResourcePlans`; Apply on a ready plan, for its team in staging and
+  admins in production, asks for a database's name before deleting it, as
+  `forge resource apply` does; plans are made from forge.yaml by the CLI or
+  the service's CI, not here), Dependencies (what it depends
   on, and what in the catalog depends on it) and, for the service's team and
   admins, Settings (the gear button too): the owning team (an admin's only),
   the contacts and the lifecycle,
@@ -159,8 +165,8 @@ the others. The server only serves the pages and
   does not know is left out: rules and approvals, the golden path, tiers
   and SLOs, team members and on-call, template lint. The Docs page searches
   every service's pages (`SearchDocs`, forge-api with TechDocs milestone 3).
-  The mockup's Overview is the page as it is built here, with one addition:
-  a Databases widget for the service databases Phase 5 brought.
+  The mockup's Overview is the page as it is built here. The service
+  databases Phase 5 brought are on the service's Resources tab.
 
 ## Develop
 
