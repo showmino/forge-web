@@ -42,7 +42,7 @@ type Open =
   | { kind: "rollback"; env: "staging" | "production" }
   | { kind: "extend" | "destroy"; environment: Environment };
 
-type Tab = "overview" | "deploys" | "resources" | "deps" | "docs" | "settings";
+type Tab = "overview" | "deploys" | "approvals" | "resources" | "deps" | "docs" | "settings";
 
 const row = "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-t border-line px-4 py-[11px] first:border-t-0";
 
@@ -203,9 +203,12 @@ function ServiceView({ id }: { id: string }) {
   const noRepo = !s.repoUrl;
   // A service that runs a published chart shows the chart where an image would be.
   const runsChart = noRepo && !!deployments.data?.some((d) => isChartRef(d.image));
-  // An infrastructure repo deploys itself from GitHub Actions: no Forge
-  // deploys, previews or promotes; its production runs wait for approvals.
+  // An infrastructure repo deploys its code from GitHub Actions, and its
+  // production runs wait for approvals. Without an app (infraOnly) it has
+  // no Forge deploys, previews or promotes; with one (runs), Forge deploys
+  // the app as any service's.
   const infra = s.infrastructure;
+  const infraOnly = !!infra && !infra.runs;
 
   return (
     <>
@@ -240,13 +243,13 @@ function ServiceView({ id }: { id: string }) {
                 <Icon name="gear" />
               </Button>
             ) : null}
-            {can("environment.create") && !noRepo && !infra ? (
+            {can("environment.create") && !noRepo && !infraOnly ? (
               <Button onClick={() => setOpen({ kind: "preview" })}>
                 <Icon name="plus" />
                 Preview env
               </Button>
             ) : null}
-            {infra ? null : ahead && staging && can("deploy.promote") ? (
+            {infraOnly ? null : ahead && staging && can("deploy.promote") ? (
               <>
                 {can("deploy.start") ? (
                   <Button onClick={() => setOpen({ kind: "deploy" })} aria-label="Deploy to staging">
@@ -291,7 +294,8 @@ function ServiceView({ id }: { id: string }) {
         onChange={setTab}
         tabs={[
           { value: "overview", label: "Overview" },
-          { value: "deploys", label: infra ? "Approvals" : "Deployments" },
+          { value: "deploys", label: infraOnly ? "Approvals" : "Deployments" },
+          ...(infra && !infraOnly ? [{ value: "approvals" as const, label: "Approvals" }] : []),
           ...(hasResources && !infra ? [{ value: "resources" as const, label: "Resources" }] : []),
           {
             value: "deps",
@@ -305,7 +309,8 @@ function ServiceView({ id }: { id: string }) {
           ...(canUpdate ? [{ value: "settings" as const, label: "Settings" }] : []),
         ]}
       >
-        {tab === "deploys" ? infra ? <ServiceApprovals name={s.name} /> : <DeployHistory id={id} /> : null}
+        {tab === "deploys" ? infraOnly ? <ServiceApprovals name={s.name} /> : <DeployHistory id={id} /> : null}
+        {tab === "approvals" && infra ? <ServiceApprovals name={s.name} /> : null}
         {tab === "resources" && !infra ? (
           <ResourcesTab id={id} canApply={(env) => can(env === "production" ? "resource.apply.production" : "resource.apply")} onStarted={onStarted} />
         ) : null}
@@ -371,21 +376,24 @@ function ServiceView({ id }: { id: string }) {
             ) : null}
           </div>
         ) : null}
-        {tab === "overview" && infra ? (
+        {tab === "overview" && infraOnly ? (
           <InfrastructureOverview service={s} />
         ) : tab === "overview" ? (
-          <OverviewTab
-            id={id}
-            service={s}
-            deployments={deployments}
-            previews={previews}
-            events={events}
-            can={can}
-            ahead={ahead}
-            deployment={deployment}
-            deployed={deployed}
-            onOpen={setOpen}
-          />
+          <>
+            <OverviewTab
+              id={id}
+              service={s}
+              deployments={deployments}
+              previews={previews}
+              events={events}
+              can={can}
+              ahead={ahead}
+              deployment={deployment}
+              deployed={deployed}
+              onOpen={setOpen}
+            />
+            {infra ? <InfrastructureOverview service={s} /> : null}
+          </>
         ) : null}
       </Tabs>
 
@@ -848,10 +856,17 @@ function InfrastructureOverview({ service: s }: { service: Service }) {
         </Panel>
       </Section>
       {asking ? <ExceptionDialog service={s.name} team={s.ownerTeam} revoke={!!exception.data} onClose={() => setAsking(false)} /> : null}
-      <p className="text-fg-2">
-        Its own GitHub Actions deploy it: a merge to main deploys to staging (when it has one), then asks for production&apos;s approval, which
-        someone else of team {s.ownerTeam} gives on the Approvals tab. Forge never deploys it itself.
-      </p>
+      {i.runs ? (
+        <p className="text-fg-2">
+          Forge deploys its app like any service&apos;s. Its own GitHub Actions deploy the code in infrastructure/: a merge to main deploys to
+          staging (when it has one), then asks for production&apos;s approval, which someone else of team {s.ownerTeam} gives on the Approvals tab.
+        </p>
+      ) : (
+        <p className="text-fg-2">
+          Its own GitHub Actions deploy it: a merge to main deploys to staging (when it has one), then asks for production&apos;s approval, which
+          someone else of team {s.ownerTeam} gives on the Approvals tab. Forge never deploys it itself.
+        </p>
+      )}
     </div>
   );
 }

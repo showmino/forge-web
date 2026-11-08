@@ -304,6 +304,7 @@ function forge(w: World) {
       },
     });
     router.service(TemplateService, {
+      listTargets: () => ({ targets: [{ name: "azure-main", title: "Azure", environments: ["staging", "production"], teams: [] }] }),
       listTemplates: () => ({
         templates: [
           {
@@ -344,6 +345,15 @@ function forge(w: World) {
               { name: "public", type: TemplateParameter_Type.BOOL, required: true },
               { name: "retries", type: TemplateParameter_Type.INT, defaultValue: "3" },
             ],
+          },
+          {
+            name: "templates/nextjs-infra",
+            version: "v1.4.0",
+            title: "Next.js web app with infrastructure",
+            description: "A Next.js app and the Bicep or OpenTofu code for its cloud resources",
+            type: "infrastructure",
+            parameters: [{ name: "iac", type: TemplateParameter_Type.ENUM, values: ["opentofu", "bicep"], defaultValue: "opentofu" }],
+            options: ["replicas"],
           },
         ],
       }),
@@ -402,11 +412,11 @@ const dialog = () => within(screen.getByRole("dialog"));
 // Create button.
 const next = () => fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 async function pickTemplate(id: string) {
-  fireEvent.click(await screen.findByRole("radio", { name: new RegExp(`^${id}\\b`) }));
+  fireEvent.click(await screen.findByRole("radio", { name: new RegExp(`^${id}(?![\\w-])`) }));
 }
 async function fillCreate(name: string, team = "finance", template?: string) {
   if (template) await pickTemplate(template);
-  else await screen.findByRole("radio", { name: /^nextjs/ });
+  else await screen.findByRole("radio", { name: /^nextjs(?![\w-])/ });
   next();
   fireEvent.change(screen.getByLabelText(/^(Service name|Name)$/), { target: { value: name } });
   await screen.findByRole("option", { name: /^finance/ });
@@ -927,7 +937,7 @@ describe("create a service", () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
     // The first step is the template, the first one chosen.
-    expect(((await screen.findByRole("radio", { name: /^nextjs/ })) as HTMLInputElement).checked).toBe(true);
+    expect(((await screen.findByRole("radio", { name: /^nextjs(?!-)/ })) as HTMLInputElement).checked).toBe(true);
     const steps = within(screen.getByRole("navigation", { name: "Steps" }));
     expect(steps.getAllByRole("button").map((b) => b.textContent)).toEqual(["1Template", "2Name and owner", "3Template inputs", "4How it runs", "5Review"]);
     expect(steps.getByRole("button", { name: /^\d?Template$/ }).getAttribute("aria-current")).toBe("step");
@@ -1364,6 +1374,26 @@ describe("create a service", () => {
     });
   });
 
+  it("makes an infrastructure repo with an app: a target, and the app's run options", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    await fillCreate("shop", "finance", "nextjs-infra");
+    expect(await screen.findByLabelText("Target")).toBeTruthy();
+    // The app is reached like a service's.
+    expect(screen.getByRole("radiogroup", { name: "Who can reach it" })).toBeTruthy();
+    next();
+    next();
+    fireEvent.change(screen.getByLabelText("Pods in production"), { target: { value: "2" } });
+    const command = screen.getByLabelText("The same from the terminal").textContent!;
+    for (const flag of ["--template nextjs-infra", "--replicas 2", "--target azure-main"]) {
+      expect(command).toContain(flag);
+    }
+    toReview();
+    click(screen.getByRole("button", { name: "Create repo" }));
+    await screen.findByRole("heading", { name: "shop was created" });
+    expect(w.calls.create[0]).toMatchObject({ template: "templates/nextjs-infra", target: "azure-main", runOptions: { replicas: 2 } });
+  });
+
   it("asks again with the same key when the connection drops, so there is one create", async () => {
     const w = world({ dropCreate: 1 });
     renderWithApi(<CreateService />, forge(w));
@@ -1445,7 +1475,7 @@ describe("create a service", () => {
   it("asks for the owner before going on", async () => {
     const w = world();
     renderWithApi(<CreateService />, forge(w));
-    await screen.findByRole("radio", { name: /^nextjs/ });
+    await screen.findByRole("radio", { name: /^nextjs(?!-)/ });
     next();
     fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "ledger" } });
     await screen.findByRole("option", { name: /^finance/ });
@@ -1458,7 +1488,7 @@ describe("create a service", () => {
   it("says why the teams cannot be listed, and still lets the owner be typed", async () => {
     const w = world({ teamsDenied: true });
     renderWithApi(<CreateService />, forge(w));
-    await screen.findByRole("radio", { name: /^nextjs/ });
+    await screen.findByRole("radio", { name: /^nextjs(?!-)/ });
     next();
     expect((await screen.findByRole("alert")).textContent).toContain('grant it the organization permission "Members: read"');
     fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "ledger" } });
@@ -1581,7 +1611,7 @@ describe("create a service", () => {
   it("switches the questions with the template, and tells a reader they cannot create", async () => {
     const w = world({ writer: false });
     renderWithApi(<CreateService />, forge(w));
-    await screen.findByRole("radio", { name: /^nextjs/ });
+    await screen.findByRole("radio", { name: /^nextjs(?!-)/ });
     const command = () => screen.getByLabelText("The same from the terminal").textContent!;
     expect(command()).toContain("--set region=eu");
     await pickTemplate("go-grpc");
@@ -1600,7 +1630,7 @@ describe("create a service", () => {
   it("refuses a team the caller is not in, and lists their own teams first", async () => {
     const w = world({ caller: { teams: ["platform-engineering"] } });
     renderWithApi(<CreateService />, forge(w));
-    await screen.findByRole("radio", { name: /^nextjs/ });
+    await screen.findByRole("radio", { name: /^nextjs(?!-)/ });
     next();
     fireEvent.change(screen.getByLabelText("Service name"), { target: { value: "ledger" } });
     const own = await screen.findByRole("option", { name: /^platform-engineering .*your team/ });

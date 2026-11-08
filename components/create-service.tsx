@@ -423,7 +423,10 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   // A file template is a form: its inputs in its own order, under their groups.
   const isFile = !noTemplate && template?.type === "file";
   // An infrastructure template makes a repo that deploys itself to a target.
+  // One that offers run options also has an app, which Forge deploys like a
+  // service's (nextjs-infra); without them (infraOnly) nothing of it runs on Forge.
   const isInfra = !noTemplate && template?.type === "infrastructure";
+  const infraOnly = isInfra && (template?.options.length ?? 0) === 0;
   const teamTargets = (targets.data ?? []).filter((t) => t.teams.length === 0 || t.teams.includes(team.trim()));
   const theTarget = teamTargets.find((t) => t.name === target) ?? teamTargets[0];
   const targetName = theTarget?.name ?? "";
@@ -450,7 +453,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     );
   };
   // Where it is reached: a file template makes no service.
-  const reachRun = isFile || isInfra
+  const reachRun = isFile || infraOnly
     ? { flags: [] as [string, string][], options: {} }
     : reach === "internal"
       ? { flags: [["--internal", ""]] as [string, string][], options: { networkOnly: true } }
@@ -458,7 +461,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
         ? { flags: [["--internal-staging", ""]] as [string, string][], options: { stagingNetworkOnly: true } }
         : { flags: [] as [string, string][], options: {} };
   // The default domain is left to the API, as forge.yaml leaves it.
-  const ownDomain = !isFile && !isInfra && choosesDomain && domain !== defaultDomain;
+  const ownDomain = !isFile && !infraOnly && choosesDomain && domain !== defaultDomain;
   const address = ownDomain
     ? { flags: [...reachRun.flags, ["--domain", domain]] as [string, string][], options: { ...reachRun.options, domain } }
     : reachRun;
@@ -579,6 +582,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
           parameters,
           target: targetName,
           environments: chosenEnvs ? envs : [],
+          runOptions: infraOnly ? undefined : runAndAddress,
         }
       : {
           serviceId: name,
@@ -954,7 +958,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
               ["Environments", envs.join(", ")],
             ] as [string, ReactNode][])
           : []),
-        ...(isFile || fromRepo || isInfra
+        ...(isFile || fromRepo || infraOnly
           ? []
           : ([
               ["Reach", chosen.title],
@@ -1544,7 +1548,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                       )}
                     </fieldset>
                   ) : null}
-                  {(repoless || (template && !noTemplate)) && !isFile && !isInfra ? (
+                  {(repoless || (template && !noTemplate)) && !isFile && !infraOnly ? (
                     <fieldset className="flex min-w-0 flex-col gap-3">
                       <legend className="mb-1.5 text-[13px] font-medium">Who can reach it</legend>
                       <div role="radiogroup" aria-label="Who can reach it" className="flex flex-col gap-2">
@@ -1729,7 +1733,14 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                           <li>
                             It sets up the GitHub environments {envs.join(" and ")} for <span className="font-mono">{targetName}</span>, with their accounts&apos; secrets, and lets the shared workflow sign in there.
                           </li>
-                          <li>Nothing deploys until you merge to main. Production then waits for an approval by someone else on your team.</li>
+                          {infraOnly ? (
+                            <li>Nothing deploys until you merge to main. Production then waits for an approval by someone else on your team.</li>
+                          ) : (
+                            <li>
+                              Its CI deploys the app to staging, as any service&apos;s. Its infrastructure deploys when you merge to main; production then
+                              waits for an approval by someone else on your team.
+                            </li>
+                          )}
                         </>
                       ) : isFile ? (
                         <>

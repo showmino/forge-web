@@ -79,10 +79,14 @@ the others. The server only serves the pages and
   an exception" or "Revoke exception" for its team or an admin (a repo with
   production only; `RequestException` and `RevokeException` open a pull
   request in the deploy repo, which the dialog links), an Approvals
-  tab instead of Deployments, and no Deploy, Promote or Preview buttons. The
-  Create page asks an infrastructure template for a target
+  tab instead of Deployments, and no Deploy, Promote or Preview buttons. A
+  repo that also has an app (`infrastructure.runs`, from a template such as
+  `nextjs-infra`) shows a service's page, with deploys, previews and
+  promote, and adds the infrastructure to its overview and an Approvals tab.
+  The Create page asks an infrastructure template for a target
   (`TemplateService.ListTargets`, those open to the team) and its
-  environments instead of run options.
+  environments; one that offers run options asks for those too, and for who
+  can reach the app.
 - **Ownership** (`/ownership`): the organization's teams (`TeamService`)
   joined with the catalog: which team owns which service, services whose
   team is not a team on GitHub, services with no contacts, teams with no
