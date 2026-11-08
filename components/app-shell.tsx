@@ -1,13 +1,16 @@
 "use client";
 
+import { Code } from "@connectrpc/connect";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { CommandPalette } from "@/components/command-palette";
 import { ButtonLink, Icon } from "@/components/ui/button";
 import { useApi } from "@/components/providers";
-import { listAllServices } from "@/lib/api";
+import { type Approval, Approval_State } from "@/gen/forge/v1/approval_pb";
+import { isCode, listAllServices } from "@/lib/api";
+import { waitingForTeam } from "@/lib/approvals";
 import { clearSession, loadSession, SESSION_KEY, type Session } from "@/lib/auth/session";
 
 // The shell of the Forge design language: a dark iron rail beside a light work
@@ -140,6 +143,28 @@ export function usePermissions(service?: string): Permissions {
     role: q.data?.role ?? "",
     loading: q.isPending,
   };
+}
+
+// useWaitingApprovals is the production runs that wait for the caller's
+// team to approve them, for the rail's count and the Overview. A Forge
+// without infrastructure repos answers FailedPrecondition: nothing waits.
+export function useWaitingApprovals(): Approval[] {
+  const api = useApi();
+  const status = useQuery({ queryKey: ["status"], queryFn: () => api.auth.getStatus({}), staleTime: 5 * 60_000 });
+  const pending = useQuery({
+    queryKey: ["approvals", "waiting"],
+    queryFn: () =>
+      api.approvals.listApprovals({ state: Approval_State.PENDING, pageSize: 100 }).then(
+        (r) => r.approvals,
+        (err: unknown) => {
+          if (isCode(err, Code.FailedPrecondition)) return [];
+          throw err;
+        },
+      ),
+    retry: false,
+    refetchInterval: 60_000,
+  });
+  return useMemo(() => waitingForTeam(pending.data ?? [], status.data), [pending.data, status.data]);
 }
 
 // useRole names what the caller is in Forge: an admin, a member of a team, or
@@ -283,6 +308,7 @@ function Rail({
   const role = useRole();
   // The same list the Services page shows, so the count costs nothing extra there.
   const services = useQuery({ queryKey: ["services"], queryFn: () => listAllServices(api) });
+  const waiting = useWaitingApprovals().length;
   const who = session.email || session.subject;
   const short = who.split("@")[0];
   // Icons only applies on a wide screen; the narrow rail slides in at full width.
@@ -318,7 +344,7 @@ function Rail({
                   key={item.href}
                   href={item.href}
                   aria-current={active ? "page" : undefined}
-                  title={mini ? item.label : undefined}
+                  title={mini ? (item.href === "/approvals" && waiting ? `${item.label}, ${waiting} waiting for your team` : item.label) : undefined}
                   className={`relative flex items-center gap-2.5 rounded-md px-2.5 py-[7px] font-medium no-underline ${m("rail:h-9 rail:w-10 rail:justify-center rail:p-0")} ${
                     active
                       ? `bg-rail-active text-rail-fg before:absolute before:inset-y-2 before:-left-3 before:w-[3px] before:rounded-r-[3px] before:bg-ember before:content-[''] ${m("rail:before:-left-2.5")}`
@@ -344,6 +370,17 @@ function Rail({
                     <>
                       {/* A space, so the link reads "Services 2" and not "Services2". */}{" "}
                       <span className={`ml-auto font-mono text-[11px] text-rail-fg-2 ${m("rail:hidden")}`}>{services.data.length}</span>
+                    </>
+                  ) : null}
+                  {item.href === "/approvals" && waiting > 0 ? (
+                    <>
+                      {" "}
+                      <span className={`ml-auto rounded-full bg-ember px-1.5 font-mono text-[11px] font-medium text-ember-on ${m("rail:hidden")}`}>
+                        {waiting}
+                      </span>{" "}
+                      <span className="sr-only">waiting for your team</span>
+                      {/* The narrow rail has no room for the number: a dot says something waits. */}
+                      <span aria-hidden="true" className={`absolute right-1.5 top-1.5 hidden size-2 rounded-full bg-ember ${m("rail:block")}`} />
                     </>
                   ) : null}
                 </Link>

@@ -31,9 +31,15 @@ the others. The server only serves the pages and
   was deployed last), the last a link to the Services page for the rest, so it
   stays one screen with a thousand services. The numbers of the day and the recent deploys come from the audit
   log of the last 24 hours, which outlives a restart of the API; what is in
-  flight is followed live; "needs attention" is deployments Argo CD does not
+  flight is followed live; "needs attention" is first the production runs
+  of infrastructure repos that wait for the caller's team (pending
+  approvals whose `owner_team` is one of the caller's teams, every one for
+  an admin; `lib/approvals.ts`), then deployments Argo CD does not
   call healthy, deploy targets whose last deploy failed, and previews that
-  failed or end within six hours. The stage line shows Forge's own steps
+  failed or end within six hours. The rail counts those waiting runs beside
+  Approvals (a dot on the narrow rail). The dashboard does not know the
+  caller's GitHub user, so a run they started themselves is counted too:
+  the text says "your team's approval". The stage line shows Forge's own steps
   (image, release, commit, namespace, sync): building and testing happen in
   the service's CI before Forge is asked. The services list is at
   `/services`.
