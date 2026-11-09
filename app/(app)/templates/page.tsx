@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { usePermissions } from "@/components/app-shell";
+import { CatalogTabs } from "@/components/catalog-tabs";
 import { useApi } from "@/components/providers";
 import { ButtonLink, NameLink } from "@/components/ui/button";
 import { Empty, ErrorNote, Loading, PageHeader, Panel } from "@/components/ui/layout";
@@ -31,6 +32,7 @@ export default function Templates() {
         lead="Golden paths owned by the platform team. CI, a Dockerfile and the deploy config come with every new service."
         cli="forge template list"
       />
+      <CatalogTabs current="templates" />
       {templates.isPending ? (
         <Loading what="templates" />
       ) : templates.error ? (

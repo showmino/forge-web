@@ -9,10 +9,10 @@ import { ClusterService } from "@/gen/forge/v1/cluster_pb";
 import { Deployment_Health, Deployment_SyncStatus, DeployService } from "@/gen/forge/v1/deploy_pb";
 import { Environment_State, EnvironmentService } from "@/gen/forge/v1/environment_pb";
 import { OperationService } from "@/gen/forge/v1/operation_pb";
-import { ADMIN, authAs, READER, renderWithApi, signIn } from "@/test/helpers";
-import Overview from "./(app)/page";
+import { ADMIN, authAs, type Caller, READER, renderWithApi, signIn } from "@/test/helpers";
+import Home from "./(app)/page";
 
-// The overview is rendered against an in-memory Forge API with a day of
+// The home page is rendered against an in-memory Forge API with a day of
 // history: one deploy in flight, one failed promotion, a preview about to end,
 // and one of two clusters short of memory.
 
@@ -26,6 +26,8 @@ const ago = (minutes: number) => timestampFromDate(new Date(Date.now() - minutes
 
 type World = {
   writer: boolean;
+  // Who calls, when not an admin (writer) or a reader.
+  caller?: Caller;
   quiet: boolean; // nothing running, nothing broken, nothing deployed
   auditDown: boolean;
   clustersDown: boolean;
@@ -51,9 +53,17 @@ const request = (id: number, minutes: number, action: string, service: string, e
 function forge(w: World) {
   const running = { name: "operations/op_9f2c4a1b0c3d", kind: "deploy", target: "deployments/payments/staging", creator: "github:showmino/payments", createTime: ago(4) };
   return (router: ConnectRouter) => {
-    router.service(AuthService, authAs(w.writer ? ADMIN : READER));
+    router.service(AuthService, authAs(w.caller ?? (w.writer ? ADMIN : READER)));
     router.service(ServiceCatalogService, {
-      listServices: () => ({ services: w.quiet ? [] : [{ name: "services/payments" }, { name: "services/ledger" }, { name: "services/checkout-api" }] }),
+      listServices: () => ({
+        services: w.quiet
+          ? []
+          : [
+              { name: "services/payments", ownerTeam: "payments" },
+              { name: "services/ledger", ownerTeam: "finance" },
+              { name: "services/checkout-api", ownerTeam: "commerce" },
+            ],
+      }),
     });
     router.service(DeployService, {
       listDeployments: () => ({
@@ -154,91 +164,66 @@ afterEach(() => {
   cleanup();
 });
 
-// A fact under the board: its label (a link to the page behind it) and its value.
-const stat = (label: string) => screen.getByText(label).closest("div")!.querySelector("dd")!.textContent;
+describe("the home page", () => {
 
-describe("the overview", () => {
-  it("says the clusters could not be read, and shows the rest of the board", async () => {
-    renderWithApi(<Overview />, forge(world({ clustersDown: true })));
-    expect(await screen.findByRole("list", { name: "Production" })).toBeTruthy();
-    await waitFor(() => expect(stat("Clusters")).toBe("–"), { timeout: 4000 });
+  const stat = (label: string) => screen.getByText(label, { selector: "div" }).parentElement!.textContent;
+
+  it("says what Forge is for, with the actions the role allows", async () => {
+    renderWithApi(<Home />, forge(world()));
+    expect(screen.getByRole("heading", { level: 1, name: "Internal Developer Platform" })).toBeTruthy();
+    expect((await screen.findByRole("link", { name: "Create a service" })).getAttribute("href")).toBe("/create");
+    expect(screen.getByRole("link", { name: "Deploy a change" })).toBeTruthy();
+    expect(screen.getByText(/As an/).textContent).toContain("admin");
+
+    cleanup();
+    renderWithApi(<Home />, forge(world({ writer: false })));
+    expect(await screen.findByRole("link", { name: "Browse templates" })).toBeTruthy();
+    await waitFor(() => expect(screen.getByText(/As a/).textContent).toContain("reader"));
+    expect(screen.queryByRole("link", { name: "Create a service" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Deploy a change" })).toBeNull();
   });
 
-
-  it("shows a few services per environment and links to the rest", async () => {
-    renderWithApi(<Overview />, forge(world({ many: 20 })));
-    const status = within(await screen.findByRole("region", { name: "Status" }));
-    const staging = within(await status.findByRole("list", { name: "Staging" }));
-    const links = staging.getAllByRole("link");
-    // Four tiles, the last deployed first, and one link to the other seventeen.
-    expect(links).toHaveLength(5);
-    expect(links[0].textContent).toContain("payments");
-    const more = staging.getByRole("link", { name: /17 more/ });
-    expect(more.getAttribute("href")).toBe("/services");
-    expect(status.getByText("All 21 healthy")).toBeTruthy();
+  it("leads with four numbers", async () => {
+    renderWithApi(<Home />, forge(world()));
+    await waitFor(() => expect(stat("Services")).toContain("3"));
+    // Five deploys asked for today; of the four that ended, two failed.
+    await waitFor(() => expect(stat("Deploys today")).toContain("5"));
+    expect(stat("Deploys today")).toContain("50% success");
+    // checkout-api is degraded, ledger's deploy failed, and pr-388 ends soon.
+    await waitFor(() => expect(stat("Need a decision")).toContain("3"));
+    expect(stat("Production")).toContain("1 unhealthy");
   });
 
-  it("leads with the status of production and staging", async () => {
-    renderWithApi(<Overview />, forge(world()));
-    expect(await screen.findByRole("heading", { name: "Overview" })).toBeTruthy();
-    const status = within(screen.getByRole("region", { name: "Status" }));
-    // Production first: what is broken leads, a healthy tile names its version.
-    const production = within(await status.findByRole("list", { name: "Production" }));
-    const tiles = production.getAllByRole("link").map((a) => a.textContent);
-    expect(tiles).toEqual(["checkout-apiDegraded · 31 min ago", "ledgerHealthy, running v1.2.0 · 3 h ago"]);
-    expect(production.getByRole("link", { name: /checkout-api/ }).getAttribute("href")).toBe("/services/checkout-api");
-    expect(status.getByText("1 unhealthy")).toBeTruthy();
-    // Three services are in the catalog: one has nothing in production yet.
-    expect(status.getByText("2 running · 1 not deployed")).toBeTruthy();
-    const staging = within(status.getByRole("list", { name: "Staging" }));
-    expect(staging.getAllByRole("link").map((a) => a.textContent)).toEqual(["paymentsHealthy, running abc1234 · 1 h ago"]);
-    expect(status.getByText("All 1 healthy")).toBeTruthy();
-    // Under the rows, the day: five deploys started, four ended, two of them failed.
-    await waitFor(() => expect(stat("Deploys today")).toBe("5 · 2 of 4 failed"));
-    expect(stat("Previews live")).toBe("2 · 1 ends soon");
-    await waitFor(() => expect(stat("Clusters")).toBe("1 of 2 needs a look"));
-    // The page names its command. Creating a service is in the top bar, on every page.
-    expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge deploy status");
+  it("lists the services that need a look first, and what needs the caller", async () => {
+    renderWithApi(<Home />, forge(world()));
+    const table = within(await screen.findByRole("table", { name: "Services" }));
+    await waitFor(() => expect(table.getAllByRole("link").map((a) => a.textContent)).toEqual(["checkout-api", "ledger", "payments"]));
+    expect(within(table.getByText("checkout-api").closest("tr")!).getByText("Degraded")).toBeTruthy();
+
+    const needs = within(await screen.findByRole("list", { name: "Needs attention" }));
+    const lines = needs.getAllByRole("listitem").map((li) => li.textContent);
+    expect(lines[0]).toContain("checkout-api is degraded in production");
+    expect(lines.some((l) => l?.includes("The last ledger deploy to staging failed"))).toBe(true);
+    expect(lines.some((l) => l?.includes("Preview pr-388 expires"))).toBe(true);
   });
 
-  it("shows what is in flight, live, with the stage it is at", async () => {
-    const w = world();
-    renderWithApi(<Overview />, forge(w));
-    const flight = within(await screen.findByRole("region", { name: "In flight: Deploy payments to staging" }));
-    expect(flight.getByText("In progress")).toBeTruthy();
-    // The version comes from the release step; the line is at Sync.
-    expect(await flight.findByText("v0.4.1-rc.2")).toBeTruthy();
-    expect(await flight.findByRole("img", { name: "Deploy pipeline: running at Sync" })).toBeTruthy();
-    expect(flight.getByText(/· running/).parentElement!.textContent).toBe("Sync · running");
-    expect(flight.getByText("Synced, Progressing; 2 of 3 pods ready")).toBeTruthy();
-    expect(flight.getByText("github:showmino/payments")).toBeTruthy();
-    // The Argo CD application, and the namespace step of the log.
-    expect(flight.getAllByText("payments-staging")).toHaveLength(2);
-    expect(flight.getByRole("link", { name: "Watch op_9f2c4a1b0c3d" }).getAttribute("href")).toBe("/operations/op_9f2c4a1b0c3d");
-
-    // It lands: the page reads everything again, and nothing is in flight.
-    w.land();
-    await waitFor(() => expect(screen.queryByRole("heading", { name: "In flight" })).toBeNull());
-  });
-
-  it("lists what needs someone, the broken first", async () => {
-    renderWithApi(<Overview />, forge(world()));
-    const list = within(await screen.findByRole("list", { name: "Needs attention" }));
-    const rows = list.getAllByRole("listitem").map((li) => li.textContent);
-    expect(rows).toHaveLength(3);
-    expect(rows[0]).toContain("checkout-api is degraded in production");
-    expect(rows[0]).toContain("1 of 3 pods is crash-looping");
-    // checkout-api's failed promotion was followed by a rollback that worked: only ledger's failure stands.
-    expect(rows[1]).toContain("The last ledger deploy to staging failed");
-    expect(rows[1]).toContain("CI test finished with failure");
-    expect(rows[2]).toContain("Preview pr-388 expires in 2 h");
-    expect(rows.join()).not.toContain("pr-142");
-    expect(list.getByRole("link", { name: "Open checkout-api" }).getAttribute("href")).toBe("/services/checkout-api");
+  it("shows a team member their team's services and what is wrong with them", async () => {
+    renderWithApi(<Home />, forge(world({ caller: { teams: ["commerce"] } })));
+    expect(await screen.findByRole("heading", { name: "Your services" })).toBeTruthy();
+    const table = within(await screen.findByRole("table", { name: "Services" }));
+    await waitFor(() => expect(table.getAllByRole("link").map((a) => a.textContent)).toEqual(["checkout-api"]));
+    await waitFor(() => expect(stat("Your team's services")).toContain("of 3"));
+    const lines = within(await screen.findByRole("list", { name: "Needs attention" }))
+      .getAllByRole("listitem")
+      .map((li) => li.textContent);
+    // ledger is another team's; the preview is of checkout-api, theirs.
+    expect(lines.some((l) => l?.includes("ledger"))).toBe(false);
+    expect(lines.some((l) => l?.includes("pr-388"))).toBe(true);
   });
 
   it("lets a writer extend a preview from the list, and a reader open it", async () => {
     const w = world();
-    renderWithApi(<Overview />, forge(w));
+    renderWithApi(<Home />, forge(w));
     fireEvent.click(await screen.findByRole("button", { name: "Extend pr-388" }));
     const dialog = within(await screen.findByRole("dialog"));
     expect(dialog.getByRole("heading", { name: "Extend pr-388?" })).toBeTruthy();
@@ -247,41 +232,51 @@ describe("the overview", () => {
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
 
     cleanup();
-    renderWithApi(<Overview />, forge(world({ writer: false })));
+    renderWithApi(<Home />, forge(world({ writer: false })));
     expect((await screen.findByRole("link", { name: "Open pr-388" })).getAttribute("href")).toBe("/services/checkout-api");
     expect(screen.queryByRole("button", { name: "Extend pr-388" })).toBeNull();
+    expect(screen.getByText(/Their owners are on it/)).toBeTruthy();
   });
 
   it("lists the deploys that ended, with how", async () => {
-    renderWithApi(<Overview />, forge(world()));
+    renderWithApi(<Home />, forge(world()));
     const list = within(await screen.findByRole("list", { name: "Recent deploys" }));
     const rows = list.getAllByRole("listitem").map((li) => li.textContent);
     expect(rows).toHaveLength(4);
-    expect(rows[0]).toMatch(/checkout-api → production.*Rollback.*Succeeded/);
-    expect(rows[1]).toMatch(/checkout-api → production.*Promotion · Argo CD did not report the application healthy in 10m0s.*Failed/);
-    expect(rows[2]).toMatch(/ledger → staging.*Deploy · CI test finished with failure.*Failed/);
-    // The line is red where it stopped: at the image for a CI failure, at the sync for a timeout.
-    expect(list.getByRole("img", { name: "Pipeline: failed at Image" })).toBeTruthy();
-    expect(list.getByRole("img", { name: "Pipeline: failed at Sync" })).toBeTruthy();
-    expect(list.getAllByRole("img", { name: "Pipeline: every stage done" })).toHaveLength(2);
+    expect(rows[0]).toMatch(/Rolled back checkout-api → production/);
+    expect(rows[1]).toMatch(/Failed checkout-api → production/);
+    expect(rows[2]).toMatch(/Failed ledger → staging/);
+    expect(rows[3]).toMatch(/Deployed payments → staging/);
   });
 
-  it("says so when nothing is running, broken or deployed", async () => {
-    renderWithApi(<Overview />, forge(world({ quiet: true })));
-    expect(await screen.findByText("Nothing needs you right now.")).toBeTruthy();
-    expect(screen.getByText("No deploy has ended in the last 24 hours.")).toBeTruthy();
-    expect(screen.queryByRole("heading", { name: "In flight" })).toBeNull();
-    expect(await screen.findByText("Nothing is deployed to production yet.")).toBeTruthy();
-    expect(screen.getByText("Nothing is deployed to staging yet.")).toBeTruthy();
-    await waitFor(() => expect(stat("Deploys today")).toBe("0"));
-    expect(stat("Previews live")).toBe("0");
+  it("says how the platform is doing", async () => {
+    renderWithApi(<Home />, forge(world()));
+    const lines = within(await screen.findByRole("list", { name: "Platform status" }));
+    const text = (label: string) => lines.getByText(label).closest("a")!.textContent;
+    await waitFor(() => expect(text("Production")).toContain("1 unhealthy"));
+    expect(text("Staging")).toContain("Operational");
+    await waitFor(() => expect(text("Previews")).toContain("2 live, 1 ending soon"));
+    await waitFor(() => expect(text("Deploy pipeline")).toContain("1 running"));
+    await waitFor(() => expect(text("Clusters")).toContain("1 needs a look"));
+  });
+
+  it("shows the way to production when nothing needs the caller", async () => {
+    renderWithApi(<Home />, forge(world({ quiet: true })));
+    expect(await screen.findByRole("heading", { name: "Get started" })).toBeTruthy();
+    const steps = within(screen.getByRole("list", { name: "Get started" }));
+    expect(steps.getByText("Sign in to Forge").textContent).toContain("(done)");
+    // An admin is on the way to production; the list follows once their role is known.
+    expect(await screen.findByRole("link", { name: "Create your first service" })).toBeTruthy();
+    await waitFor(() => expect(stat("Need a decision")).toContain("All clear"));
+    expect(await screen.findByText("No deploy has ended in the last 24 hours.")).toBeTruthy();
   });
 
   it("says what could not be read, and still shows the rest", async () => {
-    renderWithApi(<Overview />, forge(world({ auditDown: true })));
-    await waitFor(() => expect(screen.getAllByRole("alert").length).toBeGreaterThan(0), { timeout: 4000 });
-    // The board still stands, without the numbers of the day.
-    expect(await screen.findByRole("list", { name: "Production" })).toBeTruthy();
-    expect(stat("Deploys today")).toBe("–");
+    renderWithApi(<Home />, forge(world({ auditDown: true, clustersDown: true })));
+    expect((await screen.findByRole("alert")).textContent).toContain("The Forge API cannot be reached");
+    const lines = within(await screen.findByRole("list", { name: "Platform status" }));
+    await waitFor(() => expect(lines.getByText("Production").closest("a")!.textContent).toContain("1 unhealthy"));
+    expect(lines.queryByText("Clusters")).toBeNull();
+    expect(await screen.findByRole("table", { name: "Services" })).toBeTruthy();
   });
 });

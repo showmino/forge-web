@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useApi } from "@/components/providers";
 import { ExternalButton, NameLink } from "@/components/ui/button";
+import { CatalogTabs } from "@/components/catalog-tabs";
 import { ErrorNote, Loading, PageHeader, TableFrame, td, th, tr } from "@/components/ui/layout";
 import { Meter } from "@/components/ui/meter";
 import { StatusBadge } from "@/components/ui/status";
@@ -28,6 +29,7 @@ export default function Clusters() {
       >
         {grafana ? <ExternalButton href={grafana}>Open Grafana</ExternalButton> : null}
       </PageHeader>
+      <CatalogTabs current="clusters" />
       {clusters.isPending ? (
         <Loading what="clusters" />
       ) : clusters.error ? (
