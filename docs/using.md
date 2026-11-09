@@ -23,15 +23,21 @@ Same from the terminal: `forge deploy status`.
 
 ## Services
 
-`/services` is the catalog: every service, its team, its lifecycle and how
-staging and production are doing. Filter by name or pick a team.
+`/` is the home page: the actions your role allows, four numbers, the
+services that need a look (or your team's), what needs you, recent activity
+and how the platform is doing.
+
+`/services` is the Catalog: every service, its team, its lifecycle and the
+environment where it hurts most, broken first. Search, or pick an owner or a
+status ("Needs attention", "Ready to promote"). Its tabs lead to the
+templates, the resources and, for admins, the clusters.
 `forge service list`
 
 A service's page (`/services/<name>`) has tabs:
 
 | Tab | What it shows |
 | --- | --- |
-| Overview | Staging and production (status, version, commit, who deployed, address), previews, recent activity, the facts about the service |
+| Overview | The facts about the service, its resources and dependencies, staging and production (status, version, commit, who deployed, address), recent activity and previews |
 | Deployments | What was deployed to staging and production, newest first |
 | Dependencies | The services it depends on, and the ones that depend on it |
 | Docs | The service's docs, when its repo has `docs/index.md` |
@@ -78,9 +84,11 @@ service's team create, extend and destroy them here or on the service's page.
 
 ## Deployments and Operations
 
-- `/deployments`: deploys, promotions and rollbacks of the last 7 days, with
-  the stage each reached and who started it. Filter by in progress, failed,
-  succeeded.
+- `/deployments`: today in four numbers (deploys, success rate, median
+  duration, failures), then the deploys, promotions and rollbacks of the
+  last 7 days, with the stage each reached and who started it. Search, or
+  pick a service, an environment or a status; click a row for its details,
+  its operation and its Argo CD application.
 - `/operations`: all long-running work, including creating a service, previews
   and deletes. Open one to follow it live or cancel it.
 

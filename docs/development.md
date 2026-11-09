@@ -43,7 +43,7 @@ transport), never a mock of `fetch`. Test data has the shapes of the live API
 | --- | --- |
 | `app/pages.test.tsx` | Every page as a reader sees it, the frame, Jump to |
 | `app/actions.test.tsx` | A writer's actions: create, deploy, promote, roll back, previews, settings, delete |
-| `app/overview.test.tsx` | The Overview |
+| `app/overview.test.tsx` | The home page |
 | `app/docs.test.tsx` | The docs reader: links, raw HTML, images, missing pages |
 | `lib/*.test.ts` | The pure functions that decide what pages show |
 | `lib/auth/*.test.ts` | PKCE and the session |

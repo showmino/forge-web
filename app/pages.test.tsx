@@ -364,7 +364,15 @@ describe("deployments", () => {
     // A refused rollback started nothing: it is in the audit log, not here.
     expect(table.getAllByRole("row")).toHaveLength(3);
 
-    fireEvent.click(screen.getByRole("button", { name: /^Failed/ }));
+    // The first one is picked: its details are beside the table.
+    const details = within(screen.getByRole("region", { name: "Deployment details" }));
+    expect(details.getByRole("link", { name: "ledger" })).toBeTruthy();
+    expect(details.getByText(/step \d of 5/)).toBeTruthy();
+    fireEvent.click(promoted);
+    expect(details.getByRole("link", { name: "payments" })).toBeTruthy();
+    expect(details.getByText("All 5 stages passed")).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("Status"), { target: { value: "failed" } });
     expect(screen.getByText("No deployments match this filter.")).toBeTruthy();
     expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge audit list --since 7d --failed");
   });
