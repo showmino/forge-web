@@ -109,6 +109,14 @@ export function errorText(err: unknown): string {
 // The API names things by kind ("services/payments", "templates/nextjs",
 // "environments/pr-42", "operations/op_1d68e6ad2d75"); pages and addresses use
 // the short name.
+// serviceEnvs is the deploy environments a service has, in deploy order. One
+// made before they could be chosen records none: it has both.
+export function serviceEnvs(s: { environments: string[] }): ("staging" | "production")[] {
+  const all = ["staging", "production"] as const;
+  if (s.environments.length === 0) return [...all];
+  return all.filter((e) => s.environments.includes(e));
+}
+
 export function serviceId(name: string): string {
   return name.replace(/^services\//, "");
 }

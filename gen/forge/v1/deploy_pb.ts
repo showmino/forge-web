@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file forge/v1/deploy.proto.
  */
 export const file_forge_v1_deploy: GenFile = /*@__PURE__*/
-  fileDesc("ChVmb3JnZS92MS9kZXBsb3kucHJvdG8SCGZvcmdlLnYxIowFCgpEZXBsb3ltZW50EgwKBG5hbWUYASABKAkSDwoHc2VydmljZRgCIAEoCRILCgNlbnYYAyABKAkSDQoFaW1hZ2UYBCABKAkSCwoDcmVmGAUgASgJEg4KBmNvbW1pdBgGIAEoCRILCgN1cmwYByABKAkSLQoEc3luYxgIIAEoDjIfLmZvcmdlLnYxLkRlcGxveW1lbnQuU3luY1N0YXR1cxIrCgZoZWFsdGgYCSABKA4yGy5mb3JnZS52MS5EZXBsb3ltZW50LkhlYWx0aBIPCgdtZXNzYWdlGAogASgJEhUKDWRlcGxveV9jb21taXQYCyABKAkSEwoLZGVwbG95ZWRfYnkYDCABKAkSLwoLZGVwbG95X3RpbWUYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCW9wZXJhdGlvbhgOIAEoCRIPCgd2ZXJzaW9uGA8gASgJEhAKCGFyZ29fdXJsGBAgASgJIncKClN5bmNTdGF0dXMSGwoXU1lOQ19TVEFUVVNfVU5TUEVDSUZJRUQQABIWChJTWU5DX1NUQVRVU19TWU5DRUQQARIbChdTWU5DX1NUQVRVU19PVVRfT0ZfU1lOQxACEhcKE1NZTkNfU1RBVFVTX1VOS05PV04QAyKfAQoGSGVhbHRoEhYKEkhFQUxUSF9VTlNQRUNJRklFRBAAEhIKDkhFQUxUSF9IRUFMVEhZEAESFgoSSEVBTFRIX1BST0dSRVNTSU5HEAISEwoPSEVBTFRIX0RFR1JBREVEEAMSEgoOSEVBTFRIX01JU1NJTkcQBBIUChBIRUFMVEhfU1VTUEVOREVEEAUSEgoOSEVBTFRIX1VOS05PV04QBiK8AQoMRGVwbG95UmVjb3JkEhUKDWRlcGxveV9jb21taXQYASABKAkSDAoEa2luZBgCIAEoCRINCgVpbWFnZRgDIAEoCRILCgNyZWYYBCABKAkSDgoGY29tbWl0GAUgASgJEg0KBWFjdG9yGAYgASgJEigKBHRpbWUYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCW9wZXJhdGlvbhgIIAEoCRIPCgd2ZXJzaW9uGAkgASgJIp4BChJTdGFydERlcGxveVJlcXVlc3QSDwoHc2VydmljZRgBIAEoCRILCgNlbnYYAiABKAkSCwoDcmVmGAMgASgJEhIKCnJlcXVlc3RfaWQYBCABKAkSFQoNdmFsaWRhdGVfb25seRgFIAEoCBIcCgRidW1wGAYgASgOMg4uZm9yZ2UudjEuQnVtcBIUCgxjaGFydF92YWx1ZXMYByABKAkiZwoTU3RhcnREZXBsb3lSZXNwb25zZRImCglvcGVyYXRpb24YASABKAsyEy5mb3JnZS52MS5PcGVyYXRpb24SKAoKZGVwbG95bWVudBgCIAEoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQiJAoUR2V0RGVwbG95bWVudFJlcXVlc3QSDAoEbmFtZRgBIAEoCSJBChVHZXREZXBsb3ltZW50UmVzcG9uc2USKAoKZGVwbG95bWVudBgBIAEoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQiNgoWTGlzdERlcGxveW1lbnRzUmVxdWVzdBIPCgdzZXJ2aWNlGAEgASgJEgsKA2VudhgCIAEoCSJEChdMaXN0RGVwbG95bWVudHNSZXNwb25zZRIpCgtkZXBsb3ltZW50cxgBIAMoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQiNwoYTGlzdERlcGxveUhpc3RvcnlSZXF1ZXN0EgwKBG5hbWUYASABKAkSDQoFbGltaXQYAiABKAUiRAoZTGlzdERlcGxveUhpc3RvcnlSZXNwb25zZRInCgdyZWNvcmRzGAEgAygLMhYuZm9yZ2UudjEuRGVwbG95UmVjb3JkIkgKFVJvbGxiYWNrRGVwbG95UmVxdWVzdBIMCgRuYW1lGAEgASgJEgoKAnRvGAIgASgJEhUKDXZhbGlkYXRlX29ubHkYAyABKAgiagoWUm9sbGJhY2tEZXBsb3lSZXNwb25zZRImCglvcGVyYXRpb24YASABKAsyEy5mb3JnZS52MS5PcGVyYXRpb24SKAoKZGVwbG95bWVudBgCIAEoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQidgoUUHJvbW90ZURlcGxveVJlcXVlc3QSDwoHc2VydmljZRgBIAEoCRIMCgRmcm9tGAIgASgJEgoKAnRvGAMgASgJEhUKDXZhbGlkYXRlX29ubHkYBCABKAgSHAoEYnVtcBgFIAEoDjIOLmZvcmdlLnYxLkJ1bXAiaQoVUHJvbW90ZURlcGxveVJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIoCgpkZXBsb3ltZW50GAIgASgLMhQuZm9yZ2UudjEuRGVwbG95bWVudCKFAQoRU2V0QWRkcmVzc1JlcXVlc3QSDwoHc2VydmljZRgBIAEoCRIMCgRob3N0GAIgASgJEg4KBmRvbWFpbhgDIAEoCRINCgVjbGVhchgEIAEoCBINCgVjbGFpbRgFIAMoCRIVCg12YWxpZGF0ZV9vbmx5GAYgASgIEgwKBGV0YWcYByABKAkiZQoSU2V0QWRkcmVzc1Jlc3BvbnNlEiIKB3NlcnZpY2UYASABKAsyES5mb3JnZS52MS5TZXJ2aWNlEisKCWFkZHJlc3NlcxgCIAMoCzIYLmZvcmdlLnYxLlBsYW5uZWRBZGRyZXNzIm0KDlBsYW5uZWRBZGRyZXNzEgsKA2VudhgBIAEoCRILCgN1cmwYAiABKAkSDgoGcHVibGljGAMgASgIEg4KBmluX3VzZRgEIAEoCBITCgtjdXJyZW50X3VybBgFIAEoCRIMCgRob3N0GAYgASgJIhQKEkxpc3REb21haW5zUmVxdWVzdCJXChNMaXN0RG9tYWluc1Jlc3BvbnNlEicKB2RvbWFpbnMYASADKAsyFi5mb3JnZS52MS5QdWJsaWNEb21haW4SFwoPaW50ZXJuYWxfZG9tYWluGAIgASgJIjAKDFB1YmxpY0RvbWFpbhIMCgRuYW1lGAEgASgJEhIKCmlzX2RlZmF1bHQYAiABKAgqTAoEQnVtcBIUChBCVU1QX1VOU1BFQ0lGSUVEEAASDgoKQlVNUF9QQVRDSBABEg4KCkJVTVBfTUlOT1IQAhIOCgpCVU1QX01BSk9SEAMyuwUKDURlcGxveVNlcnZpY2USTAoLU3RhcnREZXBsb3kSHC5mb3JnZS52MS5TdGFydERlcGxveVJlcXVlc3QaHS5mb3JnZS52MS5TdGFydERlcGxveVJlc3BvbnNlIgASVQoNR2V0RGVwbG95bWVudBIeLmZvcmdlLnYxLkdldERlcGxveW1lbnRSZXF1ZXN0Gh8uZm9yZ2UudjEuR2V0RGVwbG95bWVudFJlc3BvbnNlIgOQAgESWwoPTGlzdERlcGxveW1lbnRzEiAuZm9yZ2UudjEuTGlzdERlcGxveW1lbnRzUmVxdWVzdBohLmZvcmdlLnYxLkxpc3REZXBsb3ltZW50c1Jlc3BvbnNlIgOQAgESYQoRTGlzdERlcGxveUhpc3RvcnkSIi5mb3JnZS52MS5MaXN0RGVwbG95SGlzdG9yeVJlcXVlc3QaIy5mb3JnZS52MS5MaXN0RGVwbG95SGlzdG9yeVJlc3BvbnNlIgOQAgESVQoOUm9sbGJhY2tEZXBsb3kSHy5mb3JnZS52MS5Sb2xsYmFja0RlcGxveVJlcXVlc3QaIC5mb3JnZS52MS5Sb2xsYmFja0RlcGxveVJlc3BvbnNlIgASUgoNUHJvbW90ZURlcGxveRIeLmZvcmdlLnYxLlByb21vdGVEZXBsb3lSZXF1ZXN0Gh8uZm9yZ2UudjEuUHJvbW90ZURlcGxveVJlc3BvbnNlIgASSQoKU2V0QWRkcmVzcxIbLmZvcmdlLnYxLlNldEFkZHJlc3NSZXF1ZXN0GhwuZm9yZ2UudjEuU2V0QWRkcmVzc1Jlc3BvbnNlIgASTwoLTGlzdERvbWFpbnMSHC5mb3JnZS52MS5MaXN0RG9tYWluc1JlcXVlc3QaHS5mb3JnZS52MS5MaXN0RG9tYWluc1Jlc3BvbnNlIgOQAgFiBnByb3RvMw", [file_forge_v1_catalog, file_forge_v1_operation, file_google_protobuf_timestamp]);
+  fileDesc("ChVmb3JnZS92MS9kZXBsb3kucHJvdG8SCGZvcmdlLnYxIowFCgpEZXBsb3ltZW50EgwKBG5hbWUYASABKAkSDwoHc2VydmljZRgCIAEoCRILCgNlbnYYAyABKAkSDQoFaW1hZ2UYBCABKAkSCwoDcmVmGAUgASgJEg4KBmNvbW1pdBgGIAEoCRILCgN1cmwYByABKAkSLQoEc3luYxgIIAEoDjIfLmZvcmdlLnYxLkRlcGxveW1lbnQuU3luY1N0YXR1cxIrCgZoZWFsdGgYCSABKA4yGy5mb3JnZS52MS5EZXBsb3ltZW50LkhlYWx0aBIPCgdtZXNzYWdlGAogASgJEhUKDWRlcGxveV9jb21taXQYCyABKAkSEwoLZGVwbG95ZWRfYnkYDCABKAkSLwoLZGVwbG95X3RpbWUYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCW9wZXJhdGlvbhgOIAEoCRIPCgd2ZXJzaW9uGA8gASgJEhAKCGFyZ29fdXJsGBAgASgJIncKClN5bmNTdGF0dXMSGwoXU1lOQ19TVEFUVVNfVU5TUEVDSUZJRUQQABIWChJTWU5DX1NUQVRVU19TWU5DRUQQARIbChdTWU5DX1NUQVRVU19PVVRfT0ZfU1lOQxACEhcKE1NZTkNfU1RBVFVTX1VOS05PV04QAyKfAQoGSGVhbHRoEhYKEkhFQUxUSF9VTlNQRUNJRklFRBAAEhIKDkhFQUxUSF9IRUFMVEhZEAESFgoSSEVBTFRIX1BST0dSRVNTSU5HEAISEwoPSEVBTFRIX0RFR1JBREVEEAMSEgoOSEVBTFRIX01JU1NJTkcQBBIUChBIRUFMVEhfU1VTUEVOREVEEAUSEgoOSEVBTFRIX1VOS05PV04QBiK8AQoMRGVwbG95UmVjb3JkEhUKDWRlcGxveV9jb21taXQYASABKAkSDAoEa2luZBgCIAEoCRINCgVpbWFnZRgDIAEoCRILCgNyZWYYBCABKAkSDgoGY29tbWl0GAUgASgJEg0KBWFjdG9yGAYgASgJEigKBHRpbWUYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCW9wZXJhdGlvbhgIIAEoCRIPCgd2ZXJzaW9uGAkgASgJIp4BChJTdGFydERlcGxveVJlcXVlc3QSDwoHc2VydmljZRgBIAEoCRILCgNlbnYYAiABKAkSCwoDcmVmGAMgASgJEhIKCnJlcXVlc3RfaWQYBCABKAkSFQoNdmFsaWRhdGVfb25seRgFIAEoCBIcCgRidW1wGAYgASgOMg4uZm9yZ2UudjEuQnVtcBIUCgxjaGFydF92YWx1ZXMYByABKAkiZwoTU3RhcnREZXBsb3lSZXNwb25zZRImCglvcGVyYXRpb24YASABKAsyEy5mb3JnZS52MS5PcGVyYXRpb24SKAoKZGVwbG95bWVudBgCIAEoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQiJAoUR2V0RGVwbG95bWVudFJlcXVlc3QSDAoEbmFtZRgBIAEoCSJBChVHZXREZXBsb3ltZW50UmVzcG9uc2USKAoKZGVwbG95bWVudBgBIAEoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQiNgoWTGlzdERlcGxveW1lbnRzUmVxdWVzdBIPCgdzZXJ2aWNlGAEgASgJEgsKA2VudhgCIAEoCSJEChdMaXN0RGVwbG95bWVudHNSZXNwb25zZRIpCgtkZXBsb3ltZW50cxgBIAMoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQiNwoYTGlzdERlcGxveUhpc3RvcnlSZXF1ZXN0EgwKBG5hbWUYASABKAkSDQoFbGltaXQYAiABKAUiRAoZTGlzdERlcGxveUhpc3RvcnlSZXNwb25zZRInCgdyZWNvcmRzGAEgAygLMhYuZm9yZ2UudjEuRGVwbG95UmVjb3JkIkgKFVJvbGxiYWNrRGVwbG95UmVxdWVzdBIMCgRuYW1lGAEgASgJEgoKAnRvGAIgASgJEhUKDXZhbGlkYXRlX29ubHkYAyABKAgiagoWUm9sbGJhY2tEZXBsb3lSZXNwb25zZRImCglvcGVyYXRpb24YASABKAsyEy5mb3JnZS52MS5PcGVyYXRpb24SKAoKZGVwbG95bWVudBgCIAEoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQidgoUUHJvbW90ZURlcGxveVJlcXVlc3QSDwoHc2VydmljZRgBIAEoCRIMCgRmcm9tGAIgASgJEgoKAnRvGAMgASgJEhUKDXZhbGlkYXRlX29ubHkYBCABKAgSHAoEYnVtcBgFIAEoDjIOLmZvcmdlLnYxLkJ1bXAiaQoVUHJvbW90ZURlcGxveVJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIoCgpkZXBsb3ltZW50GAIgASgLMhQuZm9yZ2UudjEuRGVwbG95bWVudCI+ChdEZWxldGVEZXBsb3ltZW50UmVxdWVzdBIMCgRuYW1lGAEgASgJEhUKDXZhbGlkYXRlX29ubHkYAiABKAgibAoYRGVsZXRlRGVwbG95bWVudFJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIoCgpkZXBsb3ltZW50GAIgASgLMhQuZm9yZ2UudjEuRGVwbG95bWVudCKFAQoRU2V0QWRkcmVzc1JlcXVlc3QSDwoHc2VydmljZRgBIAEoCRIMCgRob3N0GAIgASgJEg4KBmRvbWFpbhgDIAEoCRINCgVjbGVhchgEIAEoCBINCgVjbGFpbRgFIAMoCRIVCg12YWxpZGF0ZV9vbmx5GAYgASgIEgwKBGV0YWcYByABKAkiZQoSU2V0QWRkcmVzc1Jlc3BvbnNlEiIKB3NlcnZpY2UYASABKAsyES5mb3JnZS52MS5TZXJ2aWNlEisKCWFkZHJlc3NlcxgCIAMoCzIYLmZvcmdlLnYxLlBsYW5uZWRBZGRyZXNzIm0KDlBsYW5uZWRBZGRyZXNzEgsKA2VudhgBIAEoCRILCgN1cmwYAiABKAkSDgoGcHVibGljGAMgASgIEg4KBmluX3VzZRgEIAEoCBITCgtjdXJyZW50X3VybBgFIAEoCRIMCgRob3N0GAYgASgJIhQKEkxpc3REb21haW5zUmVxdWVzdCJXChNMaXN0RG9tYWluc1Jlc3BvbnNlEicKB2RvbWFpbnMYASADKAsyFi5mb3JnZS52MS5QdWJsaWNEb21haW4SFwoPaW50ZXJuYWxfZG9tYWluGAIgASgJIjAKDFB1YmxpY0RvbWFpbhIMCgRuYW1lGAEgASgJEhIKCmlzX2RlZmF1bHQYAiABKAgqTAoEQnVtcBIUChBCVU1QX1VOU1BFQ0lGSUVEEAASDgoKQlVNUF9QQVRDSBABEg4KCkJVTVBfTUlOT1IQAhIOCgpCVU1QX01BSk9SEAMymAYKDURlcGxveVNlcnZpY2USTAoLU3RhcnREZXBsb3kSHC5mb3JnZS52MS5TdGFydERlcGxveVJlcXVlc3QaHS5mb3JnZS52MS5TdGFydERlcGxveVJlc3BvbnNlIgASVQoNR2V0RGVwbG95bWVudBIeLmZvcmdlLnYxLkdldERlcGxveW1lbnRSZXF1ZXN0Gh8uZm9yZ2UudjEuR2V0RGVwbG95bWVudFJlc3BvbnNlIgOQAgESWwoPTGlzdERlcGxveW1lbnRzEiAuZm9yZ2UudjEuTGlzdERlcGxveW1lbnRzUmVxdWVzdBohLmZvcmdlLnYxLkxpc3REZXBsb3ltZW50c1Jlc3BvbnNlIgOQAgESYQoRTGlzdERlcGxveUhpc3RvcnkSIi5mb3JnZS52MS5MaXN0RGVwbG95SGlzdG9yeVJlcXVlc3QaIy5mb3JnZS52MS5MaXN0RGVwbG95SGlzdG9yeVJlc3BvbnNlIgOQAgESVQoOUm9sbGJhY2tEZXBsb3kSHy5mb3JnZS52MS5Sb2xsYmFja0RlcGxveVJlcXVlc3QaIC5mb3JnZS52MS5Sb2xsYmFja0RlcGxveVJlc3BvbnNlIgASUgoNUHJvbW90ZURlcGxveRIeLmZvcmdlLnYxLlByb21vdGVEZXBsb3lSZXF1ZXN0Gh8uZm9yZ2UudjEuUHJvbW90ZURlcGxveVJlc3BvbnNlIgASWwoQRGVsZXRlRGVwbG95bWVudBIhLmZvcmdlLnYxLkRlbGV0ZURlcGxveW1lbnRSZXF1ZXN0GiIuZm9yZ2UudjEuRGVsZXRlRGVwbG95bWVudFJlc3BvbnNlIgASSQoKU2V0QWRkcmVzcxIbLmZvcmdlLnYxLlNldEFkZHJlc3NSZXF1ZXN0GhwuZm9yZ2UudjEuU2V0QWRkcmVzc1Jlc3BvbnNlIgASTwoLTGlzdERvbWFpbnMSHC5mb3JnZS52MS5MaXN0RG9tYWluc1JlcXVlc3QaHS5mb3JnZS52MS5MaXN0RG9tYWluc1Jlc3BvbnNlIgOQAgFiBnByb3RvMw", [file_forge_v1_catalog, file_forge_v1_operation, file_google_protobuf_timestamp]);
 
 /**
  * Deployment is what runs for one service in one environment.
@@ -617,6 +617,56 @@ export const PromoteDeployResponseSchema: GenMessage<PromoteDeployResponse> = /*
   messageDesc(file_forge_v1_deploy, 13);
 
 /**
+ * @generated from message forge.v1.DeleteDeploymentRequest
+ */
+export type DeleteDeploymentRequest = Message<"forge.v1.DeleteDeploymentRequest"> & {
+  /**
+   * "deployments/{service}/{env}".
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: bool validate_only = 2;
+   */
+  validateOnly: boolean;
+};
+
+/**
+ * Describes the message forge.v1.DeleteDeploymentRequest.
+ * Use `create(DeleteDeploymentRequestSchema)` to create a new message.
+ */
+export const DeleteDeploymentRequestSchema: GenMessage<DeleteDeploymentRequest> = /*@__PURE__*/
+  messageDesc(file_forge_v1_deploy, 14);
+
+/**
+ * @generated from message forge.v1.DeleteDeploymentResponse
+ */
+export type DeleteDeploymentResponse = Message<"forge.v1.DeleteDeploymentResponse"> & {
+  /**
+   * Unset with validate_only.
+   *
+   * @generated from field: forge.v1.Operation operation = 1;
+   */
+  operation?: Operation | undefined;
+
+  /**
+   * What runs there now, which the delete takes down.
+   *
+   * @generated from field: forge.v1.Deployment deployment = 2;
+   */
+  deployment?: Deployment | undefined;
+};
+
+/**
+ * Describes the message forge.v1.DeleteDeploymentResponse.
+ * Use `create(DeleteDeploymentResponseSchema)` to create a new message.
+ */
+export const DeleteDeploymentResponseSchema: GenMessage<DeleteDeploymentResponse> = /*@__PURE__*/
+  messageDesc(file_forge_v1_deploy, 15);
+
+/**
  * @generated from message forge.v1.SetAddressRequest
  */
 export type SetAddressRequest = Message<"forge.v1.SetAddressRequest"> & {
@@ -676,7 +726,7 @@ export type SetAddressRequest = Message<"forge.v1.SetAddressRequest"> & {
  * Use `create(SetAddressRequestSchema)` to create a new message.
  */
 export const SetAddressRequestSchema: GenMessage<SetAddressRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_deploy, 14);
+  messageDesc(file_forge_v1_deploy, 16);
 
 /**
  * @generated from message forge.v1.SetAddressResponse
@@ -702,7 +752,7 @@ export type SetAddressResponse = Message<"forge.v1.SetAddressResponse"> & {
  * Use `create(SetAddressResponseSchema)` to create a new message.
  */
 export const SetAddressResponseSchema: GenMessage<SetAddressResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_deploy, 15);
+  messageDesc(file_forge_v1_deploy, 17);
 
 /**
  * PlannedAddress is where one environment of a service will be reached.
@@ -755,7 +805,7 @@ export type PlannedAddress = Message<"forge.v1.PlannedAddress"> & {
  * Use `create(PlannedAddressSchema)` to create a new message.
  */
 export const PlannedAddressSchema: GenMessage<PlannedAddress> = /*@__PURE__*/
-  messageDesc(file_forge_v1_deploy, 16);
+  messageDesc(file_forge_v1_deploy, 18);
 
 /**
  * @generated from message forge.v1.ListDomainsRequest
@@ -768,7 +818,7 @@ export type ListDomainsRequest = Message<"forge.v1.ListDomainsRequest"> & {
  * Use `create(ListDomainsRequestSchema)` to create a new message.
  */
 export const ListDomainsRequestSchema: GenMessage<ListDomainsRequest> = /*@__PURE__*/
-  messageDesc(file_forge_v1_deploy, 17);
+  messageDesc(file_forge_v1_deploy, 19);
 
 /**
  * @generated from message forge.v1.ListDomainsResponse
@@ -797,7 +847,7 @@ export type ListDomainsResponse = Message<"forge.v1.ListDomainsResponse"> & {
  * Use `create(ListDomainsResponseSchema)` to create a new message.
  */
 export const ListDomainsResponseSchema: GenMessage<ListDomainsResponse> = /*@__PURE__*/
-  messageDesc(file_forge_v1_deploy, 18);
+  messageDesc(file_forge_v1_deploy, 20);
 
 /**
  * PublicDomain is a domain services can be reached under from the internet.
@@ -825,7 +875,7 @@ export type PublicDomain = Message<"forge.v1.PublicDomain"> & {
  * Use `create(PublicDomainSchema)` to create a new message.
  */
 export const PublicDomainSchema: GenMessage<PublicDomain> = /*@__PURE__*/
-  messageDesc(file_forge_v1_deploy, 19);
+  messageDesc(file_forge_v1_deploy, 21);
 
 /**
  * Bump is the part of the version a final release raises.
@@ -928,6 +978,18 @@ export const DeployService: GenService<{
     methodKind: "unary";
     input: typeof PromoteDeployRequestSchema;
     output: typeof PromoteDeployResponseSchema;
+  },
+  /**
+   * DeleteDeployment takes down what runs in one environment: its values in
+   * the GitOps repo, its Argo CD application and its namespace. The service
+   * stays in the catalog, with its other environment and its previews.
+   *
+   * @generated from rpc forge.v1.DeployService.DeleteDeployment
+   */
+  deleteDeployment: {
+    methodKind: "unary";
+    input: typeof DeleteDeploymentRequestSchema;
+    output: typeof DeleteDeploymentResponseSchema;
   },
   /**
    * SetAddress changes where a service is reached, overriding forge.yaml's

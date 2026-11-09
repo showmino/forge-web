@@ -9,7 +9,7 @@ import { Field, inputClass } from "@/components/ui/field";
 import { ErrorNote, Panel } from "@/components/ui/layout";
 import { useToast } from "@/components/ui/toast";
 import { Lifecycle, type Service } from "@/gen/forge/v1/catalog_pb";
-import { serviceId, teamId } from "@/lib/api";
+import { serviceEnvs, serviceId, teamId } from "@/lib/api";
 import { lifecycleWord } from "@/lib/status";
 
 const LIFECYCLES = [Lifecycle.EXPERIMENTAL, Lifecycle.PRODUCTION, Lifecycle.DEPRECATED];
@@ -19,7 +19,7 @@ export function contacts(text: string): string[] {
   return [...new Set(text.split(",").map((s) => s.trim()).filter(Boolean))];
 }
 
-type Change = { team: string; owners: string[]; lifecycle: Lifecycle };
+type Change = { team: string; owners: string[]; lifecycle: Lifecycle; envs?: string[] };
 
 // changes names what differs from the service, as update_mask paths and as the CLI's flags.
 export function changes(s: Service, next: Change): { paths: string[]; flags: string[] } {
@@ -36,6 +36,10 @@ export function changes(s: Service, next: Change): { paths: string[]; flags: str
   if (next.lifecycle !== s.lifecycle) {
     paths.push("lifecycle");
     flags.push(`--lifecycle ${lifecycleWord(next.lifecycle).toLowerCase()}`);
+  }
+  if (next.envs && next.envs.join(",") !== serviceEnvs(s).join(",")) {
+    paths.push("environments");
+    flags.push(`--environments ${next.envs.join(",")}`);
   }
   return { paths, flags };
 }
@@ -59,21 +63,24 @@ function SettingsForm({ service: s, canMoveTeam, canChangeRepo }: { service: Ser
   const [team, setTeam] = useState(s.ownerTeam);
   const [owners, setOwners] = useState(s.owners.join(", "));
   const [lifecycle, setLifecycle] = useState(s.lifecycle);
+  // An infrastructure repo keeps the environments it was made with.
+  const envsFixed = !!s.infrastructure;
+  const [envs, setEnvs] = useState<string[]>(serviceEnvs(s));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const next = { team: team.trim(), owners: contacts(owners), lifecycle };
+  const next = { team: team.trim(), owners: contacts(owners), lifecycle, envs: envsFixed ? undefined : envs };
   const { paths, flags } = changes(s, next);
   const command = `forge service update ${id}${flags.length ? " " + flags.join(" ") : ""}`;
   const slugs = (teams.data ?? []).map((t) => teamId(t.name));
 
   function save(e: FormEvent) {
     e.preventDefault();
-    if (!paths.length || !next.team) return;
+    if (!paths.length || !next.team || envs.length === 0) return;
     setBusy(true);
     setError(null);
     api.catalog
       .updateService({
-        service: { name: s.name, etag: s.etag, ownerTeam: next.team, owners: next.owners, lifecycle: next.lifecycle },
+        service: { name: s.name, etag: s.etag, ownerTeam: next.team, owners: next.owners, lifecycle: next.lifecycle, environments: envs },
         updateMask: { paths },
       })
       .then(
@@ -157,13 +164,33 @@ function SettingsForm({ service: s, canMoveTeam, canChangeRepo }: { service: Ser
               ))}
             </select>
           </Field>
+          <div role="group" aria-label="Environments" className="flex flex-col gap-2">
+            <span className="text-[13px] font-medium">Environments</span>
+            {(["staging", "production"] as const).map((e) => (
+              <label key={e} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  disabled={envsFixed}
+                  checked={envs.includes(e)}
+                  onChange={(ev) => setEnvs(ev.target.checked ? ["staging", "production"].filter((x) => x === e || envs.includes(x)) : envs.filter((x) => x !== e))}
+                />
+                <span>{e}</span>
+              </label>
+            ))}
+            <span className="text-[12.5px] text-fg-3">
+              {envsFixed
+                ? "An infrastructure repo keeps the environments it was made with."
+                : "Production only: a person deploys it, CI deploys nothing. Staging only: never promoted. Take an environment down before dropping it."}
+            </span>
+            {envs.length === 0 ? <p className="text-bad-fg">Keep at least one environment.</p> : null}
+          </div>
           <Field id="settings-repo" label="Repository" hint={canChangeRepo ? `Change it with forge service update ${id} --repo <url>.` : "Only an admin can point the service at another repository."}>
             <input id="settings-repo" className={`${inputClass} bg-surface-2 font-mono text-fg-2`} value={s.repoUrl || "–"} readOnly aria-describedby="settings-repo-note" />
           </Field>
           <Cli command={command} />
           {error ? <ErrorNote error={error} /> : null}
           <div>
-            <Button kind="primary" type="submit" disabled={busy || !paths.length || !next.team}>
+            <Button kind="primary" type="submit" disabled={busy || !paths.length || !next.team || envs.length === 0}>
               Save changes
             </Button>
           </div>

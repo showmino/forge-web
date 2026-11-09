@@ -430,8 +430,15 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
   const teamTargets = (targets.data ?? []).filter((t) => t.teams.length === 0 || t.teams.includes(team.trim()));
   const theTarget = teamTargets.find((t) => t.name === target) ?? teamTargets[0];
   const targetName = theTarget?.name ?? "";
-  const envs = chosenEnvs ?? theTarget?.environments ?? [];
-  const infraReady = !isInfra || (targetName !== "" && envs.length > 0);
+  // The deploy environments: an infrastructure repo's default to its
+  // target's, every other service's to both.
+  const envs = chosenEnvs ?? (isInfra ? (theTarget?.environments ?? []) : [...ENVS]);
+  const firstEnv = envs[0] ?? "staging";
+  const bothEnvs = ENVS.every((e) => envs.includes(e));
+  const infraReady = (!isInfra || targetName !== "") && (isFile || envs.length > 0);
+  // What the review says about production, by the environments chosen.
+  const promoteNote = bothEnvs ? " Production waits for your first promote." : firstEnv === "staging" ? " It has staging only: it is never promoted." : "";
+  const envFlags: [string, string][] = isFile || bothEnvs || isInfra ? [] : [["--environments", envs.join(",")]];
   const groups = [...new Set((template?.parameters ?? []).map((p) => p.group))];
   const field = (p: TemplateParameter) => {
     const key = `${template?.name}/${p.name}`;
@@ -485,6 +492,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     ["--team", team.trim() || "<team>"],
     ...runAsked.flags,
     ...address.flags,
+    ...envFlags,
     ...(deployNow ? [] : ([["--deploy=false", ""]] as [string, string][])),
   ];
   const repoFlags: [string, string][] = [
@@ -492,6 +500,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     ["--team", team.trim() || "<team>"],
     ...(port.trim() ? ([["--port", port.trim()]] as [string, string][]) : []),
     ...(health.trim() ? ([["--health", health.trim()]] as [string, string][]) : []),
+    ...envFlags,
   ];
   const chartFlags: [string, string][] = [
     ["--chart", chartName.trim() || "<chart>"],
@@ -502,6 +511,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     ...(productionValues.trim() ? ([["--production-values", "production.yaml"]] as [string, string][]) : []),
     ["--team", team.trim() || "<team>"],
     ...address.flags,
+    ...envFlags,
     ...(deployNow ? [] : ([["--deploy=false", ""]] as [string, string][])),
   ];
   const flags: [string, string][] = fromRepo
@@ -520,6 +530,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     }),
     ...runAsked.flags,
     ...address.flags,
+    ...envFlags,
     ...(isInfra
       ? ([["--target", targetName || "<target>"], ...(chosenEnvs ? [["--environments", envs.join(",")]] : [])] as [string, string][])
       : []),
@@ -551,6 +562,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
           repoUrl,
           ownerTeam: team.trim(),
           runOptions: Object.keys(repoRun).length > 0 ? repoRun : undefined,
+          environments: chosenEnvs ? envs : [],
         }
       : fromChart
       ? {
@@ -566,6 +578,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
             exposePort: exposePortNumber,
           },
           runOptions: Object.keys(address.options).length > 0 ? address.options : undefined,
+          environments: chosenEnvs ? envs : [],
         }
       : fromImage
       ? {
@@ -573,6 +586,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
           image: image.trim(),
           ownerTeam: team.trim(),
           runOptions: Object.keys(imageRun).length > 0 ? { ...runAndAddress, ...imageRun } : runAndAddress,
+          environments: chosenEnvs ? envs : [],
         }
       : isInfra
       ? {
@@ -590,6 +604,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
           ownerTeam: team.trim(),
           parameters,
           runOptions: runAndAddress,
+          environments: chosenEnvs && !isFile ? envs : [],
         };
     const signature = JSON.stringify(request);
     if (attempt.current?.request !== signature) attempt.current = { key: randomString(), request: signature };
@@ -639,14 +654,16 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
     }
     settle();
     if (ended?.service && repoless && deployNow) {
-      // As forge create --image and --chart: once the service is there, deploy it to staging.
-      show({ key: "deploy", tone: "progress", text: "Starting the deploy to staging" });
+      // As forge create --image and --chart: once the service is there, deploy
+      // it to its first environment (staging, or production when it has only that).
+      const env = ended.service.environments[0] ?? "staging";
+      show({ key: "deploy", tone: "progress", text: `Starting the deploy to ${env}` });
       try {
-        const res = await api.deploys.startDeploy({ service: ended.service.name, env: "staging", requestId: randomString() });
-        show({ key: "deploy", tone: "success", text: "Started the deploy to staging" });
+        const res = await api.deploys.startDeploy({ service: ended.service.name, env, requestId: randomString() });
+        show({ key: "deploy", tone: "success", text: `Started the deploy to ${env}` });
         ended = { ...ended, deploy: res.operation?.name };
       } catch (err) {
-        show({ key: "deploy", tone: "danger", text: "The deploy to staging did not start" });
+        show({ key: "deploy", tone: "danger", text: `The deploy to ${env} did not start` });
         ended = { ...ended, deployError: err };
       }
     }
@@ -961,9 +978,10 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
         ...(isFile || fromRepo || infraOnly
           ? []
           : ([
+              ["Environments", envs.join(", ")],
               ["Reach", chosen.title],
-              ["Staging", mono(addressOf("staging"))],
-              ["Production", mono(addressOf("production"))],
+              ...(envs.includes("staging") ? ([["Staging", mono(addressOf("staging"))]] as [string, ReactNode][]) : []),
+              ...(envs.includes("production") ? ([["Production", mono(addressOf("production"))]] as [string, ReactNode][]) : []),
             ] as [string, ReactNode][])),
       ],
     ],
@@ -1548,6 +1566,27 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                       )}
                     </fieldset>
                   ) : null}
+                  {(repoless || fromRepo || (template && !noTemplate)) && !isFile && !isInfra ? (
+                    <div role="group" aria-label="Environments" className="flex min-w-0 flex-col gap-2">
+                      <span className="type-small font-semibold">Environments</span>
+                      {ENVS.map((e) => (
+                        <label key={e} className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={envs.includes(e)}
+                            onChange={(ev) => setChosenEnvs(ev.target.checked ? ENVS.filter((x) => x === e || envs.includes(x)) : envs.filter((x) => x !== e))}
+                          />
+                          <span>
+                            {e}
+                            {e === "production" && envs.includes("production") && !envs.includes("staging") ? (
+                              <span className="text-fg-2"> · deployed by a person: CI deploys only to staging</span>
+                            ) : null}
+                          </span>
+                        </label>
+                      ))}
+                      {envs.length === 0 ? <p className="text-bad-fg">Choose at least one environment.</p> : null}
+                    </div>
+                  ) : null}
                   {(repoless || (template && !noTemplate)) && !isFile && !infraOnly ? (
                     <fieldset className="flex min-w-0 flex-col gap-3">
                       <legend className="mb-1.5 text-[13px] font-medium">Who can reach it</legend>
@@ -1590,7 +1629,7 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                         </Field>
                       ) : null}
                       <dl aria-label="Addresses" className="flex flex-col gap-1 rounded-md bg-surface-2 px-3 py-2.5 text-[12.5px]">
-                        {ENVS.map((env) => (
+                        {ENVS.filter((env) => envs.includes(env)).map((env) => (
                           <div key={env} className="flex min-w-0 gap-2.5">
                             <dt className="w-[74px] shrink-0 text-fg-3">{env}</dt>
                             <dd className="font-mono [overflow-wrap:anywhere]">{addressOf(env)}</dd>
@@ -1711,8 +1750,8 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                             It writes <span className="font-mono">services/{name}/forge.yaml</span> into the deploy repo and adds {name} to the catalog. No repo is made.
                           </li>
                           <li>
-                            {deployNow ? "It deploys the chart to staging" : "Nothing is deployed until you deploy it from its page"}: in its own namespace, where it may not
-                            make cluster-wide resources or privileged pods. Production waits for your first promote.
+                            {deployNow ? `It deploys the chart to ${firstEnv}` : "Nothing is deployed until you deploy it from its page"}: in its own namespace, where it may not
+                            make cluster-wide resources or privileged pods.{promoteNote}
                           </li>
                         </>
                       ) : fromImage ? (
@@ -1723,7 +1762,10 @@ export function CreateService({ initial, fixed }: { initial?: string | null; fix
                           <li>
                             It writes <span className="font-mono">services/{name}/forge.yaml</span> into the deploy repo and adds {name} to the catalog. No repo is made.
                           </li>
-                          <li>{deployNow ? "It deploys it to staging." : "Nothing is deployed until you deploy it from its page."} Production waits for your first promote.</li>
+                          <li>
+                            {deployNow ? `It deploys it to ${firstEnv}.` : "Nothing is deployed until you deploy it from its page."}
+                            {promoteNote}
+                          </li>
                         </>
                       ) : isInfra ? (
                         <>
