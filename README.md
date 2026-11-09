@@ -25,26 +25,43 @@ caller may do (`AuthService.TestPermissions`, per service, through
 the others. The server only serves the pages and
 `/api/healthz`; it holds no secrets.
 
-- **Overview** (`/`): what is shipping, what is broken and what needs
-  someone. Its status board has a row for production and one for staging:
-  their counts, and one line of tiles each (what is broken first, then what
-  was deployed last), the last a link to the Services page for the rest, so it
-  stays one screen with a thousand services. The numbers of the day and the recent deploys come from the audit
-  log of the last 24 hours, which outlives a restart of the API; what is in
-  flight is followed live; "needs attention" is first the production runs
-  of infrastructure repos that wait for the caller's team (pending
-  approvals whose `owner_team` is one of the caller's teams, an admin's
-  too: only the owning team is told; `lib/approvals.ts`), then deployments Argo CD does not
-  call healthy, deploy targets whose last deploy failed, and previews that
-  failed or end within six hours. The rail counts those waiting runs beside
-  Approvals (a dot on the narrow rail). The dashboard does not know the
-  caller's GitHub user, so a run they started themselves is counted too:
-  the text says "your team's approval". The stage line shows Forge's own steps
-  (image, release, commit, namespace, sync): building and testing happen in
-  the service's CI before Forge is asked. The services list is at
-  `/services`.
-- **A service** (`/services/<name>`) has tabs: Overview (what runs in
-  staging and production, previews, recent activity, about), Deployments
+- **Home** (`/`): what Forge is for, with the actions the caller's role
+  allows (create, deploy, templates, docs); four numbers (services, or the
+  caller's team's; deploys today and their success rate; what needs the
+  caller; production's health); "Services that need a look first" (an
+  admin's and a reader's) or "Your services" (a team member's: the services
+  whose `owner_team` is one of their teams), each where it hurts most
+  (`lib/catalog.ts`); "Needs you" or, when nothing does, "Get started"; then
+  recent activity, the platform's status and quick links. The numbers of the
+  day and the recent deploys come from the audit log of the last 24 hours,
+  which outlives a restart of the API. "Needs you" is first the production
+  runs of infrastructure repos that wait for the caller's team (pending
+  approvals whose `owner_team` is one of the caller's teams, an admin's too:
+  only the owning team is told; `lib/approvals.ts`), then deployments Argo
+  CD does not call healthy, deploy targets whose last deploy failed, and
+  previews that failed or end within six hours; a team member sees only
+  their team's. The rail counts those waiting runs beside Approvals (a dot
+  on the narrow rail). The dashboard does not know the caller's GitHub user,
+  so a run they started themselves is counted too: the text says "your
+  team's approval".
+- **Catalog** (`/services`): tabs for services, templates, resources and,
+  for admins, clusters (`components/catalog-tabs.tsx`); search, filters for
+  the owner and the status (needs attention, healthy, ready to promote), and
+  one table with the environment where each service hurts most, broken
+  first. **Resources** (`/resources`) lists every resource of every service
+  (`ListResources`); plans and applies stay on a service's Resources tab.
+- **Deployments** (`/deployments`): the day in four numbers (deploys, the
+  success rate, the median duration of the successful ones, failures), then
+  every deploy, promotion and rollback running now or ended in the last 7
+  days, with search and filters for the service, the environment and the
+  status, and the details of the one picked. A duration is the time from
+  the request to the outcome in the audit log (`lib/deployments.ts`). The
+  stage line shows Forge's own steps (image, release, commit, namespace,
+  sync): building and testing happen in the service's CI before Forge is
+  asked.
+- **A service** (`/services/<name>`) has tabs: Overview (cards: the service
+  in facts, its resources and dependencies, staging and production, recent
+  activity and previews), Deployments
   (`ListDeployHistory` of both environments), Resources (once it has a
   resource or a plan: its databases with live health, `ListResources`, and
   its newest plans with their changes and policy result,

@@ -209,39 +209,46 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("the catalog", () => {
-  it("lists every service with how staging and production are doing", async () => {
+  it("lists every service with the environment where it hurts most", async () => {
     renderWithApi(<Catalog />, forge);
     const name = await screen.findByRole("link", { name: "payments" });
     expect(name.getAttribute("href")).toBe("/services/payments");
-    await waitFor(() => expect(within(row("payments")).getByText("Healthy")).toBeTruthy());
-    expect(within(row("payments")).getByText("Degraded")).toBeTruthy();
-    expect(within(row("payments")).getByText("12 min ago")).toBeTruthy();
-    // A service that was never deployed says so in both columns.
-    expect(within(row("ledger")).getAllByText("Not deployed")).toHaveLength(2);
+    // Production is degraded, so the row shows production, and comes first.
+    await waitFor(() => expect(within(row("payments")).getByText("Degraded")).toBeTruthy());
+    expect(within(row("payments")).getByText("prod")).toBeTruthy();
+    const names = screen.getAllByRole("row").slice(1).map((r) => r.querySelector("a")?.textContent);
+    expect(names).toEqual(["payments", "ledger"]);
+    // A service that was never deployed says so once.
+    expect(within(row("ledger")).getAllByText("Not deployed")).toHaveLength(1);
   });
 
-  it("filters by name or team", async () => {
+  it("searches by name or team", async () => {
     renderWithApi(<Catalog />, forge);
     await screen.findByRole("link", { name: "payments" });
-    fireEvent.change(screen.getByPlaceholderText("Name or team"), { target: { value: "finance" } });
+    fireEvent.change(screen.getByPlaceholderText("Search services…"), { target: { value: "finance" } });
     expect(screen.queryByRole("link", { name: "payments" })).toBeNull();
     expect(screen.getByRole("link", { name: "ledger" })).toBeTruthy();
-    fireEvent.change(screen.getByPlaceholderText("Name or team"), { target: { value: "zzz" } });
+    fireEvent.change(screen.getByPlaceholderText("Search services…"), { target: { value: "zzz" } });
     expect(screen.getByText(/No services match/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(screen.getByRole("link", { name: "payments" })).toBeTruthy();
   });
 
-  it("filters by team with a chip, and names the command that does the same", async () => {
+  it("filters by owner and status, and names the command that does the same", async () => {
     renderWithApi(<Catalog />, forge);
     await screen.findByRole("link", { name: "payments" });
     const cli = () => screen.getByTitle("Same action from the terminal").textContent;
     expect(cli()).toContain("forge service list");
-    fireEvent.click(screen.getByRole("button", { name: /^finance/ }));
+    fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "finance" } });
     expect(screen.queryByRole("link", { name: "payments" })).toBeNull();
     expect(screen.getByRole("link", { name: "ledger" })).toBeTruthy();
     expect(cli()).toContain("forge service list --team finance");
-    expect(screen.getByText("1 service shown.")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: /^All teams/ }));
+    expect(screen.getByText(/1 service of 2/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Owner"), { target: { value: "all" } });
+    await waitFor(() => expect(within(row("payments")).getByText("Degraded")).toBeTruthy());
+    fireEvent.change(screen.getByLabelText("Status"), { target: { value: "attention" } });
     expect(screen.getByRole("link", { name: "payments" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "ledger" })).toBeNull();
   });
 
   it("says how to make the first service when there is none", async () => {
@@ -357,7 +364,15 @@ describe("deployments", () => {
     // A refused rollback started nothing: it is in the audit log, not here.
     expect(table.getAllByRole("row")).toHaveLength(3);
 
-    fireEvent.click(screen.getByRole("button", { name: /^Failed/ }));
+    // The first one is picked: its details are beside the table.
+    const details = within(screen.getByRole("region", { name: "Deployment details" }));
+    expect(details.getByRole("link", { name: "ledger" })).toBeTruthy();
+    expect(details.getByText(/step \d of 5/)).toBeTruthy();
+    fireEvent.click(promoted);
+    expect(details.getByRole("link", { name: "payments" })).toBeTruthy();
+    expect(details.getByText("All 5 stages passed")).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("Status"), { target: { value: "failed" } });
     expect(screen.getByText("No deployments match this filter.")).toBeTruthy();
     expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge audit list --since 7d --failed");
   });
@@ -560,8 +575,8 @@ describe("the frame around every page", () => {
     expect(screen.getByText("ana@example.com")).toBeTruthy();
     expect(screen.getByText("Reader")).toBeTruthy();
     // The rail counts the services beside the link, and marks where the reader is.
-    expect((await screen.findByRole("link", { name: "Services 2" })).getAttribute("aria-current")).toBeNull();
-    expect(screen.getByRole("link", { name: "Overview" }).getAttribute("aria-current")).toBe("page");
+    expect((await screen.findByRole("link", { name: "Catalog 2" })).getAttribute("aria-current")).toBeNull();
+    expect(screen.getByRole("link", { name: "Home" }).getAttribute("aria-current")).toBe("page");
     fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
     expect(sessionStorage.getItem("forge.session")).toBeNull();
     expect(nav.replace).toHaveBeenCalledWith("/login");
@@ -594,12 +609,12 @@ describe("the frame around every page", () => {
     expect(main.classList.contains("w-full")).toBe(true);
     expect(main.className).not.toMatch(/max-w-/);
     // Collapsed, a link keeps its name for screen readers and shows it on hover.
-    const overview = screen.getByRole("link", { name: "Overview" });
-    expect(overview.getAttribute("title")).toBe("Overview");
+    const overview = screen.getByRole("link", { name: "Home" });
+    expect(overview.getAttribute("title")).toBe("Home");
     fireEvent.click(toggle);
     expect(screen.getByRole("button", { name: "Collapse sidebar" }).getAttribute("aria-expanded")).toBe("true");
     expect(main.className).not.toMatch(/max-w-/);
-    expect(screen.getByRole("link", { name: "Overview" }).getAttribute("title")).toBeNull();
+    expect(screen.getByRole("link", { name: "Home" }).getAttribute("title")).toBeNull();
     expect(localStorage.getItem("forge.rail")).toBe("full");
 
     cleanup();

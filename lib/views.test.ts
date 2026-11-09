@@ -131,7 +131,7 @@ describe("the command palette", () => {
     expect(filterJumps(items, "pay").map((i) => i.label)).toEqual(["payments", "pr-42"]);
     expect(filterJumps(items, "pr-42")[0]).toMatchObject({ href: "/services/payments", kind: "Preview · payments" });
     expect(filterJumps(items, "billing").map((i) => i.label)).toEqual(["payments"]);
-    expect(filterJumps(items, "serv").map((i) => i.label)).toEqual(["Services", "Create service", "payments", "forge-web"]);
+    expect(filterJumps(items, "serv").map((i) => i.label)).toEqual(["Catalog of services", "Create service", "payments", "forge-web"]);
     expect(filterJumps(items, "")).toHaveLength(9);
     expect(filterJumps(items, "zzz")).toEqual([]);
   });

@@ -69,7 +69,7 @@ const world = (over: Partial<World> = {}): World => ({ caller: { teams: ["networ
 
 async function openOverview(w: World) {
   renderWithApi(<Overview />, forge(w));
-  await screen.findByRole("heading", { name: "Overview" });
+  await screen.findByRole("heading", { name: "Internal Developer Platform" });
   await waitFor(() => expect(w.asked).toBeGreaterThan(0));
   await act(() => new Promise((r) => setTimeout(r, 0)));
 }
@@ -104,17 +104,17 @@ describe("the Overview", () => {
 
   it("shows an admin in no team none", async () => {
     await openOverview(world({ caller: ADMIN }));
-    expect(await screen.findByText("Nothing needs you right now.")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Get started" })).toBeTruthy();
   });
 
   it("shows a reader none, and says nothing needs them", async () => {
     await openOverview(world({ caller: READER }));
-    expect(await screen.findByText("Nothing needs you right now.")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Get started" })).toBeTruthy();
   });
 
   it("stays quiet on a Forge without infrastructure repos", async () => {
     await openOverview(world({ noInfrastructure: true }));
-    expect(await screen.findByText("Nothing needs you right now.")).toBeTruthy();
+    expect(await screen.findByRole("heading", { name: "Get started" })).toBeTruthy();
     expect(screen.queryByRole("alert")).toBeNull();
   });
 });

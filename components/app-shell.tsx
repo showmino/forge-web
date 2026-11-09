@@ -80,38 +80,45 @@ const icon = {
       <path d="M8.5 12l2.5 2.5 4.5-5" />
     </>
   ),
+  resources: (
+    <>
+      <ellipse cx="12" cy="6" rx="7.5" ry="2.8" />
+      <path d="M4.5 6v12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8V6M4.5 12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8" />
+    </>
+  ),
 };
 
 // adminOnly hides a link from everyone else; the API refuses them anyway.
 type Item = { href: string; label: string; icon: keyof typeof icon; match: (p: string) => boolean; adminOnly?: boolean };
 const groups: { label: string; items: Item[] }[] = [
-  { label: "", items: [{ href: "/", label: "Overview", icon: "overview", match: (p) => p === "/" }] },
+  { label: "", items: [{ href: "/", label: "Home", icon: "overview", match: (p) => p === "/" }] },
   {
     label: "Build",
     items: [
       {
         href: "/services",
-        label: "Services",
+        label: "Catalog",
         icon: "services",
         match: (p) => p.startsWith("/services") || p.startsWith("/create"),
       },
       { href: "/templates", label: "Templates", icon: "templates", match: (p) => p.startsWith("/templates") },
-      { href: "/docs", label: "Docs", icon: "docs", match: (p) => p.startsWith("/docs") },
+      { href: "/docs", label: "TechDocs", icon: "docs", match: (p) => p.startsWith("/docs") },
     ],
   },
   {
     label: "Run",
     items: [
       { href: "/environments", label: "Environments", icon: "environments", match: (p) => p.startsWith("/environments") },
-      { href: "/deployments", label: "Deployments", icon: "deployments", match: (p) => p.startsWith("/deployments") },
-      { href: "/approvals", label: "Approvals", icon: "approvals", match: (p) => p.startsWith("/approvals") },
-      { href: "/operations", label: "Operations", icon: "operations", match: (p) => p.startsWith("/operations") },
       { href: "/clusters", label: "Clusters", icon: "clusters", match: (p) => p.startsWith("/clusters"), adminOnly: true },
+      { href: "/deployments", label: "Deployments", icon: "deployments", match: (p) => p.startsWith("/deployments") },
+      { href: "/resources", label: "Resources", icon: "resources", match: (p) => p.startsWith("/resources") },
+      { href: "/operations", label: "Operations", icon: "operations", match: (p) => p.startsWith("/operations") },
     ],
   },
   {
     label: "Govern",
     items: [
+      { href: "/approvals", label: "Approvals", icon: "approvals", match: (p) => p.startsWith("/approvals") },
       { href: "/ownership", label: "Ownership", icon: "ownership", match: (p) => p.startsWith("/ownership") },
       { href: "/audit", label: "Audit log", icon: "audit", match: (p) => p.startsWith("/audit") },
     ],

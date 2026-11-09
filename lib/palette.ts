@@ -10,14 +10,16 @@ import { environmentId, serviceId, templateId } from "@/lib/api";
 export type JumpItem = { label: string; href: string; kind: string; mono: boolean; line?: string };
 
 export const PAGES: [label: string, href: string][] = [
-  ["Overview", "/"],
-  ["Services", "/services"],
+  ["Home", "/"],
+  ["Catalog of services", "/services"],
   ["Templates", "/templates"],
-  ["Docs", "/docs"],
+  ["TechDocs", "/docs"],
   ["Create service", "/create"],
   ["Environments", "/environments"],
   ["Deployments", "/deployments"],
+  ["Resources", "/resources"],
   ["Operations", "/operations"],
+  ["Approvals", "/approvals"],
   ["Ownership", "/ownership"],
   ["Audit log", "/audit"],
 ];

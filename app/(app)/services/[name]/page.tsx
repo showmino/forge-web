@@ -5,7 +5,7 @@ import { Code } from "@connectrpc/connect";
 import { useQuery, useQueryClient, type UseQueryResult } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { usePermissions } from "@/components/app-shell";
 import { DocReader, DocsLink, useHasDocs } from "@/components/doc-reader";
 import { ExceptionDialog, useCanAskException } from "@/components/exception-actions";
@@ -27,6 +27,8 @@ import { ServiceSettings } from "@/components/service-settings";
 import { Addr, Button, Icon, NameLink, TextLink } from "@/components/ui/button";
 import { Cli } from "@/components/ui/cli";
 import { Crumbs, ErrorNote, Facts, Loading, PageHeader, Panel, Section, TableFrame, td, th, tr } from "@/components/ui/layout";
+import { Card, CardNote, Chip, ct, ctd, cth } from "@/components/ui/portal";
+import { catalogRows } from "@/lib/catalog";
 import { EnvTag, Life, StatusBadge } from "@/components/ui/status";
 import { Tabs } from "@/components/ui/tabs";
 import type { AuditEvent } from "@/gen/forge/v1/audit_pb";
@@ -46,7 +48,6 @@ type Open =
 
 type Tab = "overview" | "deploys" | "approvals" | "resources" | "deps" | "docs" | "settings";
 
-const row = "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 border-t border-line px-4 py-[11px] first:border-t-0";
 
 // One service: what runs in staging and production, its previews, its recent
 // history and who owns it. The service's team (and an admin) also deploys,
@@ -158,7 +159,7 @@ function ServiceView({ id }: { id: string }) {
           title={id}
           crumbs={
             <Crumbs>
-              <Link href="/services">Services</Link>
+              <Link href="/services">Catalog</Link>
             </Crumbs>
           }
           lead={
@@ -222,15 +223,20 @@ function ServiceView({ id }: { id: string }) {
         title={id}
         crumbs={
           <Crumbs>
-            <Link href="/services">Services</Link>
+            <Link href="/services">Catalog</Link>
             <span>/</span>
             <span>{s.ownerTeam || "No team"}</span>
           </Crumbs>
         }
         lead={
           <>
-            {s.displayName && s.displayName !== id ? `${s.displayName} ` : null}
-            <Life lifecycle={s.lifecycle} />
+            {s.displayName && s.displayName !== id ? <span className="mr-2">{s.displayName}</span> : null}
+            <span className="mt-1 inline-flex flex-wrap items-center gap-2 align-middle">
+              {deployments.data && !infraOnly ? <StatusBadge status={catalogRows([s], deployments.data)[0].status} /> : null}
+              {!infraOnly ? <Chip mono>{envs.join(", ")}</Chip> : null}
+              {s.ownerTeam ? <Chip>Owner: {s.ownerTeam}</Chip> : null}
+              <Life lifecycle={s.lifecycle} />
+            </span>
           </>
         }
         cli={`forge service get ${id}`}
@@ -473,7 +479,9 @@ function ArgoLink({ href, id }: { href: string; id: string }) {
   );
 }
 
-// OverviewTab is what runs where, the previews, the recent history and who owns the service.
+// OverviewTab is the service in cards: what it is and who owns it, what it
+// uses, what runs in staging and production, then its recent activity and
+// its previews.
 function OverviewTab({
   id,
   service: s,
@@ -499,223 +507,248 @@ function OverviewTab({
 }) {
   const argoApps = argoAppsUrl(id, deployments.data);
   const envs = serviceEnvs(s);
+  const { resources } = useResources(id);
+  // The last deploy of either environment.
+  const last = envs
+    .map((env) => deployment(env))
+    .filter((d): d is Deployment => !!d?.deployTime)
+    .sort((a, b) => Number(b.deployTime!.seconds - a.deployTime!.seconds))[0];
+  const running = envs.filter((env) => deployed(env));
+  const facts: [string, ReactNode][] = [
+    ["Repository", s.repoUrl ? <Addr key="r" href={s.repoUrl} className="!whitespace-nowrap !break-normal" /> : "–"],
+    [
+      "Environments",
+      <span key="e" className="inline-flex flex-wrap items-center gap-1.5">
+        {running.length ? running.map((env) => <EnvTag key={env} kind={env} />) : <span className="text-fg-3">Not deployed yet</span>}
+        {previews.data?.length ? (
+          <span className="text-fg-3">
+            + {previews.data.length} preview{previews.data.length === 1 ? "" : "s"}
+          </span>
+        ) : null}
+      </span>,
+    ],
+    ...(s.labels.template ? ([["Template", <span key="t" className="font-mono">{s.labels.template}</span>]] as [string, ReactNode][]) : []),
+    [
+      "Last deploy",
+      last ? (
+        <span key="l" title={exact(last.deployTime)}>
+          {when(last.deployTime)} <span className="text-fg-3">({last.version || shortCommit(last.commit)})</span>
+        </span>
+      ) : (
+        <span key="l" className="text-fg-3">
+          Never
+        </span>
+      ),
+    ],
+    [
+      "Owners",
+      <Fragment key="o">
+        {s.owners.length ? s.owners.join(", ") : "–"}
+        <span className="text-fg-3"> · {s.ownerTeam || "no team"}</span>
+      </Fragment>,
+    ],
+    ["Lifecycle", <Life key="lc" lifecycle={s.lifecycle} />],
+    // Not catalog fields yet: read from the service's labels when it has them.
+    ...(s.labels.tier ? ([["Tier", s.labels.tier]] as [string, ReactNode][]) : []),
+    ...(s.labels.slo ? ([["SLO", s.labels.slo]] as [string, ReactNode][]) : []),
+    ...(argoApps ? ([["Argo CD", <ArgoLink key="a" href={argoApps} id={id} />]] as [string, ReactNode][]) : []),
+    ["Registered", when(s.createTime)],
+  ];
+
   return (
-    <>
-      <Section
-        title={envs.length === 2 ? "Staging and production" : envs[0] === "production" ? "Production" : "Staging"}
-        note={
-          deployments.data && envs.length === 2 && deployed("staging")
-            ? ahead
-              ? "Staging is ahead of production"
-              : s.repoUrl
-                ? "Both run the same commit"
-                : "Both run the same image"
-            : undefined
-        }
-      >
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] items-start gap-4 max-[1100px]:grid-cols-1">
+        <Card icon="box" title="Service overview">
+          <dl className="m-0 grid grid-cols-[auto_minmax(0,1fr)] gap-x-5 text-[13.5px] [&>dd]:border-b [&>dd]:border-line [&>dd]:py-2.5 [&>dt]:border-b [&>dt]:border-line [&>dt]:py-2.5 [&>dd:last-of-type]:border-b-0 [&>dt:last-of-type]:border-b-0">
+            {facts.map(([label, value]) => (
+              <Fragment key={label}>
+                <dt className="text-fg-3">{label}</dt>
+                <dd className="m-0 min-w-0 break-words">{value}</dd>
+              </Fragment>
+            ))}
+          </dl>
+        </Card>
+        <Card icon="link" title="Related resources">
+          {(resources.data?.length ?? 0) === 0 && s.dependencies.length === 0 ? (
+            <CardNote>No resources or dependencies.</CardNote>
+          ) : (
+            <ul aria-label="Related resources" className="m-0 list-none p-0">
+              {(resources.data ?? []).map((r) => (
+                <li key={r.name} className="flex items-center justify-between border-b border-line py-2.5 text-[14px] last:border-b-0">
+                  <span className="font-mono text-[13px]">
+                    {r.name.split("/").pop()} <span className="text-fg-3">· {r.env}</span>
+                  </span>
+                  <span className="text-[13px] text-fg-3">{r.type}</span>
+                </li>
+              ))}
+              {s.dependencies.map((d) => (
+                <li key={d} className="flex items-center justify-between border-b border-line py-2.5 text-[14px] last:border-b-0">
+                  <NameLink href={`/services/${serviceId(d)}`}>{serviceId(d)}</NameLink>
+                  <span className="text-[13px] text-fg-3">Service it calls</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+      </div>
+
+      <Card icon="layers" title={envs.length === 2 ? "Staging and production" : envs[0] === "production" ? "Production" : "Staging"}>
+        {deployments.data && envs.length === 2 && deployed("staging") ? (
+          <CardNote top>{ahead ? "Staging is ahead of production" : s.repoUrl ? "Both run the same commit" : "Both run the same image"}</CardNote>
+        ) : null}
         {deployments.isPending ? (
           <Loading what="deployments" />
         ) : deployments.error ? (
           <ErrorNote error={deployments.error} />
         ) : (
-          <TableFrame label="Deployments">
-            <thead>
-              <tr>
-                <th className={th}>Environment</th>
-                <th className={th}>Status</th>
-                <th className={th}>Version</th>
-                <th className={th}>Commit</th>
-                <th className={th}>Deployed</th>
-                <th className={th}>Address</th>
-                {can("deploy.rollback") ? <th className={th}>Actions</th> : null}
-              </tr>
-            </thead>
-            <tbody>
-              {envs.map((env) => {
-                const d = deployment(env);
-                return (
-                  <tr key={env} className={tr}>
-                    <td className={td}>
-                      <EnvTag kind={env} />
-                    </td>
-                    <td className={td}>
-                      <StatusBadge status={deploymentStatus(d)} title={d?.message || undefined} />
-                    </td>
-                    <td className={td}>
-                      <span className={`font-mono text-[13px] ${env === "staging" && ahead ? "font-semibold text-ember-ink" : ""}`}>
-                        {d?.version || "–"}
-                      </span>
-                    </td>
-                    <td className={td}>
-                      <span className="font-mono text-[13px] text-fg-2">{d?.commit ? shortCommit(d.commit) : "–"}</span>
-                    </td>
-                    <td className={td}>
-                      <div title={exact(d?.deployTime)}>{when(d?.deployTime)}</div>
-                      {d?.deployedBy ? <div className="text-[12.5px] text-fg-3">by {d.deployedBy}</div> : null}
-                    </td>
-                    <td className={td}>
-                      {d?.url ? <Addr href={d.url} /> : "–"}
-                      {d?.argoUrl && /^https?:\/\//i.test(d.argoUrl) ? (
-                        <div>
-                          <a
-                            href={d.argoUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            aria-label={`${env} in Argo CD`}
-                            className="text-[12.5px] text-fg-3 no-underline hover:text-info-fg hover:underline"
-                          >
-                            Argo CD ↗
-                          </a>
-                        </div>
-                      ) : null}
-                    </td>
-                    {can("deploy.rollback") ? (
-                      <td className={td}>
-                        {deployed(env) ? (
-                          <Button kind="quiet" size="sm" onClick={() => setOpen({ kind: "rollback", env })} aria-label={`Roll back ${env}`}>
-                            Roll back
-                          </Button>
+          <div className="-mx-1 overflow-x-auto">
+            <table aria-label="Deployments" className={ct}>
+              <thead>
+                <tr>
+                  <th className={cth}>Environment</th>
+                  <th className={cth}>Status</th>
+                  <th className={cth}>Version</th>
+                  <th className={cth}>Commit</th>
+                  <th className={cth}>Deployed</th>
+                  <th className={cth}>Address</th>
+                  {can("deploy.rollback") ? <th className={cth}>Actions</th> : null}
+                </tr>
+              </thead>
+              <tbody>
+                {envs.map((env) => {
+                  const d = deployment(env);
+                  return (
+                    <tr key={env}>
+                      <td className={ctd}>
+                        <EnvTag kind={env} />
+                      </td>
+                      <td className={ctd}>
+                        <StatusBadge status={deploymentStatus(d)} title={d?.message || undefined} />
+                      </td>
+                      <td className={ctd}>
+                        <span className={`font-mono text-[13px] ${env === "staging" && ahead ? "font-semibold text-ember-ink" : ""}`}>{d?.version || "–"}</span>
+                      </td>
+                      <td className={ctd}>
+                        <span className="font-mono text-[13px] text-fg-2">{d?.commit ? shortCommit(d.commit) : "–"}</span>
+                      </td>
+                      <td className={ctd}>
+                        <div title={exact(d?.deployTime)}>{when(d?.deployTime)}</div>
+                        {d?.deployedBy ? <div className="text-[12.5px] text-fg-3">by {d.deployedBy}</div> : null}
+                      </td>
+                      <td className={ctd}>
+                        {d?.url ? <Addr href={d.url} /> : "–"}
+                        {d?.argoUrl && /^https?:\/\//i.test(d.argoUrl) ? (
+                          <div>
+                            <a
+                              href={d.argoUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label={`${env} in Argo CD`}
+                              className="text-[12.5px] text-fg-3 no-underline hover:text-info-fg hover:underline"
+                            >
+                              Argo CD ↗
+                            </a>
+                          </div>
                         ) : null}
                       </td>
-                    ) : null}
-                  </tr>
+                      {can("deploy.rollback") ? (
+                        <td className={ctd}>
+                          {deployed(env) ? (
+                            <Button kind="quiet" size="sm" onClick={() => setOpen({ kind: "rollback", env })} aria-label={`Roll back ${env}`}>
+                              Roll back
+                            </Button>
+                          ) : null}
+                        </td>
+                      ) : null}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] items-start gap-4 max-[1100px]:grid-cols-1">
+        <Card icon="pulse" title="Recent activity" more={{ href: `/audit?service=${encodeURIComponent(id)}`, label: `All activity of ${id}` }}>
+          {events.isPending ? (
+            <Loading what="recent activity" />
+          ) : events.error ? (
+            <ErrorNote error={events.error} />
+          ) : events.data.length === 0 ? (
+            <CardNote>Nothing has happened to this service yet.</CardNote>
+          ) : (
+            <ul aria-label="Recent activity" className="m-0 list-none p-0">
+              {events.data.map((e) => (
+                <li key={e.name} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-line py-[9px] last:border-b-0">
+                  <div className="min-w-0">
+                    <div className="min-w-0 font-medium">
+                      <span className="font-mono text-[13px]">{e.action}</span> <span className="font-normal text-fg-3">{e.target}</span>
+                    </div>
+                    <div className="mt-px text-[12.5px] text-fg-3" title={exact(e.time)}>
+                      {actorText(e)} · {when(e.time)}
+                    </div>
+                  </div>
+                  <StatusBadge status={auditStatus(e.result?.code)} title={e.result?.message || e.result?.code} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <Card icon="box" title="Previews">
+          {previews.isPending ? (
+            <Loading what="previews" />
+          ) : previews.error ? (
+            <ErrorNote error={previews.error} />
+          ) : previews.data.length === 0 ? (
+            <CardNote>
+              {s.repoUrl ? (
+                <>
+                  No previews. Create one for any branch with <span className="font-mono text-[12.5px]">forge env create &lt;name&gt; --service {id}</span>.
+                </>
+              ) : (
+                `No previews: ${id} runs an image and has no repo, so it has no branches to preview.`
+              )}
+            </CardNote>
+          ) : (
+            <ul aria-label="Previews" className="m-0 list-none p-0">
+              {previews.data.map((e) => {
+                const preview = environmentId(e.name);
+                return (
+                  // The row wraps on a narrow screen: the actions drop below the details.
+                  <li key={e.name} className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line py-2.5 last:border-b-0">
+                    <EnvTag kind="preview" name={preview} />
+                    <div className="min-w-0 flex-[1_1_200px]">
+                      <div className="min-w-0 font-medium">{e.url ? <Addr href={e.url} /> : <span className="text-fg-3">No address yet</span>}</div>
+                      <div className="mt-px text-[12.5px] text-fg-3">
+                        <span className="font-mono">{e.ref || "main"}</span>
+                        {e.commit ? ` at ${shortCommit(e.commit)}` : ""}
+                        {e.creator ? ` · ${e.creator}` : ""}
+                        {e.expireTime ? ` · expires ${timeUntil(timestampDate(e.expireTime))}` : ""}
+                      </div>
+                    </div>
+                    <div className="ml-auto flex flex-wrap items-center justify-end gap-1">
+                      <StatusBadge status={environmentStatus(e)} title={e.stateMessage || undefined} />
+                      {can("environment.extend") ? (
+                        <Button kind="quiet" size="sm" onClick={() => setOpen({ kind: "extend", environment: e })} aria-label={`Extend ${preview}`}>
+                          Extend
+                        </Button>
+                      ) : null}
+                      {can("environment.destroy") ? (
+                        <Button kind="quiet" size="sm" onClick={() => setOpen({ kind: "destroy", environment: e })} aria-label={`Destroy ${preview}`}>
+                          Destroy
+                        </Button>
+                      ) : null}
+                    </div>
+                  </li>
                 );
               })}
-            </tbody>
-          </TableFrame>
-        )}
-      </Section>
-
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 min-[1081px]:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-        <div className="flex min-w-0 flex-col gap-6">
-          <Section title="Previews" note={previews.data ? String(previews.data.length) : undefined}>
-            {previews.isPending ? (
-              <Loading what="previews" />
-            ) : previews.error ? (
-              <ErrorNote error={previews.error} />
-            ) : previews.data.length === 0 ? (
-              <Panel className="p-6 text-center text-[13.5px] text-fg-2">
-                {s.repoUrl ? (
-                  <>
-                    No previews. Create one for any branch with{" "}
-                    <span className="font-mono text-[12.5px]">forge env create &lt;name&gt; --service {id}</span>.
-                  </>
-                ) : (
-                  `No previews: ${id} runs an image and has no repo, so it has no branches to preview.`
-                )}
-              </Panel>
-            ) : (
-              <Panel>
-                <ul aria-label="Previews">
-                  {previews.data.map((e) => {
-                    const preview = environmentId(e.name);
-                    return (
-                      // The row wraps on a narrow screen: the actions drop below the details.
-                      <li key={e.name} className="flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line px-4 py-[11px] first:border-t-0">
-                        <EnvTag kind="preview" name={preview} />
-                        <div className="min-w-0 flex-[1_1_200px]">
-                          <div className="min-w-0 font-medium">{e.url ? <Addr href={e.url} /> : <span className="text-fg-3">No address yet</span>}</div>
-                          <div className="mt-px text-[12.5px] text-fg-3">
-                            <span className="font-mono">{e.ref || "main"}</span>
-                            {e.commit ? ` at ${shortCommit(e.commit)}` : ""}
-                            {e.creator ? ` · ${e.creator}` : ""}
-                            {e.expireTime ? ` · expires ${timeUntil(timestampDate(e.expireTime))}` : ""}
-                          </div>
-                        </div>
-                        <div className="ml-auto flex flex-wrap items-center justify-end gap-1">
-                          <StatusBadge status={environmentStatus(e)} title={e.stateMessage || undefined} />
-                          {can("environment.extend") ? (
-                            <Button kind="quiet" size="sm" onClick={() => setOpen({ kind: "extend", environment: e })} aria-label={`Extend ${preview}`}>
-                              Extend
-                            </Button>
-                          ) : null}
-                          {can("environment.destroy") ? (
-                            <Button kind="quiet" size="sm" onClick={() => setOpen({ kind: "destroy", environment: e })} aria-label={`Destroy ${preview}`}>
-                              Destroy
-                            </Button>
-                          ) : null}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </Panel>
-            )}
-          </Section>
-
-          <Section
-            title="Recent activity"
-            action={
-              <TextLink href={`/audit?service=${encodeURIComponent(id)}`} className="text-[13px] !text-fg-2">
-                All activity of {id}
-              </TextLink>
-            }
-          >
-            {events.isPending ? (
-              <Loading what="recent activity" />
-            ) : events.error ? (
-              <ErrorNote error={events.error} />
-            ) : events.data.length === 0 ? (
-              <Panel className="p-6 text-center text-[13.5px] text-fg-2">Nothing has happened to this service yet.</Panel>
-            ) : (
-              <Panel>
-                <ul aria-label="Recent activity">
-                  {events.data.map((e) => (
-                    <li key={e.name} className={row}>
-                      <span aria-hidden="true" className="w-[3px] self-stretch rounded-sm bg-line-strong" />
-                      <div className="min-w-0">
-                        <div className="min-w-0 font-medium">
-                          <span className="font-mono text-[13px]">{e.action}</span>{" "}
-                          <span className="font-normal text-fg-3">{e.target}</span>
-                        </div>
-                        <div className="mt-px text-[12.5px] text-fg-3" title={exact(e.time)}>
-                          {actorText(e)} · {when(e.time)}
-                        </div>
-                      </div>
-                      <StatusBadge status={auditStatus(e.result?.code)} title={e.result?.message || e.result?.code} />
-                    </li>
-                  ))}
-                </ul>
-              </Panel>
-            )}
-          </Section>
-        </div>
-
-        <div className="flex min-w-0 flex-col gap-6">
-          <Section title="About">
-            <Panel>
-              <div className="p-4">
-                <Facts
-                  items={[
-                    ["Team", s.ownerTeam || "–"],
-                    ["Owners", s.owners.length ? s.owners.join(", ") : "–"],
-                    ["Lifecycle", <Life key="l" lifecycle={s.lifecycle} />],
-                    ...(argoApps ? ([["Argo CD", <ArgoLink key="a" href={argoApps} id={id} />]] as [string, ReactNode][]) : []),
-                    ["Repository", s.repoUrl ? <Addr key="r" href={s.repoUrl} className="!whitespace-nowrap !break-normal" /> : "–"],
-                    [
-                      "Depends on",
-                      s.dependencies.length
-                        ? s.dependencies.map((d, i) => (
-                            <span key={d}>
-                              {i > 0 ? ", " : null}
-                              <NameLink href={`/services/${serviceId(d)}`}>{serviceId(d)}</NameLink>
-                            </span>
-                          ))
-                        : "–",
-                    ],
-                    // Not catalog fields: read from the service's labels when it has them.
-                    ["Tier", s.labels.tier || "–"],
-                    ["SLO", s.labels.slo || "–"],
-                    ["Template", s.labels.template || "–"],
-                    ["Registered", when(s.createTime)],
-                  ]}
-                />
-              </div>
-            </Panel>
-          </Section>
-        </div>
+            </ul>
+          )}
+        </Card>
       </div>
-    </>
+    </div>
   );
 }
 

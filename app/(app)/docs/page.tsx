@@ -47,7 +47,7 @@ export default function Docs() {
   return (
     <>
       <PageHeader
-        title="Docs"
+        title="TechDocs"
         lead="Every service's documentation in one place, read straight from its repo: what it does, how to run it, what to do when it breaks."
         cli={searching ? `forge docs search ${query}` : "forge docs list"}
       />
