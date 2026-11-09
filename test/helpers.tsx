@@ -39,6 +39,7 @@ const ACTION_ROLES: Record<string, "team" | "admin"> = {
   "deploy.start": "team",
   "deploy.promote": "team",
   "deploy.rollback": "team",
+  "deploy.remove": "team",
   "environment.create": "team",
   "environment.extend": "team",
   "environment.destroy": "team",

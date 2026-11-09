@@ -20,6 +20,7 @@ import {
   ExtendDialog,
   PreviewDialog,
   PromoteDialog,
+  RemoveDeploymentDialog,
   RollbackDialog,
 } from "@/components/service-actions";
 import { ServiceSettings } from "@/components/service-settings";
@@ -32,7 +33,7 @@ import type { AuditEvent } from "@/gen/forge/v1/audit_pb";
 import type { Service } from "@/gen/forge/v1/catalog_pb";
 import { type Deployment, Deployment_Health } from "@/gen/forge/v1/deploy_pb";
 import type { Environment } from "@/gen/forge/v1/environment_pb";
-import { environmentId, isCode, listAllServices, serviceId } from "@/lib/api";
+import { environmentId, isCode, listAllServices, serviceEnvs, serviceId } from "@/lib/api";
 import { START } from "@/lib/docs";
 import { actorText, exact, isChartRef, shortCommit, timeUntil, when } from "@/lib/format";
 import { approvalStatus, auditStatus, deploymentStatus, environmentStatus } from "@/lib/status";
@@ -40,6 +41,7 @@ import { approvalStatus, auditStatus, deploymentStatus, environmentStatus } from
 type Open =
   | { kind: "deploy" | "promote" | "preview" | "delete" | "address" }
   | { kind: "rollback"; env: "staging" | "production" }
+  | { kind: "remove"; env: "staging" | "production" }
   | { kind: "extend" | "destroy"; environment: Environment };
 
 type Tab = "overview" | "deploys" | "approvals" | "resources" | "deps" | "docs" | "settings";
@@ -209,6 +211,9 @@ function ServiceView({ id }: { id: string }) {
   // the app as any service's.
   const infra = s.infrastructure;
   const infraOnly = !!infra && !infra.runs;
+  // The deploy environments it has; one made before the choice has both.
+  const envs = serviceEnvs(s);
+  const bothEnvs = envs.length === 2;
 
   return (
     <>
@@ -249,7 +254,7 @@ function ServiceView({ id }: { id: string }) {
                 Preview env
               </Button>
             ) : null}
-            {infraOnly ? null : ahead && staging && can("deploy.promote") ? (
+            {infraOnly ? null : bothEnvs && ahead && staging && can("deploy.promote") ? (
               <>
                 {can("deploy.start") ? (
                   <Button onClick={() => setOpen({ kind: "deploy" })} aria-label="Deploy to staging">
@@ -266,7 +271,7 @@ function ServiceView({ id }: { id: string }) {
                 </Button>
               </>
             ) : can("deploy.start") ? (
-              <Button kind="primary" onClick={() => setOpen({ kind: "deploy" })} aria-label="Deploy to staging">
+              <Button kind="primary" onClick={() => setOpen({ kind: "deploy" })} aria-label={`Deploy to ${envs[0]}`}>
                 <Icon name="ship" />
                 Deploy
               </Button>
@@ -309,7 +314,7 @@ function ServiceView({ id }: { id: string }) {
           ...(canUpdate ? [{ value: "settings" as const, label: "Settings" }] : []),
         ]}
       >
-        {tab === "deploys" ? infraOnly ? <ServiceApprovals name={s.name} /> : <DeployHistory id={id} /> : null}
+        {tab === "deploys" ? infraOnly ? <ServiceApprovals name={s.name} /> : <DeployHistory id={id} envs={envs} /> : null}
         {tab === "approvals" && infra ? <ServiceApprovals name={s.name} /> : null}
         {tab === "resources" && !infra ? (
           <ResourcesTab id={id} canApply={(env) => can(env === "production" ? "resource.apply.production" : "resource.apply")} onStarted={onStarted} />
@@ -335,7 +340,7 @@ function ServiceView({ id }: { id: string }) {
         {tab === "settings" && canUpdate ? (
           <div className="flex max-w-[720px] flex-col gap-6">
             <ServiceSettings service={s} canMoveTeam={can("service.update.team")} canChangeRepo={role === "admin"} />
-            {can("service.address") || can("service.delete") ? (
+            {can("service.address") || can("service.delete") || (can("deploy.remove") && !infraOnly && envs.some((env) => deployed(env))) ? (
               <Panel className="border-bad-dot/45">
                 <section aria-label="Danger zone" className="contents">
                   <div className="px-4 pb-3 pt-4">
@@ -357,6 +362,22 @@ function ServiceView({ id }: { id: string }) {
                       </Button>
                     </div>
                   ) : null}
+                  {can("deploy.remove") && !infraOnly
+                    ? envs.filter((env) => deployed(env)).map((env) => (
+                        <div key={env} className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-line px-4 py-4">
+                          <div className="min-w-0 flex-[1_1_280px]">
+                            <b className="font-semibold">Take down {env}</b>
+                            <p className="mt-0.5 text-[13.5px] text-fg-2">
+                              Stops what {id} runs in {env}. It stays in the catalog; deploy again to bring {env} back. Needed before {env} can be
+                              dropped from its environments.
+                            </p>
+                          </div>
+                          <Button kind="danger" onClick={() => setOpen({ kind: "remove", env })}>
+                            Take down {env}
+                          </Button>
+                        </div>
+                      ))
+                    : null}
                   {can("service.delete") ? (
                     <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-line px-4 py-4">
                       <div className="min-w-0 flex-[1_1_280px]">
@@ -417,7 +438,8 @@ function ServiceView({ id }: { id: string }) {
           }}
         />
       ) : null}
-      {open?.kind === "deploy" ? <DeployDialog id={id} noRepo={noRepo} chart={runsChart} onClose={close} onStarted={onStarted} /> : null}
+      {open?.kind === "deploy" ? <DeployDialog id={id} env={envs[0]} noRepo={noRepo} chart={runsChart} onClose={close} onStarted={onStarted} /> : null}
+      {open?.kind === "remove" ? <RemoveDeploymentDialog id={id} env={open.env} onClose={close} onStarted={onStarted} /> : null}
       {open?.kind === "promote" ? (
         <PromoteDialog id={id} staging={deployment("staging")} onClose={close} onStarted={onStarted} />
       ) : null}
@@ -476,12 +498,13 @@ function OverviewTab({
   onOpen: (open: Open) => void;
 }) {
   const argoApps = argoAppsUrl(id, deployments.data);
+  const envs = serviceEnvs(s);
   return (
     <>
       <Section
-        title="Staging and production"
+        title={envs.length === 2 ? "Staging and production" : envs[0] === "production" ? "Production" : "Staging"}
         note={
-          deployments.data && deployed("staging")
+          deployments.data && envs.length === 2 && deployed("staging")
             ? ahead
               ? "Staging is ahead of production"
               : s.repoUrl
@@ -508,7 +531,7 @@ function OverviewTab({
               </tr>
             </thead>
             <tbody>
-              {(["staging", "production"] as const).map((env) => {
+              {envs.map((env) => {
                 const d = deployment(env);
                 return (
                   <tr key={env} className={tr}>
@@ -700,10 +723,10 @@ const kindWord: Record<string, string> = { deploy: "Deploy", promote: "Promotion
 
 // DeployHistory lists what was deployed to staging and production, newest
 // first, as the deploy repo records it.
-function DeployHistory({ id }: { id: string }) {
+function DeployHistory({ id, envs }: { id: string; envs: ("staging" | "production")[] }) {
   return (
     <>
-      {(["staging", "production"] as const).map((env) => (
+      {envs.map((env) => (
         <EnvHistory key={env} id={id} env={env} />
       ))}
     </>

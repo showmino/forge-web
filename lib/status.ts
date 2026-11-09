@@ -85,6 +85,7 @@ const kinds: Record<string, string> = {
   create_environment: "Create preview",
   destroy_environment: "Destroy preview",
   delete_service: "Delete",
+  delete_deployment: "Take down",
   "resource.plan": "Plan resources of",
   "resource.apply": "Apply resources of",
 };

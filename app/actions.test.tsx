@@ -480,7 +480,8 @@ describe("who may act", () => {
     expect(team.value).toBe("platform-engineering");
     expect(screen.getByText("Only an admin can move a service to another team.")).toBeTruthy();
     expect(screen.getByText("Only an admin can point the service at another repository.")).toBeTruthy();
-    expect(screen.queryByRole("region", { name: "Danger zone" })).toBeNull();
+    // The danger zone has only the team's part: taking an environment down.
+    expect(screen.getByRole("button", { name: "Take down staging" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Delete service" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Change address" })).toBeNull();
     // The rest of the settings are the team's.
@@ -1372,6 +1373,21 @@ describe("create a service", () => {
       env: { LOG_LEVEL: "info" },
       jobs: [{ name: "cleanup", schedule: "0 3 * * *", command: ["node", "cleanup.js"] }],
     });
+  });
+
+  it("makes a service with production only", async () => {
+    const w = world();
+    renderWithApi(<CreateService />, forge(w));
+    await fillCreate("ledger");
+    const envs = within(screen.getByRole("group", { name: "Environments" }));
+    expect((envs.getByLabelText("staging") as HTMLInputElement).checked).toBe(true);
+    click(envs.getByLabelText("staging"));
+    expect(envs.getByText(/deployed by a person: CI deploys only to staging/)).toBeTruthy();
+    expect(screen.getByLabelText("The same from the terminal").textContent).toContain("--environments production");
+    toReview();
+    click(screen.getByRole("button", { name: "Create service" }));
+    await screen.findByRole("heading", { name: "ledger was created" });
+    expect(w.calls.create[0]).toMatchObject({ environments: ["production"] });
   });
 
   it("makes an infrastructure repo with an app: a target, and the app's run options", async () => {

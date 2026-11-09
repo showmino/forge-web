@@ -68,27 +68,36 @@ const code = (text: string) => <span className="type-code">{text}</span>;
 const built = (r: { version: string; commit: string }) =>
   r.version ? `${r.version}, ${shortCommit(r.commit)}` : shortCommit(r.commit);
 
-// DeployDialog deploys a ref to staging. A service without a repo (noRepo)
-// runs an image or, with chart, a published chart: the ref is the image tag
-// or the chart version, and left empty it is the one its forge.yaml names.
-export function DeployDialog({ id, noRepo = false, chart = false, onClose, onStarted }: Common & { noRepo?: boolean; chart?: boolean }) {
+// DeployDialog deploys a ref to env: staging, or production for a service
+// that has production only. A service without a repo (noRepo) runs an image
+// or, with chart, a published chart: the ref is the image tag or the chart
+// version, and left empty it is the one its forge.yaml names.
+export function DeployDialog({
+  id,
+  env = "staging",
+  noRepo = false,
+  chart = false,
+  onClose,
+  onStarted,
+}: Common & { env?: "staging" | "production"; noRepo?: boolean; chart?: boolean }) {
   const api = useApi();
   const toast = useToast();
   const [ref, setRef] = useState(noRepo ? "" : "main");
   const [requestId] = useState(randomString);
+  const Env = env === "production" ? "Production" : "Staging";
   const action = useAction(
-    () => api.deploys.startDeploy({ service: `services/${id}`, env: "staging", ref: ref.trim(), requestId }),
+    () => api.deploys.startDeploy({ service: `services/${id}`, env, ref: ref.trim(), requestId }),
     (res) => {
-      toast(`Deploying ${id} to staging`, `forge deploy start ${id} --env staging${ref.trim() ? ` --ref ${ref.trim()}` : ""}`);
+      toast(`Deploying ${id} to ${env}`, `forge deploy start ${id} --env ${env}${ref.trim() ? ` --ref ${ref.trim()}` : ""}`);
       onStarted(res.operation?.name);
     },
   );
   return (
-    <Dialog title={`Deploy ${id} to staging?`} onClose={onClose}>
+    <Dialog title={`Deploy ${id} to ${env}?`} onClose={onClose}>
       <form onSubmit={action.run} className="flex flex-col gap-4">
         {noRepo && chart ? (
           <>
-            <p>Staging will run the chart at this version, with the values in its forge.yaml.</p>
+            <p>{Env} will run the chart at this version, with the values in its forge.yaml.</p>
             <Field
               id="deploy-ref"
               label="Chart version"
@@ -99,7 +108,7 @@ export function DeployDialog({ id, noRepo = false, chart = false, onClose, onSta
           </>
         ) : noRepo ? (
           <>
-            <p>Staging will run the image at this tag, pinned to the digest the tag has now.</p>
+            <p>{Env} will run the image at this tag, pinned to the digest the tag has now.</p>
             <Field
               id="deploy-ref"
               label="Image tag"
@@ -110,7 +119,7 @@ export function DeployDialog({ id, noRepo = false, chart = false, onClose, onSta
           </>
         ) : (
           <>
-            <p>Staging will run the image CI built for this commit.</p>
+            <p>{Env} will run the image CI built for this commit.</p>
             <Field id="deploy-ref" label="Branch, tag or commit" hint="CI must have pushed an image for it.">
               <input id="deploy-ref" className={`${inputClass} type-code`} value={ref} onChange={(e) => setRef(e.target.value)} required />
             </Field>
@@ -120,7 +129,7 @@ export function DeployDialog({ id, noRepo = false, chart = false, onClose, onSta
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
           <Button kind="primary" type="submit" disabled={action.busy}>
-            Deploy to staging
+            Deploy to {env}
           </Button>
         </DialogActions>
       </form>
@@ -292,6 +301,37 @@ export function RollbackDialog({ id, env, onClose, onStarted }: Common & { env: 
           <Button onClick={onClose}>Cancel</Button>
           <Button kind="danger" type="submit" disabled={action.busy || earlier.length === 0}>
             Roll back {env}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
+  );
+}
+
+// RemoveDeploymentDialog takes down what a service runs in one environment
+// (DeleteDeployment). The service keeps its other environment and previews.
+export function RemoveDeploymentDialog({ id, env, onClose, onStarted }: Common & { env: "staging" | "production" }) {
+  const api = useApi();
+  const toast = useToast();
+  const action = useAction(
+    () => api.deploys.deleteDeployment({ name: `deployments/${id}/${env}` }),
+    (res) => {
+      toast(`Taking down ${id} in ${env}`, `forge deploy remove ${id} --env ${env} --yes`);
+      onStarted(res.operation?.name);
+    },
+  );
+  return (
+    <Dialog title={`Take down ${id} in ${env}?`} onClose={onClose}>
+      <form onSubmit={action.run} className="flex flex-col gap-4">
+        <p>
+          Its version leaves the deploy repo, then Argo CD removes its workloads and Forge its namespace. {id} stays in the catalog, with its other
+          environment and its previews. Deploy again to bring {env} back.
+        </p>
+        {action.error ? <ErrorNote error={action.error} /> : null}
+        <DialogActions>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button kind="danger" type="submit" disabled={action.busy}>
+            Take down {env}
           </Button>
         </DialogActions>
       </form>

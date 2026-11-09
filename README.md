@@ -83,6 +83,12 @@ the others. The server only serves the pages and
   repo that also has an app (`infrastructure.runs`, from a template such as
   `nextjs-infra`) shows a service's page, with deploys, previews and
   promote, and adds the infrastructure to its overview and an Approvals tab.
+  A service has staging, production or both (`Service.environments`; empty
+  is both): its page shows only those, Deploy goes to its one environment
+  when it has one, Promote needs both, Settings changes them (not an
+  infrastructure repo's), and the danger zone takes a deployed environment
+  down for its team (`DeleteDeployment`). The Create page asks every kind of
+  service for its environments (both ticked).
   The Create page asks an infrastructure template for a target
   (`TemplateService.ListTargets`, those open to the team) and its
   environments; one that offers run options asks for those too, and for who
