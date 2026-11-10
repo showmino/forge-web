@@ -15,6 +15,9 @@ export type TeamRow = {
   lastDeploy: Date | undefined;
   // False for a name services use that is not a team of the organization.
   onGitHub: boolean;
+  // How many members it has on GitHub (0: not known), and its on-call rotation ("" for none).
+  members: number;
+  oncall: string;
 };
 
 export type NeedsOwner = { service: string; team: string };
@@ -24,6 +27,8 @@ export type Ownership = {
   needsOwner: NeedsOwner[];
   // Services with nobody named as a contact.
   noContacts: string[];
+  // Teams of the organization that own services but have no on-call rotation.
+  noOncall: string[];
   owned: number;
   total: number;
   idleTeams: number;
@@ -35,7 +40,7 @@ export function ownership(services: Service[], teams: Team[] | null, deployments
   const rows = new Map<string, TeamRow>();
   for (const t of teams ?? []) {
     const slug = teamId(t.name);
-    rows.set(slug, { slug, displayName: t.displayName, services: [], lastDeploy: undefined, onGitHub: true });
+    rows.set(slug, { slug, displayName: t.displayName, services: [], lastDeploy: undefined, onGitHub: true, members: t.memberCount, oncall: t.oncall });
   }
   const latest = new Map<string, Date>();
   for (const d of deployments) {
@@ -57,7 +62,7 @@ export function ownership(services: Service[], teams: Team[] | null, deployments
     }
     let row = rows.get(team);
     if (!row) {
-      row = { slug: team, displayName: "", services: [], lastDeploy: undefined, onGitHub: !teams };
+      row = { slug: team, displayName: "", services: [], lastDeploy: undefined, onGitHub: !teams, members: 0, oncall: "" };
       rows.set(team, row);
     }
     row.services.push(id);
@@ -70,6 +75,8 @@ export function ownership(services: Service[], teams: Team[] | null, deployments
     teams: sorted,
     needsOwner,
     noContacts,
+    // Only known when the teams were read: without them, no team is blamed.
+    noOncall: teams ? sorted.filter((t) => t.onGitHub && t.services.length > 0 && !t.oncall).map((t) => t.slug) : [],
     owned: services.length - needsOwner.length,
     total: services.length,
     idleTeams: sorted.filter((t) => t.onGitHub && t.services.length === 0).length,

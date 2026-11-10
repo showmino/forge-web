@@ -96,10 +96,16 @@ service's team create, extend and destroy them here or on the service's page.
 
 ## Ownership
 
-`/ownership`: which GitHub team owns which service. It points out services
-whose team is not a team on GitHub, services with no contacts, and teams with
-no services. An admin moves a service to another team from its Settings.
-`forge team list`
+`/ownership`: which GitHub team owns which service, how many members each
+team has and its on-call rotation. It points out services whose team is not a
+team on GitHub, services with no contacts, teams with no services, and teams
+that own services but have no on-call rotation. An admin sets a team's on-call
+there (**Set**), and moves a service to another team from its Settings.
+`forge team list`, `forge team update <team> --oncall <rotation>`
+
+A service's **tier** (critical, high or medium) and **SLO target** (such as
+99.9%) show in the Catalog and on its page; its team changes them in
+Settings. `forge service update <name> --tier 1 --slo 99.95%`
 
 ## Audit log
 

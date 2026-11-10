@@ -8,9 +8,9 @@ import { useApi } from "@/components/providers";
 import { ButtonLink, Icon } from "@/components/ui/button";
 import { Empty, ErrorNote, Loading, PageHeader } from "@/components/ui/layout";
 import { btd, bth, Card, Chip, Choose, ct, Find, FilterBar, ServiceName, wide } from "@/components/ui/portal";
-import { Life, StatusBadge } from "@/components/ui/status";
+import { StatusBadge } from "@/components/ui/status";
 import { listAllServices } from "@/lib/api";
-import { catalogRows, filterRows, type StatusFilter, teamsOf } from "@/lib/catalog";
+import { catalogRows, filterRows, type StatusFilter, teamsOf, tierStatus } from "@/lib/catalog";
 
 // The Catalog: every service in one table, the environment where each hurts
 // most first, with search and filters in one row.
@@ -25,15 +25,17 @@ export default function Catalog() {
   const [query, setQuery] = useState("");
   const [team, setTeam] = useState("all");
   const [status, setStatus] = useState<StatusFilter>("all");
+  const [tier, setTier] = useState("all");
 
   const all = useMemo(() => services.data ?? [], [services.data]);
   const rows = useMemo(() => catalogRows(all, deployments.data ?? []), [all, deployments.data]);
-  const shown = filterRows(rows, { query, team, status });
-  const filtered = query !== "" || team !== "all" || status !== "all";
+  const shown = filterRows(rows, { query, team, status, tier });
+  const filtered = query !== "" || team !== "all" || status !== "all" || tier !== "all";
   const clear = () => {
     setQuery("");
     setTeam("all");
     setStatus("all");
+    setTier("all");
   };
 
   return (
@@ -61,6 +63,18 @@ export default function Catalog() {
             <FilterBar label="Filter services">
               <Find label="Search services…" value={query} onChange={setQuery} />
               <Choose label="Owner" value={team} onChange={setTeam} options={[["all", "All"], ...teamsOf(all).map((t): [string, string] => [t, t])]} />
+              <Choose
+                label="Tier"
+                value={tier}
+                onChange={setTier}
+                options={[
+                  ["all", "All"],
+                  ["1", "Critical"],
+                  ["2", "High"],
+                  ["3", "Medium"],
+                  ["0", "Not set"],
+                ]}
+              />
               <Choose
                 label="Status"
                 value={status}
@@ -92,7 +106,7 @@ export default function Catalog() {
                         <tr>
                           <th className={bth}>Service</th>
                           <th className={`${bth} ${wide}`}>Owner</th>
-                          <th className={`${bth} ${wide}`}>Lifecycle</th>
+                          <th className={bth}>Tier</th>
                           <th className={`${bth} ${wide}`}>Environment</th>
                           <th className={bth}>Status</th>
                           <th className={`${bth} ${wide}`}>Last deploy</th>
@@ -105,8 +119,8 @@ export default function Catalog() {
                               <ServiceName id={r.id} sub={r.service.displayName && r.service.displayName !== r.id ? r.service.displayName : undefined} />
                             </td>
                             <td className={`${btd} ${wide}`}>{r.team ? <Chip>{r.team}</Chip> : <span className="text-fg-3">–</span>}</td>
-                            <td className={`${btd} ${wide}`}>
-                              <Life lifecycle={r.service.lifecycle} />
+                            <td className={btd}>
+                              <StatusBadge status={tierStatus(r.service.tier)} />
                             </td>
                             <td className={`${btd} ${wide}`}>{r.env ? <Chip mono>{r.env === "production" ? "prod" : r.env}</Chip> : <span className="text-fg-3">–</span>}</td>
                             <td className={btd}>{deployments.isPending ? <span className="text-fg-3">…</span> : <StatusBadge status={r.status} />}</td>

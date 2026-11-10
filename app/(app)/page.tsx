@@ -35,6 +35,7 @@ import { approvalAttention } from "@/lib/approvals";
 import { type CatalogRow, catalogRows, newThisWeek } from "@/lib/catalog";
 import { clusterStatus } from "@/lib/cluster";
 import { timeAgo } from "@/lib/format";
+import { ownership } from "@/lib/ownership";
 import { attention, type Attention, board, type BoardRow, dayStats, expiringSoon, recentDeploys, type RecentDeploy } from "@/lib/overview";
 import type { Tone } from "@/lib/status";
 
@@ -75,6 +76,7 @@ export default function Home() {
     refetchInterval: 60_000,
     retry: false,
   });
+  const teamList = useQuery({ queryKey: ["teams"], queryFn: () => api.teams.listTeams({}).then((r) => r.teams), retry: false });
   const waiting = useWaitingApprovals();
   const canCreate = usePermissions().can("service.create");
 
@@ -86,11 +88,26 @@ export default function Home() {
   const boards = useMemo(() => (deployments.data ? board(deployments.data, services.data?.length) : undefined), [deployments.data, services.data]);
   const needs = useMemo(() => {
     const all = [...approvalAttention(waiting), ...attention(deployments.data ?? [], environments.data ?? [], recent)];
+    // An admin also hears of the teams that own services but page nobody.
+    if (role === "Admin" && teamList.data && services.data) {
+      for (const slug of ownership(services.data, teamList.data, []).noOncall) {
+        const n = services.data.filter((s) => s.ownerTeam === slug).length;
+        all.push({
+          key: `oncall-${slug}`,
+          tone: "warning",
+          before: "",
+          subject: slug,
+          after: " has no on-call rotation",
+          detail: `${n} service${n === 1 ? "" : "s"}, and nobody is paged when they break`,
+          href: "/ownership",
+        });
+      }
+    }
     // A team member sees what is wrong with their team's services; an admin and a reader all of it.
     if (role !== "Team") return all;
     const own = new Set(mine.map((r) => r.id));
     return all.filter((a) => a.key.startsWith("approval-") || own.has(a.subject) || (a.extend && own.has(serviceId(a.extend.service))));
-  }, [waiting, deployments.data, environments.data, recent, role, mine]);
+  }, [waiting, deployments.data, environments.data, recent, role, mine, teamList.data, services.data]);
 
   const broken = services.error ?? deployments.error;
   const loading = services.isPending || deployments.isPending;
