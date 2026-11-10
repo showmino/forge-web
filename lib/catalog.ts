@@ -1,5 +1,5 @@
 import { timestampDate } from "@bufbuild/protobuf/wkt";
-import type { Service } from "@/gen/forge/v1/catalog_pb";
+import type { Service, ServiceChecks } from "@/gen/forge/v1/catalog_pb";
 import type { Deployment } from "@/gen/forge/v1/deploy_pb";
 import { serviceId } from "@/lib/api";
 import { timeAgo } from "@/lib/format";
@@ -69,10 +69,11 @@ export function catalogRows(services: Service[], deployments: Deployment[], now 
   return rows.map((r) => r.row);
 }
 
-export type StatusFilter = "all" | "attention" | "healthy" | "ahead";
+export type StatusFilter = "all" | "attention" | "healthy" | "ahead" | "offpath";
 
 // tier is "all", or "1", "2", "3" for one tier, or "0" for none set.
-export type CatalogFilter = { query: string; team: string; status: StatusFilter; tier?: string };
+// offPath holds the services that miss a golden-path check (from ListServiceChecks).
+export type CatalogFilter = { query: string; team: string; status: StatusFilter; tier?: string; offPath?: Set<string> };
 
 // tierStatus says how critical a service is: Critical, High or Medium.
 export function tierStatus(tier: number): Status {
@@ -103,6 +104,8 @@ export function filterRows(rows: CatalogRow[], f: CatalogFilter): CatalogRow[] {
         return r.severity === "ok";
       case "ahead":
         return r.ahead;
+      case "offpath":
+        return f.offPath?.has(r.id) ?? false;
       default:
         return true;
     }
@@ -118,4 +121,9 @@ export function teamsOf(services: Service[]): string[] {
 export function newThisWeek(services: Service[], now = new Date()): number {
   const week = 7 * 24 * 3600_000;
   return services.filter((s) => s.createTime && now.getTime() - timestampDate(s.createTime).getTime() < week).length;
+}
+
+// offGoldenPath lists the services that miss a golden-path check that applies to them.
+export function offGoldenPath(checks: ServiceChecks[]): Set<string> {
+  return new Set(checks.filter((c) => c.passed < c.applies).map((c) => serviceId(c.service)));
 }

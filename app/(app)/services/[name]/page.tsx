@@ -8,6 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { usePermissions } from "@/components/app-shell";
 import { DocReader, DocsLink, useHasDocs } from "@/components/doc-reader";
+import { GoldenPath } from "@/components/golden-path";
 import { ExceptionDialog, useCanAskException } from "@/components/exception-actions";
 import { OperationLog } from "@/components/operation-log";
 import { ResourcesTab, useResources } from "@/components/resources";
@@ -568,28 +569,31 @@ function OverviewTab({
             ))}
           </dl>
         </Card>
-        <Card icon="link" title="Related resources">
-          {(resources.data?.length ?? 0) === 0 && s.dependencies.length === 0 ? (
-            <CardNote>No resources or dependencies.</CardNote>
-          ) : (
-            <ul aria-label="Related resources" className="m-0 list-none p-0">
-              {(resources.data ?? []).map((r) => (
-                <li key={r.name} className="flex items-center justify-between border-b border-line py-2.5 text-[14px] last:border-b-0">
-                  <span className="font-mono text-[13px]">
-                    {r.name.split("/").pop()} <span className="text-fg-3">· {r.env}</span>
-                  </span>
-                  <span className="text-[13px] text-fg-3">{r.type}</span>
-                </li>
-              ))}
-              {s.dependencies.map((d) => (
-                <li key={d} className="flex items-center justify-between border-b border-line py-2.5 text-[14px] last:border-b-0">
-                  <NameLink href={`/services/${serviceId(d)}`}>{serviceId(d)}</NameLink>
-                  <span className="text-[13px] text-fg-3">Service it calls</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
+        <div className="flex min-w-0 flex-col gap-4">
+          <GoldenPath id={id} />
+          <Card icon="link" title="Related resources">
+            {(resources.data?.length ?? 0) === 0 && s.dependencies.length === 0 ? (
+              <CardNote>No resources or dependencies.</CardNote>
+            ) : (
+              <ul aria-label="Related resources" className="m-0 list-none p-0">
+                {(resources.data ?? []).map((r) => (
+                  <li key={r.name} className="flex items-center justify-between border-b border-line py-2.5 text-[14px] last:border-b-0">
+                    <span className="font-mono text-[13px]">
+                      {r.name.split("/").pop()} <span className="text-fg-3">· {r.env}</span>
+                    </span>
+                    <span className="text-[13px] text-fg-3">{r.type}</span>
+                  </li>
+                ))}
+                {s.dependencies.map((d) => (
+                  <li key={d} className="flex items-center justify-between border-b border-line py-2.5 text-[14px] last:border-b-0">
+                    <NameLink href={`/services/${serviceId(d)}`}>{serviceId(d)}</NameLink>
+                    <span className="text-[13px] text-fg-3">Service it calls</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
       </div>
 
       <Card icon="layers" title={envs.length === 2 ? "Staging and production" : envs[0] === "production" ? "Production" : "Staging"}>
