@@ -133,6 +133,10 @@ the others. The server only serves the pages and
   the golden path, teams without on-call, resources not ready;
   `lib/adoption.ts`), and the last 12 weeks as three small bar charts with a
   table view.
+- **Your settings** (`/me`, your name at the foot of the rail): your email,
+  role and teams, and your personal tokens (`AuthService.ListTokens`):
+  make one (name, scopes, expiry; the token is shown once, with a copy
+  button), and revoke one.
 - **Clusters** (`/clusters`, admins only): the cluster Forge runs on
   (`ClusterService`) with its status and how much CPU, memory and disk is in
   use; `/clusters/<name>` adds the pods, every node with its condition, and

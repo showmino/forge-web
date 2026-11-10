@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file forge/v1/auth.proto.
  */
 export const file_forge_v1_auth: GenFile = /*@__PURE__*/
-  fileDesc("ChNmb3JnZS92MS9hdXRoLnByb3RvEghmb3JnZS52MSJOChZUZXN0UGVybWlzc2lvbnNSZXF1ZXN0Eg8KB3NlcnZpY2UYASABKAkSDwoHYWN0aW9ucxgCIAMoCRISCgpvd25lcl90ZWFtGAMgASgJIjgKF1Rlc3RQZXJtaXNzaW9uc1Jlc3BvbnNlEg8KB2FsbG93ZWQYASADKAkSDAoEcm9sZRgCIAEoCSK4AgoHU2Vzc2lvbhIMCgRuYW1lGAEgASgJEigKBmNsaWVudBgCIAEoDjIYLmZvcmdlLnYxLlNlc3Npb24uQ2xpZW50Eg0KBWxhYmVsGAMgASgJEi8KC2NyZWF0ZV90aW1lGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIxCg1sYXN0X3VzZV90aW1lGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtleHBpcmVfdGltZRgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHY3VycmVudBgHIAEoCCJACgZDbGllbnQSFgoSQ0xJRU5UX1VOU1BFQ0lGSUVEEAASDgoKQ0xJRU5UX0NMSRABEg4KCkNMSUVOVF9XRUIQAiIlChRDcmVhdGVTZXNzaW9uUmVxdWVzdBINCgVsYWJlbBgBIAEoCSJKChVDcmVhdGVTZXNzaW9uUmVzcG9uc2USIgoHc2Vzc2lvbhgBIAEoCzIRLmZvcmdlLnYxLlNlc3Npb24SDQoFdG9rZW4YAiABKAkiFQoTTGlzdFNlc3Npb25zUmVxdWVzdCI7ChRMaXN0U2Vzc2lvbnNSZXNwb25zZRIjCghzZXNzaW9ucxgBIAMoCzIRLmZvcmdlLnYxLlNlc3Npb24iJAoURGVsZXRlU2Vzc2lvblJlcXVlc3QSDAoEbmFtZRgBIAEoCSIXChVEZWxldGVTZXNzaW9uUmVzcG9uc2UiFgoUR2V0U2VydmVySW5mb1JlcXVlc3QigQEKFUdldFNlcnZlckluZm9SZXNwb25zZRIWCg5zZXJ2ZXJfdmVyc2lvbhgBIAEoCRIaChJtaW5fY2xpZW50X3ZlcnNpb24YAiABKAkSIgoEb2lkYxgDIAEoCzIULmZvcmdlLnYxLk9JRENDb25maWcSEAoIc2Vzc2lvbnMYBCABKAgiagoKT0lEQ0NvbmZpZxIOCgZpc3N1ZXIYASABKAkSEQoJY2xpZW50X2lkGAIgASgJEg4KBnNjb3BlcxgDIAMoCRIVCg13ZWJfY2xpZW50X2lkGAQgASgJEhIKCndlYl9zY29wZXMYBSADKAkiEgoQR2V0U3RhdHVzUmVxdWVzdCKaAQoRR2V0U3RhdHVzUmVzcG9uc2USDwoHc3ViamVjdBgBIAEoCRINCgVlbWFpbBgCIAEoCRIOCgZncm91cHMYAyADKAkSEwoLcGVybWlzc2lvbnMYBCADKAkSIgoHc2Vzc2lvbhgFIAEoCzIRLmZvcmdlLnYxLlNlc3Npb24SDQoFYWRtaW4YBiABKAgSDQoFdGVhbXMYByADKAkyhAQKC0F1dGhTZXJ2aWNlElUKDUdldFNlcnZlckluZm8SHi5mb3JnZS52MS5HZXRTZXJ2ZXJJbmZvUmVxdWVzdBofLmZvcmdlLnYxLkdldFNlcnZlckluZm9SZXNwb25zZSIDkAIBEkkKCUdldFN0YXR1cxIaLmZvcmdlLnYxLkdldFN0YXR1c1JlcXVlc3QaGy5mb3JnZS52MS5HZXRTdGF0dXNSZXNwb25zZSIDkAIBElAKDUNyZWF0ZVNlc3Npb24SHi5mb3JnZS52MS5DcmVhdGVTZXNzaW9uUmVxdWVzdBofLmZvcmdlLnYxLkNyZWF0ZVNlc3Npb25SZXNwb25zZRJSCgxMaXN0U2Vzc2lvbnMSHS5mb3JnZS52MS5MaXN0U2Vzc2lvbnNSZXF1ZXN0Gh4uZm9yZ2UudjEuTGlzdFNlc3Npb25zUmVzcG9uc2UiA5ACARJQCg1EZWxldGVTZXNzaW9uEh4uZm9yZ2UudjEuRGVsZXRlU2Vzc2lvblJlcXVlc3QaHy5mb3JnZS52MS5EZWxldGVTZXNzaW9uUmVzcG9uc2USWwoPVGVzdFBlcm1pc3Npb25zEiAuZm9yZ2UudjEuVGVzdFBlcm1pc3Npb25zUmVxdWVzdBohLmZvcmdlLnYxLlRlc3RQZXJtaXNzaW9uc1Jlc3BvbnNlIgOQAgFiBnByb3RvMw", [file_google_protobuf_timestamp]);
+  fileDesc("ChNmb3JnZS92MS9hdXRoLnByb3RvEghmb3JnZS52MSJOChZUZXN0UGVybWlzc2lvbnNSZXF1ZXN0Eg8KB3NlcnZpY2UYASABKAkSDwoHYWN0aW9ucxgCIAMoCRISCgpvd25lcl90ZWFtGAMgASgJIjgKF1Rlc3RQZXJtaXNzaW9uc1Jlc3BvbnNlEg8KB2FsbG93ZWQYASADKAkSDAoEcm9sZRgCIAEoCSK4AgoHU2Vzc2lvbhIMCgRuYW1lGAEgASgJEigKBmNsaWVudBgCIAEoDjIYLmZvcmdlLnYxLlNlc3Npb24uQ2xpZW50Eg0KBWxhYmVsGAMgASgJEi8KC2NyZWF0ZV90aW1lGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIxCg1sYXN0X3VzZV90aW1lGAUgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIvCgtleHBpcmVfdGltZRgGIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHY3VycmVudBgHIAEoCCJACgZDbGllbnQSFgoSQ0xJRU5UX1VOU1BFQ0lGSUVEEAASDgoKQ0xJRU5UX0NMSRABEg4KCkNMSUVOVF9XRUIQAiIlChRDcmVhdGVTZXNzaW9uUmVxdWVzdBINCgVsYWJlbBgBIAEoCSJKChVDcmVhdGVTZXNzaW9uUmVzcG9uc2USIgoHc2Vzc2lvbhgBIAEoCzIRLmZvcmdlLnYxLlNlc3Npb24SDQoFdG9rZW4YAiABKAkiFQoTTGlzdFNlc3Npb25zUmVxdWVzdCI7ChRMaXN0U2Vzc2lvbnNSZXNwb25zZRIjCghzZXNzaW9ucxgBIAMoCzIRLmZvcmdlLnYxLlNlc3Npb24iJAoURGVsZXRlU2Vzc2lvblJlcXVlc3QSDAoEbmFtZRgBIAEoCSIXChVEZWxldGVTZXNzaW9uUmVzcG9uc2UiFgoUR2V0U2VydmVySW5mb1JlcXVlc3QigQEKFUdldFNlcnZlckluZm9SZXNwb25zZRIWCg5zZXJ2ZXJfdmVyc2lvbhgBIAEoCRIaChJtaW5fY2xpZW50X3ZlcnNpb24YAiABKAkSIgoEb2lkYxgDIAEoCzIULmZvcmdlLnYxLk9JRENDb25maWcSEAoIc2Vzc2lvbnMYBCABKAgiagoKT0lEQ0NvbmZpZxIOCgZpc3N1ZXIYASABKAkSEQoJY2xpZW50X2lkGAIgASgJEg4KBnNjb3BlcxgDIAMoCRIVCg13ZWJfY2xpZW50X2lkGAQgASgJEhIKCndlYl9zY29wZXMYBSADKAkiEgoQR2V0U3RhdHVzUmVxdWVzdCKaAQoRR2V0U3RhdHVzUmVzcG9uc2USDwoHc3ViamVjdBgBIAEoCRINCgVlbWFpbBgCIAEoCRIOCgZncm91cHMYAyADKAkSEwoLcGVybWlzc2lvbnMYBCADKAkSIgoHc2Vzc2lvbhgFIAEoCzIRLmZvcmdlLnYxLlNlc3Npb24SDQoFYWRtaW4YBiABKAgSDQoFdGVhbXMYByADKAki0AEKBVRva2VuEgwKBG5hbWUYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEg4KBnNjb3BlcxgDIAMoCRIvCgtjcmVhdGVfdGltZRgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASMQoNbGFzdF91c2VfdGltZRgFIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLZXhwaXJlX3RpbWUYBiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wInoKEkNyZWF0ZVRva2VuUmVxdWVzdBIUCgxkaXNwbGF5X25hbWUYASABKAkSDgoGc2NvcGVzGAIgAygJEhMKC2V4cGlyZV9kYXlzGAMgASgFEhIKCnJlcXVlc3RfaWQYBCABKAkSFQoNdmFsaWRhdGVfb25seRgFIAEoCCJFChNDcmVhdGVUb2tlblJlc3BvbnNlEh4KBXRva2VuGAEgASgLMg8uZm9yZ2UudjEuVG9rZW4SDgoGc2VjcmV0GAIgASgJIhMKEUxpc3RUb2tlbnNSZXF1ZXN0IjUKEkxpc3RUb2tlbnNSZXNwb25zZRIfCgZ0b2tlbnMYASADKAsyDy5mb3JnZS52MS5Ub2tlbiIiChJEZWxldGVUb2tlblJlcXVlc3QSDAoEbmFtZRgBIAEoCSIVChNEZWxldGVUb2tlblJlc3BvbnNlMuoFCgtBdXRoU2VydmljZRJVCg1HZXRTZXJ2ZXJJbmZvEh4uZm9yZ2UudjEuR2V0U2VydmVySW5mb1JlcXVlc3QaHy5mb3JnZS52MS5HZXRTZXJ2ZXJJbmZvUmVzcG9uc2UiA5ACARJJCglHZXRTdGF0dXMSGi5mb3JnZS52MS5HZXRTdGF0dXNSZXF1ZXN0GhsuZm9yZ2UudjEuR2V0U3RhdHVzUmVzcG9uc2UiA5ACARJQCg1DcmVhdGVTZXNzaW9uEh4uZm9yZ2UudjEuQ3JlYXRlU2Vzc2lvblJlcXVlc3QaHy5mb3JnZS52MS5DcmVhdGVTZXNzaW9uUmVzcG9uc2USUgoMTGlzdFNlc3Npb25zEh0uZm9yZ2UudjEuTGlzdFNlc3Npb25zUmVxdWVzdBoeLmZvcmdlLnYxLkxpc3RTZXNzaW9uc1Jlc3BvbnNlIgOQAgESUAoNRGVsZXRlU2Vzc2lvbhIeLmZvcmdlLnYxLkRlbGV0ZVNlc3Npb25SZXF1ZXN0Gh8uZm9yZ2UudjEuRGVsZXRlU2Vzc2lvblJlc3BvbnNlEkoKC0NyZWF0ZVRva2VuEhwuZm9yZ2UudjEuQ3JlYXRlVG9rZW5SZXF1ZXN0Gh0uZm9yZ2UudjEuQ3JlYXRlVG9rZW5SZXNwb25zZRJMCgpMaXN0VG9rZW5zEhsuZm9yZ2UudjEuTGlzdFRva2Vuc1JlcXVlc3QaHC5mb3JnZS52MS5MaXN0VG9rZW5zUmVzcG9uc2UiA5ACARJKCgtEZWxldGVUb2tlbhIcLmZvcmdlLnYxLkRlbGV0ZVRva2VuUmVxdWVzdBodLmZvcmdlLnYxLkRlbGV0ZVRva2VuUmVzcG9uc2USWwoPVGVzdFBlcm1pc3Npb25zEiAuZm9yZ2UudjEuVGVzdFBlcm1pc3Npb25zUmVxdWVzdBohLmZvcmdlLnYxLlRlc3RQZXJtaXNzaW9uc1Jlc3BvbnNlIgOQAgFiBnByb3RvMw", [file_google_protobuf_timestamp]);
 
 /**
  * @generated from message forge.v1.TestPermissionsRequest
@@ -442,6 +442,186 @@ export const GetStatusResponseSchema: GenMessage<GetStatusResponse> = /*@__PURE_
   messageDesc(file_forge_v1_auth, 13);
 
 /**
+ * Token is a personal token, without its secret.
+ *
+ * @generated from message forge.v1.Token
+ */
+export type Token = Message<"forge.v1.Token"> & {
+  /**
+   * "tokens/{id}".
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * What it is for, unique among its maker's tokens: "ci-deploys".
+   *
+   * @generated from field: string display_name = 2;
+   */
+  displayName: string;
+
+  /**
+   * What it may do: "read" (always), "deploy" (deploy, promote, roll back,
+   * previews, cancel), "settings" (every other change its maker may make).
+   *
+   * @generated from field: repeated string scopes = 3;
+   */
+  scopes: string[];
+
+  /**
+   * @generated from field: google.protobuf.Timestamp create_time = 4;
+   */
+  createTime?: Timestamp | undefined;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp last_use_time = 5;
+   */
+  lastUseTime?: Timestamp | undefined;
+
+  /**
+   * Unset for a token that never expires.
+   *
+   * @generated from field: google.protobuf.Timestamp expire_time = 6;
+   */
+  expireTime?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message forge.v1.Token.
+ * Use `create(TokenSchema)` to create a new message.
+ */
+export const TokenSchema: GenMessage<Token> = /*@__PURE__*/
+  messageDesc(file_forge_v1_auth, 14);
+
+/**
+ * @generated from message forge.v1.CreateTokenRequest
+ */
+export type CreateTokenRequest = Message<"forge.v1.CreateTokenRequest"> & {
+  /**
+   * @generated from field: string display_name = 1;
+   */
+  displayName: string;
+
+  /**
+   * "read" is implied; "deploy" and "settings" add to it.
+   *
+   * @generated from field: repeated string scopes = 2;
+   */
+  scopes: string[];
+
+  /**
+   * Days until it expires, 1 to 365; 0: it never expires.
+   *
+   * @generated from field: int32 expire_days = 3;
+   */
+  expireDays: number;
+
+  /**
+   * @generated from field: string request_id = 4;
+   */
+  requestId: string;
+
+  /**
+   * @generated from field: bool validate_only = 5;
+   */
+  validateOnly: boolean;
+};
+
+/**
+ * Describes the message forge.v1.CreateTokenRequest.
+ * Use `create(CreateTokenRequestSchema)` to create a new message.
+ */
+export const CreateTokenRequestSchema: GenMessage<CreateTokenRequest> = /*@__PURE__*/
+  messageDesc(file_forge_v1_auth, 15);
+
+/**
+ * @generated from message forge.v1.CreateTokenResponse
+ */
+export type CreateTokenResponse = Message<"forge.v1.CreateTokenResponse"> & {
+  /**
+   * @generated from field: forge.v1.Token token = 1;
+   */
+  token?: Token | undefined;
+
+  /**
+   * The token itself, "fgp_...": shown once, never again.
+   *
+   * @generated from field: string secret = 2;
+   */
+  secret: string;
+};
+
+/**
+ * Describes the message forge.v1.CreateTokenResponse.
+ * Use `create(CreateTokenResponseSchema)` to create a new message.
+ */
+export const CreateTokenResponseSchema: GenMessage<CreateTokenResponse> = /*@__PURE__*/
+  messageDesc(file_forge_v1_auth, 16);
+
+/**
+ * @generated from message forge.v1.ListTokensRequest
+ */
+export type ListTokensRequest = Message<"forge.v1.ListTokensRequest"> & {
+};
+
+/**
+ * Describes the message forge.v1.ListTokensRequest.
+ * Use `create(ListTokensRequestSchema)` to create a new message.
+ */
+export const ListTokensRequestSchema: GenMessage<ListTokensRequest> = /*@__PURE__*/
+  messageDesc(file_forge_v1_auth, 17);
+
+/**
+ * @generated from message forge.v1.ListTokensResponse
+ */
+export type ListTokensResponse = Message<"forge.v1.ListTokensResponse"> & {
+  /**
+   * @generated from field: repeated forge.v1.Token tokens = 1;
+   */
+  tokens: Token[];
+};
+
+/**
+ * Describes the message forge.v1.ListTokensResponse.
+ * Use `create(ListTokensResponseSchema)` to create a new message.
+ */
+export const ListTokensResponseSchema: GenMessage<ListTokensResponse> = /*@__PURE__*/
+  messageDesc(file_forge_v1_auth, 18);
+
+/**
+ * @generated from message forge.v1.DeleteTokenRequest
+ */
+export type DeleteTokenRequest = Message<"forge.v1.DeleteTokenRequest"> & {
+  /**
+   * "tokens/{id}".
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+};
+
+/**
+ * Describes the message forge.v1.DeleteTokenRequest.
+ * Use `create(DeleteTokenRequestSchema)` to create a new message.
+ */
+export const DeleteTokenRequestSchema: GenMessage<DeleteTokenRequest> = /*@__PURE__*/
+  messageDesc(file_forge_v1_auth, 19);
+
+/**
+ * @generated from message forge.v1.DeleteTokenResponse
+ */
+export type DeleteTokenResponse = Message<"forge.v1.DeleteTokenResponse"> & {
+};
+
+/**
+ * Describes the message forge.v1.DeleteTokenResponse.
+ * Use `create(DeleteTokenResponseSchema)` to create a new message.
+ */
+export const DeleteTokenResponseSchema: GenMessage<DeleteTokenResponse> = /*@__PURE__*/
+  messageDesc(file_forge_v1_auth, 20);
+
+/**
  * AuthService tells clients how to log in and who they are.
  *
  * @generated from service forge.v1.AuthService
@@ -502,6 +682,39 @@ export const AuthService: GenService<{
     methodKind: "unary";
     input: typeof DeleteSessionRequestSchema;
     output: typeof DeleteSessionResponseSchema;
+  },
+  /**
+   * CreateToken makes a personal token (fgp_...) for CI and scripts: it acts
+   * as its maker, never with more than their role, and only within its
+   * scopes. Only a login (the CLI's or the dashboard's) makes one, never a
+   * token or a CI job. The token is in the answer once; Forge keeps its hash.
+   *
+   * @generated from rpc forge.v1.AuthService.CreateToken
+   */
+  createToken: {
+    methodKind: "unary";
+    input: typeof CreateTokenRequestSchema;
+    output: typeof CreateTokenResponseSchema;
+  },
+  /**
+   * ListTokens returns the caller's tokens, newest first.
+   *
+   * @generated from rpc forge.v1.AuthService.ListTokens
+   */
+  listTokens: {
+    methodKind: "unary";
+    input: typeof ListTokensRequestSchema;
+    output: typeof ListTokensResponseSchema;
+  },
+  /**
+   * DeleteToken revokes one of the caller's tokens at once.
+   *
+   * @generated from rpc forge.v1.AuthService.DeleteToken
+   */
+  deleteToken: {
+    methodKind: "unary";
+    input: typeof DeleteTokenRequestSchema;
+    output: typeof DeleteTokenResponseSchema;
   },
   /**
    * TestPermissions returns which of the actions the caller may do, on a

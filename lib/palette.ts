@@ -24,6 +24,7 @@ export const PAGES: [label: string, href: string][] = [
   ["Ownership", "/ownership"],
   ["Adoption", "/adoption"],
   ["Audit log", "/audit"],
+  ["Your settings and tokens", "/me"],
 ];
 
 export function jumpItems(services: Service[], previews: Environment[], templates: Template[] = []): JumpItem[] {
