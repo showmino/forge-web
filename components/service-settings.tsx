@@ -19,7 +19,12 @@ export function contacts(text: string): string[] {
   return [...new Set(text.split(",").map((s) => s.trim()).filter(Boolean))];
 }
 
-type Change = { team: string; owners: string[]; lifecycle: Lifecycle; envs?: string[] };
+type Change = { team: string; owners: string[]; lifecycle: Lifecycle; envs?: string[]; tier?: number; slo?: string };
+
+// validSLO is the API's rule for an availability target: a percentage up to 100, at most four decimals.
+export function validSLO(s: string): boolean {
+  return /^(100|[0-9]{1,2}(\.[0-9]{1,4})?)%$/.test(s);
+}
 
 // changes names what differs from the service, as update_mask paths and as the CLI's flags.
 export function changes(s: Service, next: Change): { paths: string[]; flags: string[] } {
@@ -36,6 +41,14 @@ export function changes(s: Service, next: Change): { paths: string[]; flags: str
   if (next.lifecycle !== s.lifecycle) {
     paths.push("lifecycle");
     flags.push(`--lifecycle ${lifecycleWord(next.lifecycle).toLowerCase()}`);
+  }
+  if (next.tier !== undefined && next.tier !== s.tier) {
+    paths.push("tier");
+    flags.push(`--tier ${next.tier}`);
+  }
+  if (next.slo !== undefined && next.slo !== s.slo) {
+    paths.push("slo");
+    flags.push(`--slo ${next.slo || '""'}`);
   }
   if (next.envs && next.envs.join(",") !== serviceEnvs(s).join(",")) {
     paths.push("environments");
@@ -63,24 +76,27 @@ function SettingsForm({ service: s, canMoveTeam, canChangeRepo }: { service: Ser
   const [team, setTeam] = useState(s.ownerTeam);
   const [owners, setOwners] = useState(s.owners.join(", "));
   const [lifecycle, setLifecycle] = useState(s.lifecycle);
+  const [tier, setTier] = useState(s.tier);
+  const [slo, setSlo] = useState(s.slo);
   // An infrastructure repo keeps the environments it was made with.
   const envsFixed = !!s.infrastructure;
   const [envs, setEnvs] = useState<string[]>(serviceEnvs(s));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const next = { team: team.trim(), owners: contacts(owners), lifecycle, envs: envsFixed ? undefined : envs };
+  const next = { team: team.trim(), owners: contacts(owners), lifecycle, envs: envsFixed ? undefined : envs, tier, slo: slo.trim() };
+  const badSLO = next.slo !== "" && !validSLO(next.slo);
   const { paths, flags } = changes(s, next);
   const command = `forge service update ${id}${flags.length ? " " + flags.join(" ") : ""}`;
   const slugs = (teams.data ?? []).map((t) => teamId(t.name));
 
   function save(e: FormEvent) {
     e.preventDefault();
-    if (!paths.length || !next.team || envs.length === 0) return;
+    if (!paths.length || !next.team || envs.length === 0 || badSLO) return;
     setBusy(true);
     setError(null);
     api.catalog
       .updateService({
-        service: { name: s.name, etag: s.etag, ownerTeam: next.team, owners: next.owners, lifecycle: next.lifecycle, environments: envs },
+        service: { name: s.name, etag: s.etag, ownerTeam: next.team, owners: next.owners, lifecycle: next.lifecycle, environments: envs, tier: next.tier, slo: next.slo },
         updateMask: { paths },
       })
       .then(
@@ -164,6 +180,24 @@ function SettingsForm({ service: s, canMoveTeam, canChangeRepo }: { service: Ser
               ))}
             </select>
           </Field>
+          <Field id="settings-tier" label="Tier" hint="How critical the service is: who is woken up, and how carefully it changes.">
+            <select id="settings-tier" className={inputClass} value={tier} onChange={(e) => setTier(Number(e.target.value))}>
+              <option value={0}>Not set</option>
+              <option value={1}>1, critical</option>
+              <option value={2}>2, high</option>
+              <option value={3}>3, medium</option>
+            </select>
+          </Field>
+          <Field id="settings-slo" label="SLO target" hint="The availability it promises, such as 99.9%. Leave it empty for none." error={badSLO ? "Write it as a percentage, such as 99.9%." : undefined}>
+            <input
+              id="settings-slo"
+              className={`${inputClass} font-mono`}
+              value={slo}
+              onChange={(e) => setSlo(e.target.value)}
+              placeholder="99.9%"
+              aria-describedby="settings-slo-note"
+            />
+          </Field>
           <div role="group" aria-label="Environments" className="flex flex-col gap-2">
             <span className="text-[13px] font-medium">Environments</span>
             {(["staging", "production"] as const).map((e) => (
@@ -190,7 +224,7 @@ function SettingsForm({ service: s, canMoveTeam, canChangeRepo }: { service: Ser
           <Cli command={command} />
           {error ? <ErrorNote error={error} /> : null}
           <div>
-            <Button kind="primary" type="submit" disabled={busy || !paths.length || !next.team || envs.length === 0}>
+            <Button kind="primary" type="submit" disabled={busy || !paths.length || !next.team || envs.length === 0 || badSLO}>
               Save changes
             </Button>
           </div>

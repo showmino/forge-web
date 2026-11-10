@@ -71,7 +71,22 @@ export function catalogRows(services: Service[], deployments: Deployment[], now 
 
 export type StatusFilter = "all" | "attention" | "healthy" | "ahead";
 
-export type CatalogFilter = { query: string; team: string; status: StatusFilter };
+// tier is "all", or "1", "2", "3" for one tier, or "0" for none set.
+export type CatalogFilter = { query: string; team: string; status: StatusFilter; tier?: string };
+
+// tierStatus says how critical a service is: Critical, High or Medium.
+export function tierStatus(tier: number): Status {
+  switch (tier) {
+    case 1:
+      return { tone: "danger", word: "Critical" };
+    case 2:
+      return { tone: "warning", word: "High" };
+    case 3:
+      return { tone: "neutral", word: "Medium" };
+    default:
+      return { tone: "neutral", word: "Not set" };
+  }
+}
 
 // filterRows keeps the rows that match the search (name, display name, team)
 // and the owner and status filters.
@@ -80,6 +95,7 @@ export function filterRows(rows: CatalogRow[], f: CatalogFilter): CatalogRow[] {
   return rows.filter((r) => {
     if (q && !`${r.id} ${r.service.displayName} ${r.team}`.toLowerCase().includes(q)) return false;
     if (f.team !== "all" && r.team !== f.team) return false;
+    if (f.tier && f.tier !== "all" && String(r.service.tier) !== f.tier) return false;
     switch (f.status) {
       case "attention":
         return hurts(r.severity);

@@ -111,9 +111,13 @@ the others. The server only serves the pages and
   environments; one that offers run options asks for those too, and for who
   can reach the app.
 - **Ownership** (`/ownership`): the organization's teams (`TeamService`)
-  joined with the catalog: which team owns which service, services whose
-  team is not a team on GitHub, services with no contacts, teams with no
-  services.
+  joined with the catalog: which team owns which service, each team's
+  members and on-call rotation, services whose team is not a team on GitHub,
+  services with no contacts, teams with no services and teams that own
+  services but page nobody. An admin sets a team's on-call there
+  (`TeamService.UpdateTeam`); the home page tells an admin about a team
+  without one. A service's tier and SLO target show in the Catalog (with a
+  Tier filter) and on its page, and its team changes them in Settings.
 - **Clusters** (`/clusters`, admins only): the cluster Forge runs on
   (`ClusterService`) with its status and how much CPU, memory and disk is in
   use; `/clusters/<name>` adds the pods, every node with its condition, and

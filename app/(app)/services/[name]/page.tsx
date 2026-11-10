@@ -28,7 +28,7 @@ import { Addr, Button, Icon, NameLink, TextLink } from "@/components/ui/button";
 import { Cli } from "@/components/ui/cli";
 import { Crumbs, ErrorNote, Facts, Loading, PageHeader, Panel, Section, TableFrame, td, th, tr } from "@/components/ui/layout";
 import { Card, CardNote, Chip, ct, ctd, cth } from "@/components/ui/portal";
-import { catalogRows } from "@/lib/catalog";
+import { catalogRows, tierStatus } from "@/lib/catalog";
 import { EnvTag, Life, StatusBadge } from "@/components/ui/status";
 import { Tabs } from "@/components/ui/tabs";
 import type { AuditEvent } from "@/gen/forge/v1/audit_pb";
@@ -234,6 +234,7 @@ function ServiceView({ id }: { id: string }) {
             <span className="mt-1 inline-flex flex-wrap items-center gap-2 align-middle">
               {deployments.data && !infraOnly ? <StatusBadge status={catalogRows([s], deployments.data)[0].status} /> : null}
               {!infraOnly ? <Chip mono>{envs.join(", ")}</Chip> : null}
+              {s.tier ? <Chip>Tier: {tierStatus(s.tier).word}</Chip> : null}
               {s.ownerTeam ? <Chip>Owner: {s.ownerTeam}</Chip> : null}
               <Life lifecycle={s.lifecycle} />
             </span>
@@ -548,9 +549,8 @@ function OverviewTab({
       </Fragment>,
     ],
     ["Lifecycle", <Life key="lc" lifecycle={s.lifecycle} />],
-    // Not catalog fields yet: read from the service's labels when it has them.
-    ...(s.labels.tier ? ([["Tier", s.labels.tier]] as [string, ReactNode][]) : []),
-    ...(s.labels.slo ? ([["SLO", s.labels.slo]] as [string, ReactNode][]) : []),
+    ["Tier", s.tier ? <StatusBadge key="t" status={tierStatus(s.tier)} /> : <span key="t" className="text-fg-3">Not set</span>],
+    ["SLO target", s.slo ? <span key="s" className="font-mono">{s.slo}</span> : <span key="s" className="text-fg-3">Not set</span>],
     ...(argoApps ? ([["Argo CD", <ArgoLink key="a" href={argoApps} id={id} />]] as [string, ReactNode][]) : []),
     ["Registered", when(s.createTime)],
   ];

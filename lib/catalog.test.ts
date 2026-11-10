@@ -3,12 +3,12 @@ import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { describe, expect, it } from "vitest";
 import { ServiceSchema } from "@/gen/forge/v1/catalog_pb";
 import { Deployment_Health, Deployment_SyncStatus, DeploymentSchema } from "@/gen/forge/v1/deploy_pb";
-import { catalogRows, filterRows, teamsOf } from "./catalog";
+import { catalogRows, filterRows, teamsOf, tierStatus } from "./catalog";
 
 const NOW = new Date(2026, 10, 9, 15, 0, 0);
 const ago = (minutes: number) => timestampFromDate(new Date(NOW.getTime() - minutes * 60_000));
 
-const svc = (id: string, team = "billing", displayName = "") => create(ServiceSchema, { name: `services/${id}`, ownerTeam: team, displayName });
+const svc = (id: string, team = "billing", displayName = "", tier = 0) => create(ServiceSchema, { name: `services/${id}`, ownerTeam: team, displayName, tier });
 const dep = (id: string, env: string, over: object = {}) =>
   create(DeploymentSchema, {
     name: `deployments/${id}/${env}`,
@@ -22,7 +22,7 @@ const dep = (id: string, env: string, over: object = {}) =>
   });
 
 describe("the catalog's rows", () => {
-  const services = [svc("ledger"), svc("payments"), svc("search", "discovery"), svc("idle", "growth"), svc("web", "commerce")];
+  const services = [svc("ledger", "billing", "", 1), svc("payments", "billing", "", 1), svc("search", "discovery"), svc("idle", "growth"), svc("web", "commerce")];
   const deployments = [
     dep("ledger", "production"),
     dep("ledger", "staging"),
@@ -61,6 +61,14 @@ describe("the catalog's rows", () => {
     expect(filterRows(rows, { ...all, status: "attention" }).map((r) => r.id)).toEqual(["payments", "search"]);
     expect(filterRows(rows, { ...all, status: "healthy" }).map((r) => r.id)).toEqual(["ledger", "web"]);
     expect(filterRows(rows, { ...all, status: "ahead" }).map((r) => r.id)).toEqual(["web"]);
+  });
+
+  it("filters by tier, and names it", () => {
+    const all = { query: "", team: "all", status: "all" as const };
+    expect(filterRows(rows, { ...all, tier: "1" }).map((r) => r.id)).toEqual(["payments", "ledger"]);
+    expect(filterRows(rows, { ...all, tier: "0" }).map((r) => r.id)).toEqual(["search", "web", "idle"]);
+    expect(tierStatus(1)).toEqual({ tone: "danger", word: "Critical" });
+    expect(tierStatus(0).word).toBe("Not set");
   });
 
   it("lists the owning teams once each", () => {
