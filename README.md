@@ -122,6 +122,10 @@ the others. The server only serves the pages and
   SLO, tracing, runbook, on-call; `ServiceCatalogService.ListServiceChecks`)
   and what to do about each missing one. The Catalog's status filter "Off the
   golden path" keeps the services that miss one (`?status=offpath`).
+- **Rules** (`/rules`): the production runs waiting for the caller's team,
+  then every rule Forge checks (`PolicyService.ListRules`), by kind. An admin
+  switches a switchable rule between enforce, warn and off
+  (`UpdateRule`); the rules that guard Forge are listed as always enforced.
 - **Clusters** (`/clusters`, admins only): the cluster Forge runs on
   (`ClusterService`) with its status and how much CPU, memory and disk is in
   use; `/clusters/<name>` adds the pods, every node with its condition, and

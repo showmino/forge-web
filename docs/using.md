@@ -94,6 +94,15 @@ service's team create, extend and destroy them here or on the service's page.
 
 `forge op list`, `forge op watch <id>`
 
+## Rules
+
+`/rules`: what Forge checks before it applies a plan, promotes, runs an image
+or a chart, or makes an infrastructure repo, and each rule's mode. An admin
+sets a switchable rule to enforce (refused), warn (goes ahead, recorded in the
+audit log) or off; the others are always enforced. The production runs waiting
+for your team are at the top.
+`forge policy list`, `forge policy set <rule> --mode warn`
+
 ## Ownership
 
 `/ownership`: which GitHub team owns which service, how many members each
