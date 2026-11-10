@@ -80,6 +80,7 @@ const icon = {
       <path d="M8.5 12l2.5 2.5 4.5-5" />
     </>
   ),
+  adoption: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
   rules: (
     <>
       <path d="M9 6h11M9 12h11M9 18h11" />
@@ -127,6 +128,7 @@ const groups: { label: string; items: Item[] }[] = [
       { href: "/rules", label: "Rules", icon: "rules", match: (p) => p.startsWith("/rules") },
       { href: "/approvals", label: "Approvals", icon: "approvals", match: (p) => p.startsWith("/approvals") },
       { href: "/ownership", label: "Ownership", icon: "ownership", match: (p) => p.startsWith("/ownership") },
+      { href: "/adoption", label: "Adoption", icon: "adoption", match: (p) => p.startsWith("/adoption") },
       { href: "/audit", label: "Audit log", icon: "audit", match: (p) => p.startsWith("/audit") },
     ],
   },

@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file forge/v1/audit.proto.
  */
 export const file_forge_v1_audit: GenFile = /*@__PURE__*/
-  fileDesc("ChRmb3JnZS92MS9hdWRpdC5wcm90bxIIZm9yZ2UudjEi7QIKCkF1ZGl0RXZlbnQSDAoEbmFtZRgBIAEoCRIoCgR0aW1lGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIMCgRraW5kGAMgASgJEg4KBmFjdGlvbhgEIAEoCRIjCgVhY3RvchgFIAEoCzIULmZvcmdlLnYxLkF1ZGl0QWN0b3ISDwoHc2VydmljZRgGIAEoCRIOCgZ0YXJnZXQYByABKAkSJQoGcmVzdWx0GAggASgLMhUuZm9yZ2UudjEuQXVkaXRSZXN1bHQSEQoJb3BlcmF0aW9uGAkgASgJEjIKB2RldGFpbHMYCiADKAsyIS5mb3JnZS52MS5BdWRpdEV2ZW50LkRldGFpbHNFbnRyeRIlCgZjbGllbnQYCyABKAsyFS5mb3JnZS52MS5BdWRpdENsaWVudBouCgxEZXRhaWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJOCgpBdWRpdEFjdG9yEgwKBGtpbmQYASABKAkSDwoHc3ViamVjdBgCIAEoCRINCgVlbWFpbBgDIAEoCRISCgpyZXBvc2l0b3J5GAQgASgJIiwKC0F1ZGl0UmVzdWx0EgwKBGNvZGUYASABKAkSDwoHbWVzc2FnZRgCIAEoCSIyCgtBdWRpdENsaWVudBIPCgd2ZXJzaW9uGAEgASgJEhIKCnJlcXVlc3RfaWQYAiABKAki2gEKFkxpc3RBdWRpdEV2ZW50c1JlcXVlc3QSDwoHc2VydmljZRgBIAEoCRINCgVhY3RvchgCIAEoCRIOCgZhY3Rpb24YAyABKAkSEwoLZmFpbGVkX29ubHkYBCABKAgSKQoFc2luY2UYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEikKBXVudGlsGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCglwYWdlX3NpemUYByABKAUSEgoKcGFnZV90b2tlbhgIIAEoCSJYChdMaXN0QXVkaXRFdmVudHNSZXNwb25zZRIkCgZldmVudHMYASADKAsyFC5mb3JnZS52MS5BdWRpdEV2ZW50EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSIkChRHZXRBdWRpdEV2ZW50UmVxdWVzdBIMCgRuYW1lGAEgASgJIjwKFUdldEF1ZGl0RXZlbnRSZXNwb25zZRIjCgVldmVudBgBIAEoCzIULmZvcmdlLnYxLkF1ZGl0RXZlbnQywgEKDEF1ZGl0U2VydmljZRJbCg9MaXN0QXVkaXRFdmVudHMSIC5mb3JnZS52MS5MaXN0QXVkaXRFdmVudHNSZXF1ZXN0GiEuZm9yZ2UudjEuTGlzdEF1ZGl0RXZlbnRzUmVzcG9uc2UiA5ACARJVCg1HZXRBdWRpdEV2ZW50Eh4uZm9yZ2UudjEuR2V0QXVkaXRFdmVudFJlcXVlc3QaHy5mb3JnZS52MS5HZXRBdWRpdEV2ZW50UmVzcG9uc2UiA5ACAWIGcHJvdG8z", [file_google_protobuf_timestamp]);
+  fileDesc("ChRmb3JnZS92MS9hdWRpdC5wcm90bxIIZm9yZ2UudjEi7QIKCkF1ZGl0RXZlbnQSDAoEbmFtZRgBIAEoCRIoCgR0aW1lGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIMCgRraW5kGAMgASgJEg4KBmFjdGlvbhgEIAEoCRIjCgVhY3RvchgFIAEoCzIULmZvcmdlLnYxLkF1ZGl0QWN0b3ISDwoHc2VydmljZRgGIAEoCRIOCgZ0YXJnZXQYByABKAkSJQoGcmVzdWx0GAggASgLMhUuZm9yZ2UudjEuQXVkaXRSZXN1bHQSEQoJb3BlcmF0aW9uGAkgASgJEjIKB2RldGFpbHMYCiADKAsyIS5mb3JnZS52MS5BdWRpdEV2ZW50LkRldGFpbHNFbnRyeRIlCgZjbGllbnQYCyABKAsyFS5mb3JnZS52MS5BdWRpdENsaWVudBouCgxEZXRhaWxzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4ASJOCgpBdWRpdEFjdG9yEgwKBGtpbmQYASABKAkSDwoHc3ViamVjdBgCIAEoCRINCgVlbWFpbBgDIAEoCRISCgpyZXBvc2l0b3J5GAQgASgJIiwKC0F1ZGl0UmVzdWx0EgwKBGNvZGUYASABKAkSDwoHbWVzc2FnZRgCIAEoCSIyCgtBdWRpdENsaWVudBIPCgd2ZXJzaW9uGAEgASgJEhIKCnJlcXVlc3RfaWQYAiABKAki2gEKFkxpc3RBdWRpdEV2ZW50c1JlcXVlc3QSDwoHc2VydmljZRgBIAEoCRINCgVhY3RvchgCIAEoCRIOCgZhY3Rpb24YAyABKAkSEwoLZmFpbGVkX29ubHkYBCABKAgSKQoFc2luY2UYBSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEikKBXVudGlsGAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCglwYWdlX3NpemUYByABKAUSEgoKcGFnZV90b2tlbhgIIAEoCSJYChdMaXN0QXVkaXRFdmVudHNSZXNwb25zZRIkCgZldmVudHMYASADKAsyFC5mb3JnZS52MS5BdWRpdEV2ZW50EhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSIkChRHZXRBdWRpdEV2ZW50UmVxdWVzdBIMCgRuYW1lGAEgASgJIjwKFUdldEF1ZGl0RXZlbnRSZXNwb25zZRIjCgVldmVudBgBIAEoCzIULmZvcmdlLnYxLkF1ZGl0RXZlbnQiFAoSR2V0QWRvcHRpb25SZXF1ZXN0IrsBChNHZXRBZG9wdGlvblJlc3BvbnNlEiYKBGxhc3QYASABKAsyGC5mb3JnZS52MS5BZG9wdGlvblBlcmlvZBIqCghwcmV2aW91cxgCIAEoCzIYLmZvcmdlLnYxLkFkb3B0aW9uUGVyaW9kEiUKBXdlZWtzGAMgAygLMhYuZm9yZ2UudjEuQWRvcHRpb25XZWVrEikKBXNpbmNlGAQgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJcCg5BZG9wdGlvblBlcmlvZBIUCgxhY3RpdmVfdXNlcnMYASABKAUSDwoHZGVwbG95cxgCIAEoBRIOCgZ3cml0ZXMYAyABKAUSEwoLc2VsZl9zZXJ2ZWQYBCABKAUidQoMQWRvcHRpb25XZWVrEikKBXN0YXJ0GAEgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIPCgdkZXBsb3lzGAIgASgFEhMKC3NlbGZfc2VydmVkGAMgASgFEhQKDGFjdGl2ZV91c2VycxgEIAEoBTKTAgoMQXVkaXRTZXJ2aWNlElsKD0xpc3RBdWRpdEV2ZW50cxIgLmZvcmdlLnYxLkxpc3RBdWRpdEV2ZW50c1JlcXVlc3QaIS5mb3JnZS52MS5MaXN0QXVkaXRFdmVudHNSZXNwb25zZSIDkAIBElUKDUdldEF1ZGl0RXZlbnQSHi5mb3JnZS52MS5HZXRBdWRpdEV2ZW50UmVxdWVzdBofLmZvcmdlLnYxLkdldEF1ZGl0RXZlbnRSZXNwb25zZSIDkAIBEk8KC0dldEFkb3B0aW9uEhwuZm9yZ2UudjEuR2V0QWRvcHRpb25SZXF1ZXN0Gh0uZm9yZ2UudjEuR2V0QWRvcHRpb25SZXNwb25zZSIDkAIBYgZwcm90bzM", [file_google_protobuf_timestamp]);
 
 /**
  * AuditEvent is one entry of the audit log.
@@ -320,6 +320,134 @@ export const GetAuditEventResponseSchema: GenMessage<GetAuditEventResponse> = /*
   messageDesc(file_forge_v1_audit, 7);
 
 /**
+ * @generated from message forge.v1.GetAdoptionRequest
+ */
+export type GetAdoptionRequest = Message<"forge.v1.GetAdoptionRequest"> & {
+};
+
+/**
+ * Describes the message forge.v1.GetAdoptionRequest.
+ * Use `create(GetAdoptionRequestSchema)` to create a new message.
+ */
+export const GetAdoptionRequestSchema: GenMessage<GetAdoptionRequest> = /*@__PURE__*/
+  messageDesc(file_forge_v1_audit, 8);
+
+/**
+ * @generated from message forge.v1.GetAdoptionResponse
+ */
+export type GetAdoptionResponse = Message<"forge.v1.GetAdoptionResponse"> & {
+  /**
+   * The last 30 days, and the 30 before them.
+   *
+   * @generated from field: forge.v1.AdoptionPeriod last = 1;
+   */
+  last?: AdoptionPeriod | undefined;
+
+  /**
+   * @generated from field: forge.v1.AdoptionPeriod previous = 2;
+   */
+  previous?: AdoptionPeriod | undefined;
+
+  /**
+   * The last 12 weeks, oldest first; the last is the week so far.
+   *
+   * @generated from field: repeated forge.v1.AdoptionWeek weeks = 3;
+   */
+  weeks: AdoptionWeek[];
+
+  /**
+   * How far back the numbers go: the oldest event read. When the audit log
+   * is younger than the periods, they cover less.
+   *
+   * @generated from field: google.protobuf.Timestamp since = 4;
+   */
+  since?: Timestamp | undefined;
+};
+
+/**
+ * Describes the message forge.v1.GetAdoptionResponse.
+ * Use `create(GetAdoptionResponseSchema)` to create a new message.
+ */
+export const GetAdoptionResponseSchema: GenMessage<GetAdoptionResponse> = /*@__PURE__*/
+  messageDesc(file_forge_v1_audit, 9);
+
+/**
+ * AdoptionPeriod counts one stretch of time.
+ *
+ * @generated from message forge.v1.AdoptionPeriod
+ */
+export type AdoptionPeriod = Message<"forge.v1.AdoptionPeriod"> & {
+  /**
+   * People who changed something through Forge.
+   *
+   * @generated from field: int32 active_users = 1;
+   */
+  activeUsers: number;
+
+  /**
+   * Deploys, promotions and rollbacks started, by people and by CI.
+   *
+   * @generated from field: int32 deploys = 2;
+   */
+  deploys: number;
+
+  /**
+   * Changes by people, and how many of them by people outside the admin
+   * groups. Only changes whose audit event records the role count: Forge
+   * records it since 0.54.0.
+   *
+   * @generated from field: int32 writes = 3;
+   */
+  writes: number;
+
+  /**
+   * @generated from field: int32 self_served = 4;
+   */
+  selfServed: number;
+};
+
+/**
+ * Describes the message forge.v1.AdoptionPeriod.
+ * Use `create(AdoptionPeriodSchema)` to create a new message.
+ */
+export const AdoptionPeriodSchema: GenMessage<AdoptionPeriod> = /*@__PURE__*/
+  messageDesc(file_forge_v1_audit, 10);
+
+/**
+ * AdoptionWeek counts one week, starting on a Monday (UTC).
+ *
+ * @generated from message forge.v1.AdoptionWeek
+ */
+export type AdoptionWeek = Message<"forge.v1.AdoptionWeek"> & {
+  /**
+   * @generated from field: google.protobuf.Timestamp start = 1;
+   */
+  start?: Timestamp | undefined;
+
+  /**
+   * @generated from field: int32 deploys = 2;
+   */
+  deploys: number;
+
+  /**
+   * @generated from field: int32 self_served = 3;
+   */
+  selfServed: number;
+
+  /**
+   * @generated from field: int32 active_users = 4;
+   */
+  activeUsers: number;
+};
+
+/**
+ * Describes the message forge.v1.AdoptionWeek.
+ * Use `create(AdoptionWeekSchema)` to create a new message.
+ */
+export const AdoptionWeekSchema: GenMessage<AdoptionWeek> = /*@__PURE__*/
+  messageDesc(file_forge_v1_audit, 11);
+
+/**
  * AuditService reads the audit log: one event per write call to the Forge
  * API, refused calls included, plus the outcome of long-running work and
  * forge-api's own actions. Events are append-only. Resource names follow AIP
@@ -347,6 +475,18 @@ export const AuditService: GenService<{
     methodKind: "unary";
     input: typeof GetAuditEventRequestSchema;
     output: typeof GetAuditEventResponseSchema;
+  },
+  /**
+   * GetAdoption says how much Forge is used, from the audit log: people,
+   * deploys and self-served changes in the last 30 days and the 30 before,
+   * and week by week (phase 15).
+   *
+   * @generated from rpc forge.v1.AuditService.GetAdoption
+   */
+  getAdoption: {
+    methodKind: "unary";
+    input: typeof GetAdoptionRequestSchema;
+    output: typeof GetAdoptionResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_forge_v1_audit, 0);
