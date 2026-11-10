@@ -10,6 +10,7 @@ import { DeployService } from "@/gen/forge/v1/deploy_pb";
 import { DocsService } from "@/gen/forge/v1/docs_pb";
 import { EnvironmentService } from "@/gen/forge/v1/environment_pb";
 import { OperationService } from "@/gen/forge/v1/operation_pb";
+import { PolicyService } from "@/gen/forge/v1/policy_pb";
 import { ResourceService } from "@/gen/forge/v1/resource_pb";
 import { TeamService } from "@/gen/forge/v1/team_pb";
 import { TemplateService } from "@/gen/forge/v1/template_pb";
@@ -32,6 +33,7 @@ export type Api = {
   clusters: Client<typeof ClusterService>;
   approvals: Client<typeof ApprovalService>;
   resources: Client<typeof ResourceService>;
+  policy: Client<typeof PolicyService>;
 };
 
 const bearer: Interceptor = (next) => async (req) => {
@@ -77,6 +79,7 @@ export function makeApi(transport: Transport): Api {
     approvals: createClient(ApprovalService, transport),
     clusters: createClient(ClusterService, transport),
     resources: createClient(ResourceService, transport),
+    policy: createClient(PolicyService, transport),
   };
 }
 

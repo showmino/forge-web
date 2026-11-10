@@ -80,6 +80,12 @@ const icon = {
       <path d="M8.5 12l2.5 2.5 4.5-5" />
     </>
   ),
+  rules: (
+    <>
+      <path d="M9 6h11M9 12h11M9 18h11" />
+      <path d="M4 6l1 1 2-2M4 12l1 1 2-2M4 18l1 1 2-2" />
+    </>
+  ),
   resources: (
     <>
       <ellipse cx="12" cy="6" rx="7.5" ry="2.8" />
@@ -118,6 +124,7 @@ const groups: { label: string; items: Item[] }[] = [
   {
     label: "Govern",
     items: [
+      { href: "/rules", label: "Rules", icon: "rules", match: (p) => p.startsWith("/rules") },
       { href: "/approvals", label: "Approvals", icon: "approvals", match: (p) => p.startsWith("/approvals") },
       { href: "/ownership", label: "Ownership", icon: "ownership", match: (p) => p.startsWith("/ownership") },
       { href: "/audit", label: "Audit log", icon: "audit", match: (p) => p.startsWith("/audit") },
