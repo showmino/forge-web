@@ -112,6 +112,13 @@ is stuck (teams with no service, failing services, services off the golden
 path, teams nobody pages, resources not ready), and the last 12 weeks.
 `forge audit adoption --weekly`
 
+## Your settings and tokens
+
+`/me` (your name at the foot of the sidebar): who you are in Forge, and your
+personal tokens for CI and scripts. **New token** asks for a name, what it can
+do (read; deploy; settings) and when it expires, and shows the token once.
+`forge token create|list|revoke`
+
 ## Ownership
 
 `/ownership`: which GitHub team owns which service, how many members each

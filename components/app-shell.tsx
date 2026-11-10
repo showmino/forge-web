@@ -421,7 +421,7 @@ function Rail({
         <span className={m("rail:hidden")}>Collapse</span>
       </button>
       <div className={`flex flex-col gap-2 border-t border-rail-line px-2 pt-3 max-rail:mt-auto ${m("rail:w-full rail:items-center rail:px-0")}`}>
-        <div className="flex items-center gap-2.5">
+        <Link href="/me" title={mini ? undefined : "Your settings"} className="flex items-center gap-2.5 rounded-md text-inherit no-underline hover:bg-rail-active/60">
           <span
             title={mini ? `${who} · ${role}` : undefined}
             className="inline-grid size-7 flex-none place-items-center rounded-full bg-rail-active text-[11px] font-semibold uppercase"
@@ -433,7 +433,7 @@ function Rail({
             <small className="block truncate text-[11.5px] text-rail-fg-2">{who}</small>
           </span>
           <span className={`ml-auto rounded-sm bg-rail-active px-1.5 py-px text-[11px] font-semibold ${m("rail:hidden")}`}>{role}</span>
-        </div>
+        </Link>
         <button
           type="button"
           onClick={() => {
