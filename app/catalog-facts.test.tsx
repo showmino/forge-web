@@ -12,6 +12,7 @@ import { create } from "@bufbuild/protobuf";
 import { ADMIN, authAs, type Caller, READER, renderWithApi, signIn } from "@/test/helpers";
 import Catalog from "./(app)/services/page";
 import Ownership from "./(app)/ownership/page";
+import { GoldenPath } from "@/components/golden-path";
 
 // A service's tier and SLO, and a team's members and on-call (phase 15, B).
 
@@ -37,6 +38,25 @@ function forge(w: World) {
       updateService: (req) => {
         w.updates.push({ paths: req.updateMask?.paths ?? [], tier: req.service?.tier ?? 0, slo: req.service?.slo ?? "" });
         return { service: { name: req.service?.name, etag: "2" } };
+      },
+      listServiceChecks: (req) => {
+        const all = [
+          {
+            service: "services/payments",
+            passed: 4,
+            applies: 4,
+            checks: [
+              { name: "ci", title: "CI pipeline", applies: false, detail: "no repo: it runs an image or a chart someone else built" },
+              { name: "slo", title: "SLO defined", applies: true, passed: true, detail: "availability target 99.95%" },
+              { name: "tracing", title: "Tracing with OpenTelemetry", applies: true, passed: true, detail: "it sends traces (service.tracing)" },
+              { name: "runbook", title: "Runbook", applies: false, detail: "no repo to keep one in" },
+              { name: "oncall", title: "On-call rotation", applies: true, passed: true, detail: "team billing is on call as billing-primary" },
+            ],
+          },
+          { service: "services/ledger", passed: 1, applies: 3, checks: [] },
+          { service: "services/notes", passed: 3, applies: 3, checks: [] },
+        ];
+        return { services: req.service ? all.filter((c) => c.service === req.service) : all };
       },
     });
     router.service(DeployService, { listDeployments: () => ({}) });
@@ -120,5 +140,25 @@ describe("the teams' on-call", () => {
     fireEvent.click(dialog.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(w.oncall.growth).toBe("growth-primary"));
     await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+  });
+});
+
+describe("the golden path", () => {
+  it("shows a service's checks, and what does not apply", async () => {
+    renderWithApi(<GoldenPath id="payments" />, forge(world()));
+    expect(await screen.findByText("4 of 4")).toBeTruthy();
+    const checks = within(screen.getByRole("list", { name: "Golden-path checks" }));
+    expect(checks.getByText(/CI pipeline/).textContent).toContain("does not apply");
+    expect(checks.getByText(/SLO defined/).textContent).toContain("passes");
+    expect(checks.getByText("availability target 99.95%")).toBeTruthy();
+  });
+
+  it("lets the Catalog keep only the services off the path", async () => {
+    renderWithApi(<Catalog />, forge(world()));
+    await screen.findByRole("link", { name: "payments" });
+    fireEvent.change(screen.getByLabelText("Status"), { target: { value: "offpath" } });
+    await waitFor(() => expect(screen.queryByRole("link", { name: "payments" })).toBeNull());
+    expect(screen.getByRole("link", { name: "ledger" })).toBeTruthy();
+    expect(screen.queryByRole("link", { name: "notes" })).toBeNull();
   });
 });

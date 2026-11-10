@@ -118,6 +118,10 @@ the others. The server only serves the pages and
   (`TeamService.UpdateTeam`); the home page tells an admin about a team
   without one. A service's tier and SLO target show in the Catalog (with a
   Tier filter) and on its page, and its team changes them in Settings.
+  A service's page has a golden-path card: how many of its checks pass (CI,
+  SLO, tracing, runbook, on-call; `ServiceCatalogService.ListServiceChecks`)
+  and what to do about each missing one. The Catalog's status filter "Off the
+  golden path" keeps the services that miss one (`?status=offpath`).
 - **Clusters** (`/clusters`, admins only): the cluster Forge runs on
   (`ClusterService`) with its status and how much CPU, memory and disk is in
   use; `/clusters/<name>` adds the pods, every node with its condition, and

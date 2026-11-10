@@ -1,9 +1,9 @@
 import { create } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
 import { describe, expect, it } from "vitest";
-import { ServiceSchema } from "@/gen/forge/v1/catalog_pb";
+import { ServiceChecksSchema, ServiceSchema } from "@/gen/forge/v1/catalog_pb";
 import { Deployment_Health, Deployment_SyncStatus, DeploymentSchema } from "@/gen/forge/v1/deploy_pb";
-import { catalogRows, filterRows, teamsOf, tierStatus } from "./catalog";
+import { catalogRows, filterRows, offGoldenPath, teamsOf, tierStatus } from "./catalog";
 
 const NOW = new Date(2026, 10, 9, 15, 0, 0);
 const ago = (minutes: number) => timestampFromDate(new Date(NOW.getTime() - minutes * 60_000));
@@ -69,6 +69,17 @@ describe("the catalog's rows", () => {
     expect(filterRows(rows, { ...all, tier: "0" }).map((r) => r.id)).toEqual(["search", "web", "idle"]);
     expect(tierStatus(1)).toEqual({ tone: "danger", word: "Critical" });
     expect(tierStatus(0).word).toBe("Not set");
+  });
+
+  it("filters the services off the golden path", () => {
+    const off = offGoldenPath([
+      create(ServiceChecksSchema, { service: "services/ledger", passed: 5, applies: 5 }),
+      create(ServiceChecksSchema, { service: "services/web", passed: 2, applies: 5 }),
+      create(ServiceChecksSchema, { service: "services/idle", passed: 3, applies: 3 }),
+    ]);
+    expect([...off]).toEqual(["web"]);
+    const all = { query: "", team: "all", status: "offpath" as const, offPath: off };
+    expect(filterRows(rows, all).map((r) => r.id)).toEqual(["web"]);
   });
 
   it("lists the owning teams once each", () => {

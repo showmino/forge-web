@@ -107,6 +107,12 @@ A service's **tier** (critical, high or medium) and **SLO target** (such as
 99.9%) show in the Catalog and on its page; its team changes them in
 Settings. `forge service update <name> --tier 1 --slo 99.95%`
 
+A service's page shows its **golden path**: a CI pipeline, an SLO target,
+tracing, a runbook (`docs/runbook.md`) and an on-call rotation for its team,
+with what to do about each one it misses. In the Catalog, the status
+**Off the golden path** lists the services that miss one.
+`forge service checks [name] --missing`
+
 ## Audit log
 
 `/audit`: every action taken through Forge, from the CLI, the dashboard or CI:
