@@ -126,6 +126,13 @@ the others. The server only serves the pages and
   then every rule Forge checks (`PolicyService.ListRules`), by kind. An admin
   switches a switchable rule between enforce, warn and off
   (`UpdateRule`); the rules that guard Forge are listed as always enforced.
+- **Adoption** (`/adoption`): the last 30 days in four numbers (active
+  people, deployments against the 30 before, the self-service share of
+  people's changes, resources applied; `AuditService.GetAdoption`), "Where
+  adoption is stuck" (teams with no service, failing services, services off
+  the golden path, teams without on-call, resources not ready;
+  `lib/adoption.ts`), and the last 12 weeks as three small bar charts with a
+  table view.
 - **Clusters** (`/clusters`, admins only): the cluster Forge runs on
   (`ClusterService`) with its status and how much CPU, memory and disk is in
   use; `/clusters/<name>` adds the pods, every node with its condition, and

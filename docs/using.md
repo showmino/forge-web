@@ -103,6 +103,15 @@ audit log) or off; the others are always enforced. The production runs waiting
 for your team are at the top.
 `forge policy list`, `forge policy set <rule> --mode warn`
 
+## Adoption
+
+`/adoption`: whether Forge is used. The last 30 days: the people who changed
+something, the deployments (against the 30 days before), the share of
+people's changes made without an admin, and the resources applied. Then what
+is stuck (teams with no service, failing services, services off the golden
+path, teams nobody pages, resources not ready), and the last 12 weeks.
+`forge audit adoption --weekly`
+
 ## Ownership
 
 `/ownership`: which GitHub team owns which service, how many members each
