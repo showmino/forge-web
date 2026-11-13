@@ -72,6 +72,8 @@ type World = {
   noRepo?: boolean;
   // The service runs a published chart: its deployments show the chart.
   chart?: boolean;
+  // Production is autoscaled (KEDA sets its pod count).
+  autoscaled?: boolean;
 };
 
 function world(over: Partial<World> = {}): World {
@@ -223,8 +225,20 @@ function forge(w: World) {
             deployTime: ago(12),
             version: w.versions ? "v0.3.1-rc.2" : "",
             argoUrl: "https://argocd.example.com/applications/argocd/payments-staging",
+            // As the API: a chart's pods are the chart's, and it says 0.
+            replicas: w.chart ? 0 : 1,
+            restartTime: ago(30),
           },
-          { name: "deployments/payments/production", service: "services/payments", env: "production", health: w.production, commit: w.production === Deployment_Health.MISSING ? "" : COMMIT, argoUrl: "javascript:alert(1)" },
+          {
+            name: "deployments/payments/production",
+            service: "services/payments",
+            env: "production",
+            health: w.production,
+            commit: w.production === Deployment_Health.MISSING ? "" : COMMIT,
+            argoUrl: "javascript:alert(1)",
+            replicas: w.production === Deployment_Health.MISSING ? 0 : 2,
+            autoscaled: !!w.autoscaled,
+          },
         ],
       }),
       startDeploy: (req) => {
@@ -251,6 +265,14 @@ function forge(w: World) {
             { deployCommit: "c1", kind: "promote", commit: "9d310f0aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", actor: "bo@example.com", time: ago(3000) },
           ].slice(0, w.history),
         };
+      },
+      restartDeployment: (req) => {
+        record("restart", req);
+        return { operation: op("op_dddddddddddd", "restart", req.name) };
+      },
+      scaleDeployment: (req) => {
+        record("scale", req);
+        return { operation: op("op_eeeeeeeeeeee", "scale", req.name), previousReplicas: 1 };
       },
       rollbackDeploy: (req) => {
         record("rollback", req);
@@ -508,6 +530,67 @@ describe("who may act", () => {
     expect(screen.getByTitle("Same action from the terminal").textContent).toContain("forge service get payments");
     // Production was never deployed: there is nothing to roll back there.
     expect(screen.queryByRole("button", { name: "Roll back production" })).toBeNull();
+  });
+});
+
+describe("restart and scale", () => {
+  it("restarts an environment from the Actions tab and shows the work", async () => {
+    const w = world();
+    await openService(w);
+    click(await screen.findByRole("tab", { name: "Actions" }));
+    const actions = within(screen.getByRole("region", { name: "Actions" }));
+    expect(actions.getByText("1 pod")).toBeTruthy();
+    expect(actions.getByText(/Restarted 30 min/)).toBeTruthy();
+    // Production never ran: only staging has pods to restart.
+    expect(actions.getAllByRole("button", { name: "Restart" })).toHaveLength(1);
+
+    click(actions.getByRole("button", { name: "Restart" }));
+    expect(dialog().getByRole("heading", { name: "Restart payments in staging?" })).toBeTruthy();
+    expect(dialog().getByText(/this is not a deploy/)).toBeTruthy();
+    click(dialog().getByRole("button", { name: "Restart staging" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(w.calls.restart).toMatchObject([{ name: "deployments/payments/staging" }]);
+    expect(await screen.findByRole("region", { name: "Operation op_dddddddddddd" })).toBeTruthy();
+  });
+
+  it("scales within forge.yaml's limits and says how long it lasts", async () => {
+    const w = world({ production: Deployment_Health.HEALTHY });
+    await openService(w);
+    click(await screen.findByRole("tab", { name: "Actions" }));
+    click(within(screen.getByRole("region", { name: "Actions" })).getAllByRole("button", { name: "Scale" })[1]);
+    expect(dialog().getByRole("heading", { name: "Scale payments in production?" })).toBeTruthy();
+    expect(dialog().getByText(/set it there to keep the count/)).toBeTruthy();
+    const pods = dialog().getByLabelText("Pods") as HTMLInputElement;
+    expect(pods.value).toBe("2");
+    // The count it runs already is no change.
+    expect((dialog().getByRole("button", { name: "Scale to 2 pods" }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(pods, { target: { value: "11" } });
+    expect(dialog().getByText("A whole number from 1 to 10")).toBeTruthy();
+    fireEvent.change(pods, { target: { value: "4" } });
+    click(dialog().getByRole("button", { name: "Scale to 4 pods" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(w.calls.scale).toMatchObject([{ name: "deployments/payments/production", replicas: 4 }]);
+  });
+
+  it("offers no scale where KEDA sets the count, and no tab for a chart or a reader", async () => {
+    await openService(world({ production: Deployment_Health.HEALTHY, autoscaled: true }));
+    click(await screen.findByRole("tab", { name: "Actions" }));
+    const actions = within(screen.getByRole("region", { name: "Actions" }));
+    expect(actions.getByText("autoscaled")).toBeTruthy();
+    expect(actions.getAllByRole("button", { name: "Scale" })).toHaveLength(1);
+    expect(actions.getAllByRole("button", { name: "Restart" })).toHaveLength(2);
+    cleanup();
+
+    const reader = world({ writer: false });
+    await openService(reader);
+    await permissionsAnswered(reader, "services/payments");
+    expect(screen.queryByRole("tab", { name: "Actions" })).toBeNull();
+    cleanup();
+
+    const chart = world({ chart: true, noRepo: true });
+    await openService(chart);
+    await permissionsAnswered(chart, "services/payments");
+    expect(screen.queryByRole("tab", { name: "Actions" })).toBeNull();
   });
 });
 

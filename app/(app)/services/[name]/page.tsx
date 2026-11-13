@@ -22,7 +22,10 @@ import {
   PreviewDialog,
   PromoteDialog,
   RemoveDeploymentDialog,
+  RestartDialog,
   RollbackDialog,
+  ScaleDialog,
+  pods,
 } from "@/components/service-actions";
 import { ServiceSettings } from "@/components/service-settings";
 import { Addr, Button, Icon, NameLink, TextLink } from "@/components/ui/button";
@@ -44,10 +47,10 @@ import { approvalStatus, auditStatus, deploymentStatus, environmentStatus } from
 type Open =
   | { kind: "deploy" | "promote" | "preview" | "delete" | "address" }
   | { kind: "rollback"; env: "staging" | "production" }
-  | { kind: "remove"; env: "staging" | "production" }
+  | { kind: "remove" | "restart" | "scale"; env: "staging" | "production" }
   | { kind: "extend" | "destroy"; environment: Environment };
 
-type Tab = "overview" | "deploys" | "approvals" | "resources" | "deps" | "docs" | "settings";
+type Tab = "overview" | "deploys" | "approvals" | "resources" | "deps" | "docs" | "actions" | "settings";
 
 
 // One service: what runs in staging and production, its previews, its recent
@@ -216,6 +219,10 @@ function ServiceView({ id }: { id: string }) {
   // The deploy environments it has; one made before the choice has both.
   const envs = serviceEnvs(s);
   const bothEnvs = envs.length === 2;
+  // Restart and scale: the environments that run pods of Forge's (a chart's
+  // are the chart's), for the service's team.
+  const runsPods = (env: string) => deployed(env) && (deployment(env)?.replicas ?? 0) > 0;
+  const showActions = !infraOnly && !runsChart && (can("deploy.restart") || can("deploy.scale")) && envs.some(runsPods);
 
   return (
     <>
@@ -319,6 +326,7 @@ function ServiceView({ id }: { id: string }) {
             ),
           },
           ...(hasDocs ? [{ value: "docs" as const, label: "Docs" }] : []),
+          ...(showActions ? [{ value: "actions" as const, label: "Actions" }] : []),
           ...(canUpdate ? [{ value: "settings" as const, label: "Settings" }] : []),
         ]}
       >
@@ -328,6 +336,15 @@ function ServiceView({ id }: { id: string }) {
           <ResourcesTab id={id} canApply={(env) => can(env === "production" ? "resource.apply.production" : "resource.apply")} onStarted={onStarted} />
         ) : null}
         {tab === "deps" ? <Dependencies service={s} /> : null}
+        {tab === "actions" && showActions ? (
+          <RunActions
+            id={id}
+            deployments={envs.filter(runsPods).map((env) => deployment(env)!)}
+            canRestart={can("deploy.restart")}
+            canScale={can("deploy.scale")}
+            onOpen={setOpen}
+          />
+        ) : null}
         {tab === "docs" && hasDocs ? (
           <>
             <DocsLink id={id} path={docPath}>
@@ -448,6 +465,12 @@ function ServiceView({ id }: { id: string }) {
       ) : null}
       {open?.kind === "deploy" ? <DeployDialog id={id} env={envs[0]} noRepo={noRepo} chart={runsChart} onClose={close} onStarted={onStarted} /> : null}
       {open?.kind === "remove" ? <RemoveDeploymentDialog id={id} env={open.env} onClose={close} onStarted={onStarted} /> : null}
+      {open?.kind === "restart" && deployment(open.env) ? (
+        <RestartDialog id={id} deployment={deployment(open.env)!} onClose={close} onStarted={onStarted} />
+      ) : null}
+      {open?.kind === "scale" && deployment(open.env) ? (
+        <ScaleDialog id={id} deployment={deployment(open.env)!} onClose={close} onStarted={onStarted} />
+      ) : null}
       {open?.kind === "promote" ? (
         <PromoteDialog id={id} staging={deployment("staging")} onClose={close} onStarted={onStarted} />
       ) : null}
@@ -456,6 +479,58 @@ function ServiceView({ id }: { id: string }) {
       {open?.kind === "extend" ? <ExtendDialog environment={open.environment} onClose={close} onStarted={onStarted} /> : null}
       {open?.kind === "destroy" ? <DestroyDialog environment={open.environment} onClose={close} onStarted={onStarted} /> : null}
     </>
+  );
+}
+
+// RunActions restarts or scales what runs in each environment, without a
+// deploy. Both last until the next deploy.
+function RunActions({
+  id,
+  deployments,
+  canRestart,
+  canScale,
+  onOpen,
+}: {
+  id: string;
+  deployments: Deployment[];
+  canRestart: boolean;
+  canScale: boolean;
+  onOpen: (o: Open) => void;
+}) {
+  return (
+    <div className="flex max-w-[720px] flex-col gap-3">
+      <Panel>
+        <section aria-label="Actions" className="contents">
+          {deployments.map((d, i) => {
+            const env = d.env as "staging" | "production";
+            return (
+              <div key={env} className={`flex flex-wrap items-center gap-x-6 gap-y-3 px-4 py-4 ${i ? "border-t border-line" : ""}`}>
+                <div className="min-w-0 flex-[1_1_280px]">
+                  <div className="flex items-center gap-2">
+                    <EnvTag kind={env} />
+                    <b className="font-semibold tabular-nums">{d.autoscaled ? `${pods(d.replicas)} or more` : pods(d.replicas)}</b>
+                    {d.autoscaled ? <Chip>autoscaled</Chip> : null}
+                  </div>
+                  <p className="mt-1 text-[13.5px] text-fg-2">
+                    {d.restartTime ? (
+                      <span title={exact(d.restartTime)}>Restarted {when(d.restartTime)}. </span>
+                    ) : null}
+                    {d.autoscaled
+                      ? "KEDA sets the count from CPU; change run.autoscaling in forge.yaml to change its range."
+                      : "A new count lasts until the next deploy, promote or rollback."}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  {canRestart ? <Button onClick={() => onOpen({ kind: "restart", env })}>Restart</Button> : null}
+                  {canScale && !d.autoscaled ? <Button onClick={() => onOpen({ kind: "scale", env })}>Scale</Button> : null}
+                </div>
+              </div>
+            );
+          })}
+        </section>
+      </Panel>
+      <Cli command={`forge service restart ${id} --env ${deployments[0]?.env ?? "staging"}`} />
+    </div>
   );
 }
 

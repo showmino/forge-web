@@ -339,6 +339,97 @@ export function RemoveDeploymentDialog({ id, env, onClose, onStarted }: Common &
   );
 }
 
+// RestartDialog restarts the pods of one environment (RestartDeployment):
+// the same version, new pods, one at a time.
+export function RestartDialog({ id, deployment, onClose, onStarted }: Common & { deployment: Deployment }) {
+  const api = useApi();
+  const toast = useToast();
+  const env = deployment.env;
+  const action = useAction(
+    () => api.deploys.restartDeployment({ name: deployment.name }),
+    (res) => {
+      toast(`Restarting ${id} in ${env}`, `forge service restart ${id} --env ${env}`);
+      onStarted(res.operation?.name);
+    },
+  );
+  return (
+    <Dialog title={`Restart ${id} in ${env}?`} onClose={onClose}>
+      <form onSubmit={action.run} className="flex flex-col gap-4">
+        <p>
+          Argo CD replaces its {pods(deployment.replicas)} one at a time, each new pod ready before an old one stops. It keeps running{" "}
+          {deployment.version || shortCommit(deployment.commit) || deployment.image}: this is not a deploy, and a rollback does not list it.
+        </p>
+        {action.error ? <ErrorNote error={action.error} /> : null}
+        <DialogActions>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button kind="primary" type="submit" disabled={action.busy}>
+            Restart {env}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
+  );
+}
+
+export const MAX_REPLICAS = 10;
+
+// ScaleDialog sets how many pods one environment runs until its next deploy
+// (ScaleDeployment).
+export function ScaleDialog({ id, deployment, onClose, onStarted }: Common & { deployment: Deployment }) {
+  const api = useApi();
+  const toast = useToast();
+  const env = deployment.env;
+  const [count, setCount] = useState(String(deployment.replicas || 1));
+  const n = Number(count);
+  const valid = Number.isInteger(n) && n >= 1 && n <= MAX_REPLICAS;
+  const action = useAction(
+    () => api.deploys.scaleDeployment({ name: deployment.name, replicas: n }),
+    (res) => {
+      toast(`Scaling ${id} in ${env} to ${pods(n)}`, `forge service scale ${id} --env ${env} --replicas ${n}`);
+      onStarted(res.operation?.name);
+    },
+  );
+  function submit(e: FormEvent) {
+    e.preventDefault();
+    if (valid) action.run();
+  }
+  return (
+    <Dialog title={`Scale ${id} in ${env}?`} onClose={onClose}>
+      <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+        <p>
+          It runs {pods(deployment.replicas)} now. The new count lasts until the next deploy, promote or rollback of {env}, which runs{" "}
+          {env === "production" ? "forge.yaml's run.replicas again: set it there to keep the count" : "1 pod again"}.
+        </p>
+        <Field id="scale-pods" label="Pods" hint={`1 to ${MAX_REPLICAS}`} error={valid ? undefined : `A whole number from 1 to ${MAX_REPLICAS}`}>
+          <input
+            id="scale-pods"
+            type="number"
+            min={1}
+            max={MAX_REPLICAS}
+            inputMode="numeric"
+            aria-invalid={!valid}
+            aria-describedby="scale-pods-note"
+            value={count}
+            onChange={(e) => setCount(e.target.value)}
+            className={`${inputClass} w-28 tabular-nums`}
+          />
+        </Field>
+        {action.error ? <ErrorNote error={action.error} /> : null}
+        <DialogActions>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button kind="primary" type="submit" disabled={action.busy || !valid || n === deployment.replicas}>
+            Scale to {valid ? pods(n) : "…"}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
+  );
+}
+
+export function pods(n: number) {
+  return n === 1 ? "1 pod" : `${n} pods`;
+}
+
 const PREVIEW_NAME = /^[a-z]([a-z0-9-]{0,38}[a-z0-9])?$/;
 
 // PreviewDialog creates a preview of the service `id`, or of one picked from
