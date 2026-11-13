@@ -16,7 +16,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file forge/v1/deploy.proto.
  */
 export const file_forge_v1_deploy: GenFile = /*@__PURE__*/
-  fileDesc("ChVmb3JnZS92MS9kZXBsb3kucHJvdG8SCGZvcmdlLnYxIowFCgpEZXBsb3ltZW50EgwKBG5hbWUYASABKAkSDwoHc2VydmljZRgCIAEoCRILCgNlbnYYAyABKAkSDQoFaW1hZ2UYBCABKAkSCwoDcmVmGAUgASgJEg4KBmNvbW1pdBgGIAEoCRILCgN1cmwYByABKAkSLQoEc3luYxgIIAEoDjIfLmZvcmdlLnYxLkRlcGxveW1lbnQuU3luY1N0YXR1cxIrCgZoZWFsdGgYCSABKA4yGy5mb3JnZS52MS5EZXBsb3ltZW50LkhlYWx0aBIPCgdtZXNzYWdlGAogASgJEhUKDWRlcGxveV9jb21taXQYCyABKAkSEwoLZGVwbG95ZWRfYnkYDCABKAkSLwoLZGVwbG95X3RpbWUYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCW9wZXJhdGlvbhgOIAEoCRIPCgd2ZXJzaW9uGA8gASgJEhAKCGFyZ29fdXJsGBAgASgJIncKClN5bmNTdGF0dXMSGwoXU1lOQ19TVEFUVVNfVU5TUEVDSUZJRUQQABIWChJTWU5DX1NUQVRVU19TWU5DRUQQARIbChdTWU5DX1NUQVRVU19PVVRfT0ZfU1lOQxACEhcKE1NZTkNfU1RBVFVTX1VOS05PV04QAyKfAQoGSGVhbHRoEhYKEkhFQUxUSF9VTlNQRUNJRklFRBAAEhIKDkhFQUxUSF9IRUFMVEhZEAESFgoSSEVBTFRIX1BST0dSRVNTSU5HEAISEwoPSEVBTFRIX0RFR1JBREVEEAMSEgoOSEVBTFRIX01JU1NJTkcQBBIUChBIRUFMVEhfU1VTUEVOREVEEAUSEgoOSEVBTFRIX1VOS05PV04QBiK8AQoMRGVwbG95UmVjb3JkEhUKDWRlcGxveV9jb21taXQYASABKAkSDAoEa2luZBgCIAEoCRINCgVpbWFnZRgDIAEoCRILCgNyZWYYBCABKAkSDgoGY29tbWl0GAUgASgJEg0KBWFjdG9yGAYgASgJEigKBHRpbWUYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCW9wZXJhdGlvbhgIIAEoCRIPCgd2ZXJzaW9uGAkgASgJIp4BChJTdGFydERlcGxveVJlcXVlc3QSDwoHc2VydmljZRgBIAEoCRILCgNlbnYYAiABKAkSCwoDcmVmGAMgASgJEhIKCnJlcXVlc3RfaWQYBCABKAkSFQoNdmFsaWRhdGVfb25seRgFIAEoCBIcCgRidW1wGAYgASgOMg4uZm9yZ2UudjEuQnVtcBIUCgxjaGFydF92YWx1ZXMYByABKAkiZwoTU3RhcnREZXBsb3lSZXNwb25zZRImCglvcGVyYXRpb24YASABKAsyEy5mb3JnZS52MS5PcGVyYXRpb24SKAoKZGVwbG95bWVudBgCIAEoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQiJAoUR2V0RGVwbG95bWVudFJlcXVlc3QSDAoEbmFtZRgBIAEoCSJBChVHZXREZXBsb3ltZW50UmVzcG9uc2USKAoKZGVwbG95bWVudBgBIAEoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQiNgoWTGlzdERlcGxveW1lbnRzUmVxdWVzdBIPCgdzZXJ2aWNlGAEgASgJEgsKA2VudhgCIAEoCSJEChdMaXN0RGVwbG95bWVudHNSZXNwb25zZRIpCgtkZXBsb3ltZW50cxgBIAMoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQiNwoYTGlzdERlcGxveUhpc3RvcnlSZXF1ZXN0EgwKBG5hbWUYASABKAkSDQoFbGltaXQYAiABKAUiRAoZTGlzdERlcGxveUhpc3RvcnlSZXNwb25zZRInCgdyZWNvcmRzGAEgAygLMhYuZm9yZ2UudjEuRGVwbG95UmVjb3JkIkgKFVJvbGxiYWNrRGVwbG95UmVxdWVzdBIMCgRuYW1lGAEgASgJEgoKAnRvGAIgASgJEhUKDXZhbGlkYXRlX29ubHkYAyABKAgiagoWUm9sbGJhY2tEZXBsb3lSZXNwb25zZRImCglvcGVyYXRpb24YASABKAsyEy5mb3JnZS52MS5PcGVyYXRpb24SKAoKZGVwbG95bWVudBgCIAEoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQidgoUUHJvbW90ZURlcGxveVJlcXVlc3QSDwoHc2VydmljZRgBIAEoCRIMCgRmcm9tGAIgASgJEgoKAnRvGAMgASgJEhUKDXZhbGlkYXRlX29ubHkYBCABKAgSHAoEYnVtcBgFIAEoDjIOLmZvcmdlLnYxLkJ1bXAiaQoVUHJvbW90ZURlcGxveVJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIoCgpkZXBsb3ltZW50GAIgASgLMhQuZm9yZ2UudjEuRGVwbG95bWVudCI+ChdEZWxldGVEZXBsb3ltZW50UmVxdWVzdBIMCgRuYW1lGAEgASgJEhUKDXZhbGlkYXRlX29ubHkYAiABKAgibAoYRGVsZXRlRGVwbG95bWVudFJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIoCgpkZXBsb3ltZW50GAIgASgLMhQuZm9yZ2UudjEuRGVwbG95bWVudCKFAQoRU2V0QWRkcmVzc1JlcXVlc3QSDwoHc2VydmljZRgBIAEoCRIMCgRob3N0GAIgASgJEg4KBmRvbWFpbhgDIAEoCRINCgVjbGVhchgEIAEoCBINCgVjbGFpbRgFIAMoCRIVCg12YWxpZGF0ZV9vbmx5GAYgASgIEgwKBGV0YWcYByABKAkiZQoSU2V0QWRkcmVzc1Jlc3BvbnNlEiIKB3NlcnZpY2UYASABKAsyES5mb3JnZS52MS5TZXJ2aWNlEisKCWFkZHJlc3NlcxgCIAMoCzIYLmZvcmdlLnYxLlBsYW5uZWRBZGRyZXNzIm0KDlBsYW5uZWRBZGRyZXNzEgsKA2VudhgBIAEoCRILCgN1cmwYAiABKAkSDgoGcHVibGljGAMgASgIEg4KBmluX3VzZRgEIAEoCBITCgtjdXJyZW50X3VybBgFIAEoCRIMCgRob3N0GAYgASgJIhQKEkxpc3REb21haW5zUmVxdWVzdCJXChNMaXN0RG9tYWluc1Jlc3BvbnNlEicKB2RvbWFpbnMYASADKAsyFi5mb3JnZS52MS5QdWJsaWNEb21haW4SFwoPaW50ZXJuYWxfZG9tYWluGAIgASgJIjAKDFB1YmxpY0RvbWFpbhIMCgRuYW1lGAEgASgJEhIKCmlzX2RlZmF1bHQYAiABKAgqTAoEQnVtcBIUChBCVU1QX1VOU1BFQ0lGSUVEEAASDgoKQlVNUF9QQVRDSBABEg4KCkJVTVBfTUlOT1IQAhIOCgpCVU1QX01BSk9SEAMymAYKDURlcGxveVNlcnZpY2USTAoLU3RhcnREZXBsb3kSHC5mb3JnZS52MS5TdGFydERlcGxveVJlcXVlc3QaHS5mb3JnZS52MS5TdGFydERlcGxveVJlc3BvbnNlIgASVQoNR2V0RGVwbG95bWVudBIeLmZvcmdlLnYxLkdldERlcGxveW1lbnRSZXF1ZXN0Gh8uZm9yZ2UudjEuR2V0RGVwbG95bWVudFJlc3BvbnNlIgOQAgESWwoPTGlzdERlcGxveW1lbnRzEiAuZm9yZ2UudjEuTGlzdERlcGxveW1lbnRzUmVxdWVzdBohLmZvcmdlLnYxLkxpc3REZXBsb3ltZW50c1Jlc3BvbnNlIgOQAgESYQoRTGlzdERlcGxveUhpc3RvcnkSIi5mb3JnZS52MS5MaXN0RGVwbG95SGlzdG9yeVJlcXVlc3QaIy5mb3JnZS52MS5MaXN0RGVwbG95SGlzdG9yeVJlc3BvbnNlIgOQAgESVQoOUm9sbGJhY2tEZXBsb3kSHy5mb3JnZS52MS5Sb2xsYmFja0RlcGxveVJlcXVlc3QaIC5mb3JnZS52MS5Sb2xsYmFja0RlcGxveVJlc3BvbnNlIgASUgoNUHJvbW90ZURlcGxveRIeLmZvcmdlLnYxLlByb21vdGVEZXBsb3lSZXF1ZXN0Gh8uZm9yZ2UudjEuUHJvbW90ZURlcGxveVJlc3BvbnNlIgASWwoQRGVsZXRlRGVwbG95bWVudBIhLmZvcmdlLnYxLkRlbGV0ZURlcGxveW1lbnRSZXF1ZXN0GiIuZm9yZ2UudjEuRGVsZXRlRGVwbG95bWVudFJlc3BvbnNlIgASSQoKU2V0QWRkcmVzcxIbLmZvcmdlLnYxLlNldEFkZHJlc3NSZXF1ZXN0GhwuZm9yZ2UudjEuU2V0QWRkcmVzc1Jlc3BvbnNlIgASTwoLTGlzdERvbWFpbnMSHC5mb3JnZS52MS5MaXN0RG9tYWluc1JlcXVlc3QaHS5mb3JnZS52MS5MaXN0RG9tYWluc1Jlc3BvbnNlIgOQAgFiBnByb3RvMw", [file_forge_v1_catalog, file_forge_v1_operation, file_google_protobuf_timestamp]);
+  fileDesc("ChVmb3JnZS92MS9kZXBsb3kucHJvdG8SCGZvcmdlLnYxIuQFCgpEZXBsb3ltZW50EgwKBG5hbWUYASABKAkSDwoHc2VydmljZRgCIAEoCRILCgNlbnYYAyABKAkSDQoFaW1hZ2UYBCABKAkSCwoDcmVmGAUgASgJEg4KBmNvbW1pdBgGIAEoCRILCgN1cmwYByABKAkSLQoEc3luYxgIIAEoDjIfLmZvcmdlLnYxLkRlcGxveW1lbnQuU3luY1N0YXR1cxIrCgZoZWFsdGgYCSABKA4yGy5mb3JnZS52MS5EZXBsb3ltZW50LkhlYWx0aBIPCgdtZXNzYWdlGAogASgJEhUKDWRlcGxveV9jb21taXQYCyABKAkSEwoLZGVwbG95ZWRfYnkYDCABKAkSLwoLZGVwbG95X3RpbWUYDSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEhEKCW9wZXJhdGlvbhgOIAEoCRIPCgd2ZXJzaW9uGA8gASgJEhAKCGFyZ29fdXJsGBAgASgJEhAKCHJlcGxpY2FzGBEgASgFEhIKCmF1dG9zY2FsZWQYEiABKAgSMAoMcmVzdGFydF90aW1lGBMgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcCJ3CgpTeW5jU3RhdHVzEhsKF1NZTkNfU1RBVFVTX1VOU1BFQ0lGSUVEEAASFgoSU1lOQ19TVEFUVVNfU1lOQ0VEEAESGwoXU1lOQ19TVEFUVVNfT1VUX09GX1NZTkMQAhIXChNTWU5DX1NUQVRVU19VTktOT1dOEAMinwEKBkhlYWx0aBIWChJIRUFMVEhfVU5TUEVDSUZJRUQQABISCg5IRUFMVEhfSEVBTFRIWRABEhYKEkhFQUxUSF9QUk9HUkVTU0lORxACEhMKD0hFQUxUSF9ERUdSQURFRBADEhIKDkhFQUxUSF9NSVNTSU5HEAQSFAoQSEVBTFRIX1NVU1BFTkRFRBAFEhIKDkhFQUxUSF9VTktOT1dOEAYivAEKDERlcGxveVJlY29yZBIVCg1kZXBsb3lfY29tbWl0GAEgASgJEgwKBGtpbmQYAiABKAkSDQoFaW1hZ2UYAyABKAkSCwoDcmVmGAQgASgJEg4KBmNvbW1pdBgFIAEoCRINCgVhY3RvchgGIAEoCRIoCgR0aW1lGAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIRCglvcGVyYXRpb24YCCABKAkSDwoHdmVyc2lvbhgJIAEoCSKeAQoSU3RhcnREZXBsb3lSZXF1ZXN0Eg8KB3NlcnZpY2UYASABKAkSCwoDZW52GAIgASgJEgsKA3JlZhgDIAEoCRISCgpyZXF1ZXN0X2lkGAQgASgJEhUKDXZhbGlkYXRlX29ubHkYBSABKAgSHAoEYnVtcBgGIAEoDjIOLmZvcmdlLnYxLkJ1bXASFAoMY2hhcnRfdmFsdWVzGAcgASgJImcKE1N0YXJ0RGVwbG95UmVzcG9uc2USJgoJb3BlcmF0aW9uGAEgASgLMhMuZm9yZ2UudjEuT3BlcmF0aW9uEigKCmRlcGxveW1lbnQYAiABKAsyFC5mb3JnZS52MS5EZXBsb3ltZW50IiQKFEdldERlcGxveW1lbnRSZXF1ZXN0EgwKBG5hbWUYASABKAkiQQoVR2V0RGVwbG95bWVudFJlc3BvbnNlEigKCmRlcGxveW1lbnQYASABKAsyFC5mb3JnZS52MS5EZXBsb3ltZW50IjYKFkxpc3REZXBsb3ltZW50c1JlcXVlc3QSDwoHc2VydmljZRgBIAEoCRILCgNlbnYYAiABKAkiRAoXTGlzdERlcGxveW1lbnRzUmVzcG9uc2USKQoLZGVwbG95bWVudHMYASADKAsyFC5mb3JnZS52MS5EZXBsb3ltZW50IjcKGExpc3REZXBsb3lIaXN0b3J5UmVxdWVzdBIMCgRuYW1lGAEgASgJEg0KBWxpbWl0GAIgASgFIkQKGUxpc3REZXBsb3lIaXN0b3J5UmVzcG9uc2USJwoHcmVjb3JkcxgBIAMoCzIWLmZvcmdlLnYxLkRlcGxveVJlY29yZCJIChVSb2xsYmFja0RlcGxveVJlcXVlc3QSDAoEbmFtZRgBIAEoCRIKCgJ0bxgCIAEoCRIVCg12YWxpZGF0ZV9vbmx5GAMgASgIImoKFlJvbGxiYWNrRGVwbG95UmVzcG9uc2USJgoJb3BlcmF0aW9uGAEgASgLMhMuZm9yZ2UudjEuT3BlcmF0aW9uEigKCmRlcGxveW1lbnQYAiABKAsyFC5mb3JnZS52MS5EZXBsb3ltZW50InYKFFByb21vdGVEZXBsb3lSZXF1ZXN0Eg8KB3NlcnZpY2UYASABKAkSDAoEZnJvbRgCIAEoCRIKCgJ0bxgDIAEoCRIVCg12YWxpZGF0ZV9vbmx5GAQgASgIEhwKBGJ1bXAYBSABKA4yDi5mb3JnZS52MS5CdW1wImkKFVByb21vdGVEZXBsb3lSZXNwb25zZRImCglvcGVyYXRpb24YASABKAsyEy5mb3JnZS52MS5PcGVyYXRpb24SKAoKZGVwbG95bWVudBgCIAEoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQiPgoXRGVsZXRlRGVwbG95bWVudFJlcXVlc3QSDAoEbmFtZRgBIAEoCRIVCg12YWxpZGF0ZV9vbmx5GAIgASgIImwKGERlbGV0ZURlcGxveW1lbnRSZXNwb25zZRImCglvcGVyYXRpb24YASABKAsyEy5mb3JnZS52MS5PcGVyYXRpb24SKAoKZGVwbG95bWVudBgCIAEoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQihQEKEVNldEFkZHJlc3NSZXF1ZXN0Eg8KB3NlcnZpY2UYASABKAkSDAoEaG9zdBgCIAEoCRIOCgZkb21haW4YAyABKAkSDQoFY2xlYXIYBCABKAgSDQoFY2xhaW0YBSADKAkSFQoNdmFsaWRhdGVfb25seRgGIAEoCBIMCgRldGFnGAcgASgJImUKElNldEFkZHJlc3NSZXNwb25zZRIiCgdzZXJ2aWNlGAEgASgLMhEuZm9yZ2UudjEuU2VydmljZRIrCglhZGRyZXNzZXMYAiADKAsyGC5mb3JnZS52MS5QbGFubmVkQWRkcmVzcyJtCg5QbGFubmVkQWRkcmVzcxILCgNlbnYYASABKAkSCwoDdXJsGAIgASgJEg4KBnB1YmxpYxgDIAEoCBIOCgZpbl91c2UYBCABKAgSEwoLY3VycmVudF91cmwYBSABKAkSDAoEaG9zdBgGIAEoCSIUChJMaXN0RG9tYWluc1JlcXVlc3QiVwoTTGlzdERvbWFpbnNSZXNwb25zZRInCgdkb21haW5zGAEgAygLMhYuZm9yZ2UudjEuUHVibGljRG9tYWluEhcKD2ludGVybmFsX2RvbWFpbhgCIAEoCSIwCgxQdWJsaWNEb21haW4SDAoEbmFtZRgBIAEoCRISCgppc19kZWZhdWx0GAIgASgIIj8KGFJlc3RhcnREZXBsb3ltZW50UmVxdWVzdBIMCgRuYW1lGAEgASgJEhUKDXZhbGlkYXRlX29ubHkYAiABKAgibQoZUmVzdGFydERlcGxveW1lbnRSZXNwb25zZRImCglvcGVyYXRpb24YASABKAsyEy5mb3JnZS52MS5PcGVyYXRpb24SKAoKZGVwbG95bWVudBgCIAEoCzIULmZvcmdlLnYxLkRlcGxveW1lbnQiTwoWU2NhbGVEZXBsb3ltZW50UmVxdWVzdBIMCgRuYW1lGAEgASgJEhAKCHJlcGxpY2FzGAIgASgFEhUKDXZhbGlkYXRlX29ubHkYAyABKAgihgEKF1NjYWxlRGVwbG95bWVudFJlc3BvbnNlEiYKCW9wZXJhdGlvbhgBIAEoCzITLmZvcmdlLnYxLk9wZXJhdGlvbhIoCgpkZXBsb3ltZW50GAIgASgLMhQuZm9yZ2UudjEuRGVwbG95bWVudBIZChFwcmV2aW91c19yZXBsaWNhcxgDIAEoBSpMCgRCdW1wEhQKEEJVTVBfVU5TUEVDSUZJRUQQABIOCgpCVU1QX1BBVENIEAESDgoKQlVNUF9NSU5PUhACEg4KCkJVTVBfTUFKT1IQAzLSBwoNRGVwbG95U2VydmljZRJMCgtTdGFydERlcGxveRIcLmZvcmdlLnYxLlN0YXJ0RGVwbG95UmVxdWVzdBodLmZvcmdlLnYxLlN0YXJ0RGVwbG95UmVzcG9uc2UiABJVCg1HZXREZXBsb3ltZW50Eh4uZm9yZ2UudjEuR2V0RGVwbG95bWVudFJlcXVlc3QaHy5mb3JnZS52MS5HZXREZXBsb3ltZW50UmVzcG9uc2UiA5ACARJbCg9MaXN0RGVwbG95bWVudHMSIC5mb3JnZS52MS5MaXN0RGVwbG95bWVudHNSZXF1ZXN0GiEuZm9yZ2UudjEuTGlzdERlcGxveW1lbnRzUmVzcG9uc2UiA5ACARJhChFMaXN0RGVwbG95SGlzdG9yeRIiLmZvcmdlLnYxLkxpc3REZXBsb3lIaXN0b3J5UmVxdWVzdBojLmZvcmdlLnYxLkxpc3REZXBsb3lIaXN0b3J5UmVzcG9uc2UiA5ACARJVCg5Sb2xsYmFja0RlcGxveRIfLmZvcmdlLnYxLlJvbGxiYWNrRGVwbG95UmVxdWVzdBogLmZvcmdlLnYxLlJvbGxiYWNrRGVwbG95UmVzcG9uc2UiABJSCg1Qcm9tb3RlRGVwbG95Eh4uZm9yZ2UudjEuUHJvbW90ZURlcGxveVJlcXVlc3QaHy5mb3JnZS52MS5Qcm9tb3RlRGVwbG95UmVzcG9uc2UiABJbChBEZWxldGVEZXBsb3ltZW50EiEuZm9yZ2UudjEuRGVsZXRlRGVwbG95bWVudFJlcXVlc3QaIi5mb3JnZS52MS5EZWxldGVEZXBsb3ltZW50UmVzcG9uc2UiABJeChFSZXN0YXJ0RGVwbG95bWVudBIiLmZvcmdlLnYxLlJlc3RhcnREZXBsb3ltZW50UmVxdWVzdBojLmZvcmdlLnYxLlJlc3RhcnREZXBsb3ltZW50UmVzcG9uc2UiABJYCg9TY2FsZURlcGxveW1lbnQSIC5mb3JnZS52MS5TY2FsZURlcGxveW1lbnRSZXF1ZXN0GiEuZm9yZ2UudjEuU2NhbGVEZXBsb3ltZW50UmVzcG9uc2UiABJJCgpTZXRBZGRyZXNzEhsuZm9yZ2UudjEuU2V0QWRkcmVzc1JlcXVlc3QaHC5mb3JnZS52MS5TZXRBZGRyZXNzUmVzcG9uc2UiABJPCgtMaXN0RG9tYWlucxIcLmZvcmdlLnYxLkxpc3REb21haW5zUmVxdWVzdBodLmZvcmdlLnYxLkxpc3REb21haW5zUmVzcG9uc2UiA5ACAWIGcHJvdG8z", [file_forge_v1_catalog, file_forge_v1_operation, file_google_protobuf_timestamp]);
 
 /**
  * Deployment is what runs for one service in one environment.
@@ -85,7 +85,8 @@ export type Deployment = Message<"forge.v1.Deployment"> & {
   message: string;
 
   /**
-   * The deploy repo commit that set this version.
+   * The deploy repo commit of what runs: the deploy's, or a later restart's
+   * or scale's.
    *
    * @generated from field: string deploy_commit = 11;
    */
@@ -124,6 +125,29 @@ export type Deployment = Message<"forge.v1.Deployment"> & {
    * @generated from field: string argo_url = 16;
    */
   argoUrl: string;
+
+  /**
+   * How many pods it runs (the least, when autoscaled); 0 for a service that
+   * runs a chart, whose chart decides.
+   *
+   * @generated from field: int32 replicas = 17;
+   */
+  replicas: number;
+
+  /**
+   * KEDA sets the pod count, between replicas and run.autoscaling.max.
+   *
+   * @generated from field: bool autoscaled = 18;
+   */
+  autoscaled: boolean;
+
+  /**
+   * When RestartDeployment last restarted its pods since the deploy; unset
+   * once a deploy, promote or rollback replaces them.
+   *
+   * @generated from field: google.protobuf.Timestamp restart_time = 19;
+   */
+  restartTime?: Timestamp | undefined;
 };
 
 /**
@@ -878,6 +902,112 @@ export const PublicDomainSchema: GenMessage<PublicDomain> = /*@__PURE__*/
   messageDesc(file_forge_v1_deploy, 21);
 
 /**
+ * @generated from message forge.v1.RestartDeploymentRequest
+ */
+export type RestartDeploymentRequest = Message<"forge.v1.RestartDeploymentRequest"> & {
+  /**
+   * "deployments/{service}/{env}".
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: bool validate_only = 2;
+   */
+  validateOnly: boolean;
+};
+
+/**
+ * Describes the message forge.v1.RestartDeploymentRequest.
+ * Use `create(RestartDeploymentRequestSchema)` to create a new message.
+ */
+export const RestartDeploymentRequestSchema: GenMessage<RestartDeploymentRequest> = /*@__PURE__*/
+  messageDesc(file_forge_v1_deploy, 22);
+
+/**
+ * @generated from message forge.v1.RestartDeploymentResponse
+ */
+export type RestartDeploymentResponse = Message<"forge.v1.RestartDeploymentResponse"> & {
+  /**
+   * @generated from field: forge.v1.Operation operation = 1;
+   */
+  operation?: Operation | undefined;
+
+  /**
+   * @generated from field: forge.v1.Deployment deployment = 2;
+   */
+  deployment?: Deployment | undefined;
+};
+
+/**
+ * Describes the message forge.v1.RestartDeploymentResponse.
+ * Use `create(RestartDeploymentResponseSchema)` to create a new message.
+ */
+export const RestartDeploymentResponseSchema: GenMessage<RestartDeploymentResponse> = /*@__PURE__*/
+  messageDesc(file_forge_v1_deploy, 23);
+
+/**
+ * @generated from message forge.v1.ScaleDeploymentRequest
+ */
+export type ScaleDeploymentRequest = Message<"forge.v1.ScaleDeploymentRequest"> & {
+  /**
+   * "deployments/{service}/{env}".
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * 1 to 10, the most forge.yaml's run.replicas may ask for.
+   *
+   * @generated from field: int32 replicas = 2;
+   */
+  replicas: number;
+
+  /**
+   * @generated from field: bool validate_only = 3;
+   */
+  validateOnly: boolean;
+};
+
+/**
+ * Describes the message forge.v1.ScaleDeploymentRequest.
+ * Use `create(ScaleDeploymentRequestSchema)` to create a new message.
+ */
+export const ScaleDeploymentRequestSchema: GenMessage<ScaleDeploymentRequest> = /*@__PURE__*/
+  messageDesc(file_forge_v1_deploy, 24);
+
+/**
+ * @generated from message forge.v1.ScaleDeploymentResponse
+ */
+export type ScaleDeploymentResponse = Message<"forge.v1.ScaleDeploymentResponse"> & {
+  /**
+   * @generated from field: forge.v1.Operation operation = 1;
+   */
+  operation?: Operation | undefined;
+
+  /**
+   * @generated from field: forge.v1.Deployment deployment = 2;
+   */
+  deployment?: Deployment | undefined;
+
+  /**
+   * How many pods it ran when the call was made.
+   *
+   * @generated from field: int32 previous_replicas = 3;
+   */
+  previousReplicas: number;
+};
+
+/**
+ * Describes the message forge.v1.ScaleDeploymentResponse.
+ * Use `create(ScaleDeploymentResponseSchema)` to create a new message.
+ */
+export const ScaleDeploymentResponseSchema: GenMessage<ScaleDeploymentResponse> = /*@__PURE__*/
+  messageDesc(file_forge_v1_deploy, 25);
+
+/**
  * Bump is the part of the version a final release raises.
  *
  * @generated from enum forge.v1.Bump
@@ -990,6 +1120,30 @@ export const DeployService: GenService<{
     methodKind: "unary";
     input: typeof DeleteDeploymentRequestSchema;
     output: typeof DeleteDeploymentResponseSchema;
+  },
+  /**
+   * RestartDeployment restarts a deployment's pods, one at a time, without a
+   * new deploy: Forge marks the pod template in the deploy repo and Argo CD
+   * rolls the pods. The next deploy leaves the mark out.
+   *
+   * @generated from rpc forge.v1.DeployService.RestartDeployment
+   */
+  restartDeployment: {
+    methodKind: "unary";
+    input: typeof RestartDeploymentRequestSchema;
+    output: typeof RestartDeploymentResponseSchema;
+  },
+  /**
+   * ScaleDeployment sets how many pods a deployment runs, until the next
+   * deploy, promote or rollback, which goes back to forge.yaml's
+   * run.replicas. An autoscaled deployment refuses it.
+   *
+   * @generated from rpc forge.v1.DeployService.ScaleDeployment
+   */
+  scaleDeployment: {
+    methodKind: "unary";
+    input: typeof ScaleDeploymentRequestSchema;
+    output: typeof ScaleDeploymentResponseSchema;
   },
   /**
    * SetAddress changes where a service is reached, overriding forge.yaml's
