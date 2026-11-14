@@ -1,10 +1,10 @@
 import type { AdoptionPeriod } from "@/gen/forge/v1/audit_pb";
-import type { Service, ServiceChecks } from "@/gen/forge/v1/catalog_pb";
+import type { Service } from "@/gen/forge/v1/catalog_pb";
 import type { Deployment } from "@/gen/forge/v1/deploy_pb";
 import { type Resource, Resource_State } from "@/gen/forge/v1/resource_pb";
 import type { Team } from "@/gen/forge/v1/team_pb";
 import { serviceId } from "@/lib/api";
-import { catalogRows, offGoldenPath } from "@/lib/catalog";
+import { catalogRows } from "@/lib/catalog";
 import { ownership } from "@/lib/ownership";
 
 // The Adoption page: is Forge used, and where are teams stuck.
@@ -29,13 +29,12 @@ export type Stuck = { key: string; tone: "bad" | "warn"; title: string; detail: 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 // stuck lists where adoption is stuck: teams that never shipped a service,
-// services that fail, services off the golden path, teams nobody pages, and
-// resources that are not ready. Whatever is not known yet is left out.
+// services that fail, and resources that are not ready. Whatever is not
+// known yet is left out.
 export function stuck(
   services: Service[],
   teams: Team[] | undefined,
   deployments: Deployment[],
-  checks: ServiceChecks[] | undefined,
   resources: Resource[] | undefined,
 ): Stuck[] {
   const out: Stuck[] = [];
@@ -47,15 +46,6 @@ export function stuck(
   const failing = catalogRows(services, deployments).filter((r) => r.severity === "bad");
   if (failing.length) {
     out.push({ key: "failing", tone: "bad", title: `${plural(failing.length, "service")} failing`, detail: `${failing.map((r) => r.id).join(", ")}. Failing deploys push people back to doing it by hand.`, href: "/services?status=attention", action: "Open them" });
-  }
-  if (checks) {
-    const off = [...offGoldenPath(checks)];
-    if (off.length) {
-      out.push({ key: "offpath", tone: "warn", title: `${plural(off.length, "service")} off the golden path`, detail: `${off.length} of ${checks.length} services miss CI, an SLO, tracing, a runbook or on-call.`, href: "/services?status=offpath", action: "See services" });
-    }
-  }
-  if (o && o.noOncall.length) {
-    out.push({ key: "oncall", tone: "warn", title: `${plural(o.noOncall.length, "team")} without on-call`, detail: `${o.noOncall.join(", ")}: nobody is paged when their services break.`, href: "/ownership", action: "Set up on-call" });
   }
   const notReady = (resources ?? []).filter((r) => r.state !== Resource_State.READY);
   if (notReady.length) {

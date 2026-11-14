@@ -8,7 +8,6 @@ import { useParams, useRouter } from "next/navigation";
 import { Fragment, useEffect, useState, type ReactNode } from "react";
 import { usePermissions } from "@/components/app-shell";
 import { DocReader, DocsLink, useHasDocs } from "@/components/doc-reader";
-import { GoldenPath } from "@/components/golden-path";
 import { ExceptionDialog, useCanAskException } from "@/components/exception-actions";
 import { OperationLog } from "@/components/operation-log";
 import { ResourcesTab, useResources } from "@/components/resources";
@@ -645,7 +644,6 @@ function OverviewTab({
           </dl>
         </Card>
         <div className="flex min-w-0 flex-col gap-4">
-          <GoldenPath id={id} />
           <Card icon="link" title="Related resources">
             {(resources.data?.length ?? 0) === 0 && s.dependencies.length === 0 ? (
               <CardNote>No resources or dependencies.</CardNote>

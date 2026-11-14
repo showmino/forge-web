@@ -10,10 +10,12 @@ import { Empty, ErrorNote, Loading, PageHeader } from "@/components/ui/layout";
 import { btd, bth, Card, Chip, Choose, ct, Find, FilterBar, ServiceName, wide } from "@/components/ui/portal";
 import { StatusBadge } from "@/components/ui/status";
 import { listAllServices } from "@/lib/api";
-import { catalogRows, filterRows, offGoldenPath, type StatusFilter, teamsOf, tierStatus } from "@/lib/catalog";
+import { catalogRows, filterRows, type StatusFilter, teamsOf, tierStatus } from "@/lib/catalog";
 
 // The Catalog: every service in one table, the environment where each hurts
 // most first, with search and filters in one row.
+const STATUSES: StatusFilter[] = ["all", "attention", "healthy", "ahead"];
+
 export default function Catalog() {
   const api = useApi();
   const services = useQuery({ queryKey: ["services"], queryFn: () => listAllServices(api) });
@@ -24,17 +26,16 @@ export default function Catalog() {
   const canCreate = usePermissions().can("service.create");
   const [query, setQuery] = useState("");
   const [team, setTeam] = useState("all");
-  // The golden-path card links here with ?status=offpath.
-  const [status, setStatus] = useState<StatusFilter>(() =>
-    typeof window !== "undefined" && new URLSearchParams(window.location.search).get("status") === "offpath" ? "offpath" : "all",
-  );
-  const checks = useQuery({ queryKey: ["checks", "all"], queryFn: () => api.catalog.listServiceChecks({}).then((r) => r.services), retry: false });
-  const offPath = useMemo(() => offGoldenPath(checks.data ?? []), [checks.data]);
+  // Other pages link here with a status, such as Adoption's ?status=attention.
+  const [status, setStatus] = useState<StatusFilter>(() => {
+    const asked = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("status") : null;
+    return STATUSES.includes(asked as StatusFilter) ? (asked as StatusFilter) : "all";
+  });
   const [tier, setTier] = useState("all");
 
   const all = useMemo(() => services.data ?? [], [services.data]);
   const rows = useMemo(() => catalogRows(all, deployments.data ?? []), [all, deployments.data]);
-  const shown = filterRows(rows, { query, team, status, tier, offPath });
+  const shown = filterRows(rows, { query, team, status, tier });
   const filtered = query !== "" || team !== "all" || status !== "all" || tier !== "all";
   const clear = () => {
     setQuery("");
@@ -89,7 +90,6 @@ export default function Catalog() {
                   ["attention", "Needs attention"],
                   ["healthy", "Healthy"],
                   ["ahead", "Ready to promote"],
-                  ["offpath", "Off the golden path"],
                 ]}
               />
             </FilterBar>

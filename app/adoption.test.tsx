@@ -31,10 +31,9 @@ function forge(router: ConnectRouter) {
   });
   router.service(ServiceCatalogService, {
     listServices: () => ({ services: [{ name: "services/payments", ownerTeam: "billing" }, { name: "services/search", ownerTeam: "discovery" }] }),
-    listServiceChecks: () => ({ services: [{ service: "services/payments", passed: 5, applies: 5 }, { service: "services/search", passed: 1, applies: 5 }] }),
   });
   router.service(TeamService, {
-    listTeams: () => ({ teams: [{ name: "teams/billing", memberCount: 6, oncall: "billing-primary" }, { name: "teams/discovery", memberCount: 2 }, { name: "teams/mobile", memberCount: 4 }] }),
+    listTeams: () => ({ teams: [{ name: "teams/billing", memberCount: 6 }, { name: "teams/discovery", memberCount: 2 }, { name: "teams/mobile", memberCount: 4 }] }),
   });
   router.service(DeployService, {
     listDeployments: () => ({
@@ -61,11 +60,11 @@ describe("adoption", () => {
     await waitFor(() => expect(stat("Resources applied")).toContain("across 1 team"));
 
     const items = within(await screen.findByRole("list", { name: "Action items" }));
-    await waitFor(() => expect(items.getAllByRole("listitem")).toHaveLength(4));
+    await waitFor(() => expect(items.getAllByRole("listitem")).toHaveLength(2));
     expect(items.getByText("1 team never shipped a service")).toBeTruthy();
     expect(items.getByText("1 service failing")).toBeTruthy();
-    expect(items.getByText("1 service off the golden path")).toBeTruthy();
-    expect(items.getByText("1 team without on-call")).toBeTruthy();
+    expect(items.queryByText(/golden path/)).toBeNull();
+    expect(items.queryByText(/on-call/)).toBeNull();
   });
 
   it("charts the weeks, and shows them as a table", async () => {
