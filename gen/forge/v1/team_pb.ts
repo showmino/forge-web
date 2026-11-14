@@ -4,13 +4,15 @@
 
 import type { GenFile, GenMessage, GenService } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc, serviceDesc } from "@bufbuild/protobuf/codegenv2";
+import type { FieldMask } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_field_mask } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file forge/v1/team.proto.
  */
 export const file_forge_v1_team: GenFile = /*@__PURE__*/
-  fileDesc("ChNmb3JnZS92MS90ZWFtLnByb3RvEghmb3JnZS52MSJjCgRUZWFtEgwKBG5hbWUYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhQKDG1lbWJlcl9jb3VudBgFIAEoBUoECAQQBVIGb25jYWxsIhIKEExpc3RUZWFtc1JlcXVlc3QiMgoRTGlzdFRlYW1zUmVzcG9uc2USHQoFdGVhbXMYASADKAsyDi5mb3JnZS52MS5UZWFtMlgKC1RlYW1TZXJ2aWNlEkkKCUxpc3RUZWFtcxIaLmZvcmdlLnYxLkxpc3RUZWFtc1JlcXVlc3QaGy5mb3JnZS52MS5MaXN0VGVhbXNSZXNwb25zZSIDkAIBYgZwcm90bzM");
+  fileDesc("ChNmb3JnZS92MS90ZWFtLnByb3RvEghmb3JnZS52MSJpCgRUZWFtEgwKBG5hbWUYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhIKBm9uY2FsbBgEIAEoCUICGAESFAoMbWVtYmVyX2NvdW50GAUgASgFIhIKEExpc3RUZWFtc1JlcXVlc3QiMgoRTGlzdFRlYW1zUmVzcG9uc2USHQoFdGVhbXMYASADKAsyDi5mb3JnZS52MS5UZWFtIo0BChFVcGRhdGVUZWFtUmVxdWVzdBIcCgR0ZWFtGAEgASgLMg4uZm9yZ2UudjEuVGVhbRIvCgt1cGRhdGVfbWFzaxgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5GaWVsZE1hc2sSEgoKcmVxdWVzdF9pZBgDIAEoCRIVCg12YWxpZGF0ZV9vbmx5GAQgASgIIjIKElVwZGF0ZVRlYW1SZXNwb25zZRIcCgR0ZWFtGAEgASgLMg4uZm9yZ2UudjEuVGVhbTKmAQoLVGVhbVNlcnZpY2USSQoJTGlzdFRlYW1zEhouZm9yZ2UudjEuTGlzdFRlYW1zUmVxdWVzdBobLmZvcmdlLnYxLkxpc3RUZWFtc1Jlc3BvbnNlIgOQAgESTAoKVXBkYXRlVGVhbRIbLmZvcmdlLnYxLlVwZGF0ZVRlYW1SZXF1ZXN0GhwuZm9yZ2UudjEuVXBkYXRlVGVhbVJlc3BvbnNlIgOIAgFiBnByb3RvMw", [file_google_protobuf_field_mask]);
 
 /**
  * Team is a team of the GitHub organization.
@@ -38,6 +40,14 @@ export type Team = Message<"forge.v1.Team"> & {
    * @generated from field: string description = 3;
    */
   description: string;
+
+  /**
+   * Removed in Forge 0.57.0: always "".
+   *
+   * @generated from field: string oncall = 4 [deprecated = true];
+   * @deprecated
+   */
+  oncall: string;
 
   /**
    * How many members the team has on GitHub; 0 when GitHub could not say.
@@ -85,6 +95,59 @@ export const ListTeamsResponseSchema: GenMessage<ListTeamsResponse> = /*@__PURE_
   messageDesc(file_forge_v1_team, 2);
 
 /**
+ * @generated from message forge.v1.UpdateTeamRequest
+ */
+export type UpdateTeamRequest = Message<"forge.v1.UpdateTeamRequest"> & {
+  /**
+   * team.name selects the team ("teams/{team}").
+   *
+   * @generated from field: forge.v1.Team team = 1;
+   */
+  team?: Team | undefined;
+
+  /**
+   * Only "oncall" can be updated.
+   *
+   * @generated from field: google.protobuf.FieldMask update_mask = 2;
+   */
+  updateMask?: FieldMask | undefined;
+
+  /**
+   * @generated from field: string request_id = 3;
+   */
+  requestId: string;
+
+  /**
+   * @generated from field: bool validate_only = 4;
+   */
+  validateOnly: boolean;
+};
+
+/**
+ * Describes the message forge.v1.UpdateTeamRequest.
+ * Use `create(UpdateTeamRequestSchema)` to create a new message.
+ */
+export const UpdateTeamRequestSchema: GenMessage<UpdateTeamRequest> = /*@__PURE__*/
+  messageDesc(file_forge_v1_team, 3);
+
+/**
+ * @generated from message forge.v1.UpdateTeamResponse
+ */
+export type UpdateTeamResponse = Message<"forge.v1.UpdateTeamResponse"> & {
+  /**
+   * @generated from field: forge.v1.Team team = 1;
+   */
+  team?: Team | undefined;
+};
+
+/**
+ * Describes the message forge.v1.UpdateTeamResponse.
+ * Use `create(UpdateTeamResponseSchema)` to create a new message.
+ */
+export const UpdateTeamResponseSchema: GenMessage<UpdateTeamResponse> = /*@__PURE__*/
+  messageDesc(file_forge_v1_team, 4);
+
+/**
  * TeamService lists the teams a service can belong to: the teams of the
  * GitHub organization Forge creates repos in. Resource names follow AIP
  * style: "teams/{team}".
@@ -101,6 +164,18 @@ export const TeamService: GenService<{
     methodKind: "unary";
     input: typeof ListTeamsRequestSchema;
     output: typeof ListTeamsResponseSchema;
+  },
+  /**
+   * UpdateTeam set a team's on-call rotation. Removed in Forge 0.57.0: it
+   * answers UNIMPLEMENTED. Kept so that the API stays compatible.
+   *
+   * @generated from rpc forge.v1.TeamService.UpdateTeam
+   * @deprecated
+   */
+  updateTeam: {
+    methodKind: "unary";
+    input: typeof UpdateTeamRequestSchema;
+    output: typeof UpdateTeamResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_forge_v1_team, 0);
