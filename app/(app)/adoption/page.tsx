@@ -13,19 +13,18 @@ import { change, selfServed, stuck } from "@/lib/adoption";
 
 // Adoption: is Forge being used, and where are teams getting stuck. The
 // numbers come from the audit log (GetAdoption); what is stuck from the
-// catalog, the teams, the golden-path checks and the resources.
+// catalog, the teams and the resources.
 export default function Adoption() {
   const api = useApi();
   const adoption = useQuery({ queryKey: ["adoption"], queryFn: () => api.audit.getAdoption({}) });
   const services = useQuery({ queryKey: ["services"], queryFn: () => listAllServices(api) });
   const teams = useQuery({ queryKey: ["teams"], queryFn: () => api.teams.listTeams({}).then((r) => r.teams), retry: false });
   const deployments = useQuery({ queryKey: ["deployments"], queryFn: () => api.deploys.listDeployments({}).then((r) => r.deployments) });
-  const checks = useQuery({ queryKey: ["checks", "all"], queryFn: () => api.catalog.listServiceChecks({}).then((r) => r.services), retry: false });
   const resources = useQuery({ queryKey: ["resources", "all"], queryFn: () => api.resources.listResources({}).then((r) => r.resources), retry: false });
 
   const items = useMemo(
-    () => (services.data && deployments.data ? stuck(services.data, teams.data, deployments.data, checks.data, resources.data) : []),
-    [services.data, teams.data, deployments.data, checks.data, resources.data],
+    () => (services.data && deployments.data ? stuck(services.data, teams.data, deployments.data, resources.data) : []),
+    [services.data, teams.data, deployments.data, resources.data],
   );
   const last = adoption.data?.last;
   const prev = adoption.data?.previous;

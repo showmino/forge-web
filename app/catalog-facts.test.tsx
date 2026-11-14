@@ -12,9 +12,8 @@ import { create } from "@bufbuild/protobuf";
 import { ADMIN, authAs, type Caller, READER, renderWithApi, signIn } from "@/test/helpers";
 import Catalog from "./(app)/services/page";
 import Ownership from "./(app)/ownership/page";
-import { GoldenPath } from "@/components/golden-path";
 
-// A service's tier and SLO, and a team's members and on-call (phase 15, B).
+// A service's tier and SLO, and a team's members (phase 15, B).
 
 vi.mock("next/navigation", () => ({
   useParams: () => ({}),
@@ -28,7 +27,7 @@ const services = [
   { name: "services/notes", ownerTeam: "growth", owners: ["bo@example.com"] },
 ];
 
-type World = { caller: Caller; oncall: Record<string, string>; updates: { paths: string[]; tier: number; slo: string }[] };
+type World = { caller: Caller; updates: { paths: string[]; tier: number; slo: string }[] };
 
 function forge(w: World) {
   return (router: ConnectRouter) => {
@@ -39,25 +38,6 @@ function forge(w: World) {
         w.updates.push({ paths: req.updateMask?.paths ?? [], tier: req.service?.tier ?? 0, slo: req.service?.slo ?? "" });
         return { service: { name: req.service?.name, etag: "2" } };
       },
-      listServiceChecks: (req) => {
-        const all = [
-          {
-            service: "services/payments",
-            passed: 4,
-            applies: 4,
-            checks: [
-              { name: "ci", title: "CI pipeline", applies: false, detail: "no repo: it runs an image or a chart someone else built" },
-              { name: "slo", title: "SLO defined", applies: true, passed: true, detail: "availability target 99.95%" },
-              { name: "tracing", title: "Tracing with OpenTelemetry", applies: true, passed: true, detail: "it sends traces (service.tracing)" },
-              { name: "runbook", title: "Runbook", applies: false, detail: "no repo to keep one in" },
-              { name: "oncall", title: "On-call rotation", applies: true, passed: true, detail: "team billing is on call as billing-primary" },
-            ],
-          },
-          { service: "services/ledger", passed: 1, applies: 3, checks: [] },
-          { service: "services/notes", passed: 3, applies: 3, checks: [] },
-        ];
-        return { services: req.service ? all.filter((c) => c.service === req.service) : all };
-      },
     });
     router.service(DeployService, { listDeployments: () => ({}) });
     router.service(TemplateService, { listTemplates: () => ({}) });
@@ -65,20 +45,15 @@ function forge(w: World) {
     router.service(TeamService, {
       listTeams: () => ({
         teams: [
-          { name: "teams/billing", displayName: "Billing", memberCount: 6, oncall: w.oncall.billing ?? "" },
-          { name: "teams/growth", memberCount: 3, oncall: w.oncall.growth ?? "" },
+          { name: "teams/billing", displayName: "Billing", memberCount: 6 },
+          { name: "teams/growth", memberCount: 3 },
         ],
       }),
-      updateTeam: (req) => {
-        const slug = (req.team?.name ?? "").replace("teams/", "");
-        w.oncall[slug] = req.team?.oncall ?? "";
-        return { team: req.team };
-      },
     });
   };
 }
 
-const world = (over: Partial<World> = {}): World => ({ caller: READER, oncall: {}, updates: [], ...over });
+const world = (over: Partial<World> = {}): World => ({ caller: READER, updates: [], ...over });
 
 beforeEach(() => signIn());
 afterEach(() => cleanup());
@@ -118,47 +93,22 @@ describe("a service's tier and SLO in its settings", () => {
   });
 });
 
-describe("the teams' on-call", () => {
-  it("shows members and on-call, and names a team that owns services but pages nobody", async () => {
-    renderWithApi(<Ownership />, forge(world({ oncall: { billing: "billing-primary" } })));
+describe("the teams", () => {
+  it("shows each team's members, and nothing about on-call", async () => {
+    renderWithApi(<Ownership />, forge(world({ caller: ADMIN })));
     const teams = within(await screen.findByRole("table", { name: "Teams" }));
     const billing = teams.getByText("billing").closest("tr")!;
     expect(within(billing).getByText("6")).toBeTruthy();
-    expect(within(billing).getByText("billing-primary")).toBeTruthy();
-    expect(within(teams.getByText("growth").closest("tr")!).getByText("No on-call rotation")).toBeTruthy();
-    // A reader cannot change it.
-    expect(teams.queryByRole("button", { name: /Set the on-call/ })).toBeNull();
-  });
-
-  it("lets an admin set a team's on-call", async () => {
-    const w = world({ caller: ADMIN });
-    renderWithApi(<Ownership />, forge(w));
-    fireEvent.click(await screen.findByRole("button", { name: "Set the on-call of growth" }));
-    const dialog = within(await screen.findByRole("dialog"));
-    fireEvent.change(dialog.getByLabelText("Rotation"), { target: { value: "growth-primary" } });
-    expect(dialog.getByTitle("Same action from the terminal").textContent).toContain("forge team update growth --oncall growth-primary");
-    fireEvent.click(dialog.getByRole("button", { name: "Save" }));
-    await waitFor(() => expect(w.oncall.growth).toBe("growth-primary"));
-    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(teams.queryByText("On-call")).toBeNull();
+    expect(screen.queryByText(/on-call/i)).toBeNull();
   });
 });
 
-describe("the golden path", () => {
-  it("shows a service's checks, and what does not apply", async () => {
-    renderWithApi(<GoldenPath id="payments" />, forge(world()));
-    expect(await screen.findByText("4 of 4")).toBeTruthy();
-    const checks = within(screen.getByRole("list", { name: "Golden-path checks" }));
-    expect(checks.getByText(/CI pipeline/).textContent).toContain("does not apply");
-    expect(checks.getByText(/SLO defined/).textContent).toContain("passes");
-    expect(checks.getByText("availability target 99.95%")).toBeTruthy();
-  });
-
-  it("lets the Catalog keep only the services off the path", async () => {
+describe("the catalog's filters", () => {
+  it("offer no golden path", async () => {
     renderWithApi(<Catalog />, forge(world()));
     await screen.findByRole("link", { name: "payments" });
-    fireEvent.change(screen.getByLabelText("Status"), { target: { value: "offpath" } });
-    await waitFor(() => expect(screen.queryByRole("link", { name: "payments" })).toBeNull());
-    expect(screen.getByRole("link", { name: "ledger" })).toBeTruthy();
-    expect(screen.queryByRole("link", { name: "notes" })).toBeNull();
+    const status = screen.getByLabelText("Status") as HTMLSelectElement;
+    expect([...status.options].map((o) => o.value)).toEqual(["all", "attention", "healthy", "ahead"]);
   });
 });

@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file forge/v1/team.proto.
  */
 export const file_forge_v1_team: GenFile = /*@__PURE__*/
-  fileDesc("ChNmb3JnZS92MS90ZWFtLnByb3RvEghmb3JnZS52MSJlCgRUZWFtEgwKBG5hbWUYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEg4KBm9uY2FsbBgEIAEoCRIUCgxtZW1iZXJfY291bnQYBSABKAUiEgoQTGlzdFRlYW1zUmVxdWVzdCIyChFMaXN0VGVhbXNSZXNwb25zZRIdCgV0ZWFtcxgBIAMoCzIOLmZvcmdlLnYxLlRlYW0ijQEKEVVwZGF0ZVRlYW1SZXF1ZXN0EhwKBHRlYW0YASABKAsyDi5mb3JnZS52MS5UZWFtEi8KC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFzaxISCgpyZXF1ZXN0X2lkGAMgASgJEhUKDXZhbGlkYXRlX29ubHkYBCABKAgiMgoSVXBkYXRlVGVhbVJlc3BvbnNlEhwKBHRlYW0YASABKAsyDi5mb3JnZS52MS5UZWFtMqEBCgtUZWFtU2VydmljZRJJCglMaXN0VGVhbXMSGi5mb3JnZS52MS5MaXN0VGVhbXNSZXF1ZXN0GhsuZm9yZ2UudjEuTGlzdFRlYW1zUmVzcG9uc2UiA5ACARJHCgpVcGRhdGVUZWFtEhsuZm9yZ2UudjEuVXBkYXRlVGVhbVJlcXVlc3QaHC5mb3JnZS52MS5VcGRhdGVUZWFtUmVzcG9uc2ViBnByb3RvMw", [file_google_protobuf_field_mask]);
+  fileDesc("ChNmb3JnZS92MS90ZWFtLnByb3RvEghmb3JnZS52MSJpCgRUZWFtEgwKBG5hbWUYASABKAkSFAoMZGlzcGxheV9uYW1lGAIgASgJEhMKC2Rlc2NyaXB0aW9uGAMgASgJEhIKBm9uY2FsbBgEIAEoCUICGAESFAoMbWVtYmVyX2NvdW50GAUgASgFIhIKEExpc3RUZWFtc1JlcXVlc3QiMgoRTGlzdFRlYW1zUmVzcG9uc2USHQoFdGVhbXMYASADKAsyDi5mb3JnZS52MS5UZWFtIo0BChFVcGRhdGVUZWFtUmVxdWVzdBIcCgR0ZWFtGAEgASgLMg4uZm9yZ2UudjEuVGVhbRIvCgt1cGRhdGVfbWFzaxgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5GaWVsZE1hc2sSEgoKcmVxdWVzdF9pZBgDIAEoCRIVCg12YWxpZGF0ZV9vbmx5GAQgASgIIjIKElVwZGF0ZVRlYW1SZXNwb25zZRIcCgR0ZWFtGAEgASgLMg4uZm9yZ2UudjEuVGVhbTKmAQoLVGVhbVNlcnZpY2USSQoJTGlzdFRlYW1zEhouZm9yZ2UudjEuTGlzdFRlYW1zUmVxdWVzdBobLmZvcmdlLnYxLkxpc3RUZWFtc1Jlc3BvbnNlIgOQAgESTAoKVXBkYXRlVGVhbRIbLmZvcmdlLnYxLlVwZGF0ZVRlYW1SZXF1ZXN0GhwuZm9yZ2UudjEuVXBkYXRlVGVhbVJlc3BvbnNlIgOIAgFiBnByb3RvMw", [file_google_protobuf_field_mask]);
 
 /**
  * Team is a team of the GitHub organization.
@@ -42,10 +42,10 @@ export type Team = Message<"forge.v1.Team"> & {
   description: string;
 
   /**
-   * The name of the team's on-call rotation, for example
-   * "billing-primary"; "" when it has none. Set with UpdateTeam.
+   * Removed in Forge 0.57.0: always "".
    *
-   * @generated from field: string oncall = 4;
+   * @generated from field: string oncall = 4 [deprecated = true];
+   * @deprecated
    */
   oncall: string;
 
@@ -166,10 +166,11 @@ export const TeamService: GenService<{
     output: typeof ListTeamsResponseSchema;
   },
   /**
-   * UpdateTeam changes what Forge keeps about a team: its on-call rotation.
-   * Admins only. The team itself (its name, its members) is GitHub's.
+   * UpdateTeam set a team's on-call rotation. Removed in Forge 0.57.0: it
+   * answers UNIMPLEMENTED. Kept so that the API stays compatible.
    *
    * @generated from rpc forge.v1.TeamService.UpdateTeam
+   * @deprecated
    */
   updateTeam: {
     methodKind: "unary";

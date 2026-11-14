@@ -110,16 +110,7 @@ describe("ownership", () => {
     ]);
     expect(o.noContacts).toEqual(["forge-web"]);
     expect(o).toMatchObject({ owned: 2, total: 4, idleTeams: 1 });
-    // platform-engineering owns services and is paged by nobody; billing owns none.
-    expect(o.noOncall).toEqual(["platform-engineering"]);
     expect(o.teams[0].members).toBe(4);
-  });
-
-  it("names no team without on-call once it has a rotation", () => {
-    const paged = [create(TeamSchema, { name: "teams/platform-engineering", oncall: "platform-primary" }), teams[1]];
-    const o = ownership(services, paged, deployments);
-    expect(o.noOncall).toEqual([]);
-    expect(o.teams[0].oncall).toBe("platform-primary");
   });
 
   it("takes every named team at its word when GitHub cannot be asked", () => {
@@ -127,7 +118,6 @@ describe("ownership", () => {
     expect(o.needsOwner).toEqual([{ service: "orphan", team: "" }]);
     expect(o.teams.every((t) => t.onGitHub)).toBe(true);
     expect(o.idleTeams).toBe(0);
-    expect(o.noOncall).toEqual([]);
   });
 });
 
