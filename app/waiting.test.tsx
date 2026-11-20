@@ -74,6 +74,12 @@ async function openOverview(w: World) {
   await act(() => new Promise((r) => setTimeout(r, 0)));
 }
 
+// nothingNeedsThem checks the Overview says all is clear and lists nothing.
+async function nothingNeedsThem() {
+  expect(await screen.findByText("All clear")).toBeTruthy();
+  expect(screen.queryByRole("list", { name: "Needs attention" })).toBeNull();
+}
+
 beforeEach(() => {
   sessionStorage.clear();
   localStorage.clear();
@@ -104,17 +110,17 @@ describe("the Overview", () => {
 
   it("shows an admin in no team none", async () => {
     await openOverview(world({ caller: ADMIN }));
-    expect(await screen.findByRole("heading", { name: "Get started" })).toBeTruthy();
+    await nothingNeedsThem();
   });
 
   it("shows a reader none, and says nothing needs them", async () => {
     await openOverview(world({ caller: READER }));
-    expect(await screen.findByRole("heading", { name: "Get started" })).toBeTruthy();
+    await nothingNeedsThem();
   });
 
   it("stays quiet on a Forge without infrastructure repos", async () => {
     await openOverview(world({ noInfrastructure: true }));
-    expect(await screen.findByRole("heading", { name: "Get started" })).toBeTruthy();
+    await nothingNeedsThem();
     expect(screen.queryByRole("alert")).toBeNull();
   });
 });

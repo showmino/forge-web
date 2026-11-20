@@ -260,14 +260,11 @@ describe("the home page", () => {
     await waitFor(() => expect(text("Clusters")).toContain("1 needs a look"));
   });
 
-  it("shows the way to production when nothing needs the caller", async () => {
+  it("shows no checklist when nothing needs the caller", async () => {
     renderWithApi(<Home />, forge(world({ quiet: true })));
-    expect(await screen.findByRole("heading", { name: "Get started" })).toBeTruthy();
-    const steps = within(screen.getByRole("list", { name: "Get started" }));
-    expect(steps.getByText("Sign in to Forge").textContent).toContain("(done)");
-    // An admin is on the way to production; the list follows once their role is known.
-    expect(await screen.findByRole("link", { name: "Create your first service" })).toBeTruthy();
     await waitFor(() => expect(stat("Need a decision")).toContain("All clear"));
+    expect(screen.queryByRole("list", { name: "Needs attention" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Get started" })).toBeNull();
     expect(await screen.findByText("No deploy has ended in the last 24 hours.")).toBeTruthy();
   });
 
