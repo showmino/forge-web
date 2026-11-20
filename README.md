@@ -31,7 +31,8 @@ the others. The server only serves the pages and
   caller; production's health); "Services that need a look first" (an
   admin's and a reader's) or "Your services" (a team member's: the services
   whose `owner_team` is one of their teams), each where it hurts most
-  (`lib/catalog.ts`); "Needs you" or, when nothing does, "Get started"; then
+  (`lib/catalog.ts`); "Needs you", only when something does (otherwise the
+  services take the whole row); then
   recent activity, the platform's status and quick links. The numbers of the
   day and the recent deploys come from the audit log of the last 24 hours,
   which outlives a restart of the API. "Needs you" is first the production

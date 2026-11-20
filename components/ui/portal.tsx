@@ -437,34 +437,3 @@ export function LinkList({ items, label }: { items: { href: string; icon: GlyphN
     </ul>
   );
 }
-
-// Steps is a checklist of links: what is done is ticked and struck through.
-export function Steps({ items, label }: { items: { done: boolean; text: string; href: string }[]; label: string }) {
-  return (
-    <ul aria-label={label} className="m-0 list-none p-0">
-      {items.map((s) => (
-        <li key={s.text}>
-          <Link
-            href={s.href}
-            className={`group flex items-center gap-3 border-b border-line px-0.5 py-[9px] text-[14px] no-underline [li:last-child>&]:border-b-0 ${s.done ? "text-fg-3" : "text-inherit"}`}
-          >
-            <span
-              className={`grid size-5 flex-none place-items-center rounded-full ${s.done ? "bg-ember text-ember-on" : "shadow-[inset_0_0_0_1.5px_var(--line-strong)]"}`}
-            >
-              {s.done ? <Mark name="check" size={13} /> : null}
-            </span>
-            <span className={s.done ? "line-through" : "group-hover:underline"}>
-              {s.text}
-              {s.done ? <span className="sr-only"> (done)</span> : null}
-            </span>
-            {s.done ? null : (
-              <span className="ml-auto text-fg-3">
-                <Mark name="chev" size={15} />
-              </span>
-            )}
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
-}

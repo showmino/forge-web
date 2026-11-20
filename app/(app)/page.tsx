@@ -25,7 +25,6 @@ import {
   Stat,
   StatusLines,
   Stats,
-  Steps,
   wide,
 } from "@/components/ui/portal";
 import { StatusBadge } from "@/components/ui/status";
@@ -130,7 +129,8 @@ export default function Home() {
 
         {broken ? <ErrorNote error={broken} /> : null}
 
-        <div className="grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-4 max-[980px]:grid-cols-1">
+        {/* With nothing that needs the person, the services have the row to themselves. */}
+        <div className={needs.length > 0 ? "grid grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-4 max-[980px]:grid-cols-1" : "grid gap-4"}>
           <Card icon="box" title={role === "Team" ? "Your services" : "Services that need a look first"} more={{ href: "/services", label: "View catalog" }}>
             {loading ? (
               <Loading what="services" />
@@ -145,9 +145,7 @@ export default function Home() {
               {role === "Reader" ? <CardNote top>Their owners are on it. You can follow along, but not change anything.</CardNote> : null}
               <Needs label="Needs attention" max={5} items={needs.map((a) => needOf(a, setExtending))} />
             </Card>
-          ) : (
-            <GetStarted role={role} mine={mine} canCreate={canCreate} />
-          )}
+          ) : null}
         </div>
 
         <div className="grid grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)] gap-4 max-[1200px]:grid-cols-2 max-[1200px]:[&>*:first-child]:col-span-2 max-[700px]:grid-cols-1 max-[700px]:[&>*:first-child]:col-span-1">
@@ -363,33 +361,6 @@ function ServiceTable({ rows }: { rows: CatalogRow[] }) {
         </tbody>
       </table>
     </div>
-  );
-}
-
-// GetStarted is the path from nothing to production, when nothing needs the person.
-function GetStarted({ role, mine, canCreate }: { role: Role; mine: CatalogRow[]; canCreate: boolean }) {
-  const steps =
-    role === "Reader"
-      ? [
-          { done: true, text: "Sign in to Forge", href: "/" },
-          { done: false, text: "Find your team's owner", href: "/ownership" },
-          { done: false, text: "Browse the service templates", href: "/templates" },
-          { done: false, text: "Read the developer guide", href: "/docs" },
-        ]
-      : [
-          { done: true, text: "Sign in to Forge", href: "/" },
-          { done: mine.length > 0, text: "Create your first service", href: canCreate ? "/create" : "/templates" },
-          { done: mine.some((r) => r.service && r.env !== ""), text: "Deploy to staging", href: "/deployments" },
-          { done: mine.some((r) => r.env === "production"), text: "Promote to production", href: "/deployments" },
-          { done: false, text: "Read the developer guide", href: "/docs" },
-        ];
-  return (
-    <Card icon="rocket" title="Get started">
-      <CardNote top>
-        {role === "Reader" ? "You can look around everything. Join a team to ship your own changes." : "Nothing needs you right now. Here is the path from zero to production."}
-      </CardNote>
-      <Steps label="Get started" items={steps} />
-    </Card>
   );
 }
 
