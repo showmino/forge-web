@@ -23,7 +23,8 @@ export function renderWithApi(ui: ReactNode, routes: (router: ConnectRouter) => 
 
 // Who calls the fake API: an admin may do everything, a member of a team
 // works on the services the team owns, and anyone else only reads.
-export type Caller = { admin?: boolean; teams?: readonly string[] };
+// org is the display name of the GitHub organization the API reports.
+export type Caller = { admin?: boolean; teams?: readonly string[]; org?: string };
 export const ADMIN: Caller = { admin: true, teams: [] };
 export const READER: Caller = { teams: [] };
 
@@ -63,6 +64,7 @@ export function authAs(caller: Caller, teamOf: (service: string) => string = () 
       permissions: caller.admin || teams.length ? ["services.read", "services.write"] : ["services.read"],
       admin: !!caller.admin,
       teams,
+      ...(caller.org ? { organization: caller.org.toLowerCase().replaceAll(" ", "-"), organizationDisplayName: caller.org } : {}),
     }),
     testPermissions: (req: { service: string; actions: string[]; ownerTeam: string }) => {
       const team = req.service ? teamOf(req.service) : req.ownerTeam;
