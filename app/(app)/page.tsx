@@ -101,7 +101,7 @@ export default function Home() {
 
   return (
     <div className="flex flex-col">
-      <Hero role={role} canCreate={canCreate} team={team} />
+      <Hero role={role} canCreate={canCreate} team={team} org={status.data?.organizationDisplayName} />
 
       <div className="mt-6 flex flex-col gap-4">
         <Stats label="At a glance">
@@ -218,8 +218,10 @@ export default function Home() {
 
 type Role = ReturnType<typeof useRole>;
 
-// Hero says what Forge is for, with the actions the person's role allows.
-function Hero({ role, canCreate, team }: { role: Role; canCreate: boolean; team: string | undefined }) {
+// Hero says what Forge is for, with the actions the person's role allows. It
+// is titled after the GitHub organization the Forge serves, when the API
+// names one.
+function Hero({ role, canCreate, team, org }: { role: Role; canCreate: boolean; team: string | undefined; org: string | undefined }) {
   const big = "!px-[18px] !py-2.5 !text-[14.5px] gap-2.5";
   return (
     <section aria-labelledby="home-title" className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-6 pt-1 max-[980px]:grid-cols-1">
@@ -231,7 +233,7 @@ function Hero({ role, canCreate, team }: { role: Role; canCreate: boolean; team:
           Home
         </div>
         <h1 id="home-title" className="m-0 font-display text-[44px] leading-[1.05] font-[800] tracking-[-0.01em] [font-stretch:112%] max-[700px]:text-[32px]">
-          Internal Developer Platform
+          {org ? `${org} Developer Platform` : "Internal Developer Platform"}
         </h1>
         <p className="mt-3 mb-0 max-w-[62ch] text-[16px] text-fg-2 max-[700px]:text-[15px]">
           Build, deploy and run services on Forge. Self-serve templates, previews and guardrails for shipping safely.

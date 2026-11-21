@@ -127,6 +127,15 @@ message Deployment {
   // When RestartDeployment last restarted its pods since the deploy; unset
   // once a deploy, promote or rollback replaces them.
   google.protobuf.Timestamp restart_time = 19;
+  // What the service is linked to in its application: forge.yaml's
+  // run.links of the commit that runs. "services/{service}" is a part,
+  // whose address its pods have in <PART>_URL;
+  // "services/{service}/resources/{name}" is a part's shared database,
+  // which its pods have in DATABASE_URL. Output only.
+  repeated string links = 20;
+  // The service is a worker (forge.yaml's run.worker): it serves nothing,
+  // and url is empty. Output only.
+  bool worker = 21;
 }
 
 // DeployRecord is one change of one environment.

@@ -168,6 +168,11 @@ describe("the home page", () => {
 
   const stat = (label: string) => screen.getByText(label, { selector: "div" }).parentElement!.textContent;
 
+  it("is titled after the GitHub organization the Forge serves", async () => {
+    renderWithApi(<Home />, forge(world({ caller: { ...ADMIN, org: "My Org" } })));
+    expect(await screen.findByRole("heading", { level: 1, name: "My Org Developer Platform" })).toBeTruthy();
+  });
+
   it("says what Forge is for, with the actions the role allows", async () => {
     renderWithApi(<Home />, forge(world()));
     expect(screen.getByRole("heading", { level: 1, name: "Internal Developer Platform" })).toBeTruthy();
